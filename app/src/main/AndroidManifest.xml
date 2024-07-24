@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-          package="tkaxv7s.xposed.sesame">
+          package="io.github.lazyimmortal.sesame">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -28,7 +28,7 @@
 
         <meta-data
                 android:name="xposeddescription"
-                android:value="芝麻粒TK版" />
+                android:value="芝麻粒LazyImmortal版" />
 
         <meta-data
                 android:name="xposedminversion"
@@ -40,7 +40,7 @@
 
 
         <activity
-                android:name="tkaxv7s.xposed.sesame.ui.MainActivity"
+                android:name="io.github.lazyimmortal.sesame.ui.MainActivity"
                 android:resizeableActivity="true"
                 android:exported="true">
             <intent-filter>
@@ -52,7 +52,7 @@
         <activity-alias
                 android:name=".ui.MainActivityAlias"
                 android:enabled="true"
-                android:targetActivity="tkaxv7s.xposed.sesame.ui.MainActivity"
+                android:targetActivity="io.github.lazyimmortal.sesame.ui.MainActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -61,17 +61,17 @@
         </activity-alias>
 
         <activity
-                android:name="tkaxv7s.xposed.sesame.ui.NewSettingsActivity"
+                android:name="io.github.lazyimmortal.sesame.ui.NewSettingsActivity"
                 android:resizeableActivity="true"
                 tools:targetApi="n" />
 
         <activity
-                android:name="tkaxv7s.xposed.sesame.ui.SettingsActivity"
+                android:name="io.github.lazyimmortal.sesame.ui.SettingsActivity"
                 android:resizeableActivity="true"
                 tools:targetApi="n" />
 
         <activity
-                android:name="tkaxv7s.xposed.sesame.ui.HtmlViewerActivity"
+                android:name="io.github.lazyimmortal.sesame.ui.HtmlViewerActivity"
                 android:resizeableActivity="true"
                 tools:targetApi="n" />
 
