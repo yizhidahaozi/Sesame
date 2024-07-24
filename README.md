@@ -4,8 +4,6 @@
 [![Latest Release](https://img.shields.io/github/release/TKaxv-7S/Sesame-TK.svg)](../../releases)
 [![All Releases Download](https://img.shields.io/github/downloads/TKaxv-7S/Sesame-TK/total.svg)](../../releases)
 
-# 本仓库已存档，新版本可前往由 [@LazyImmortal](https://github.com/LazyImmortal) 维护的 [Sesame](https://github.com/LazyImmortal/Sesame) 更新
-
 # 为了大家的资金安全与个人信息安全，强烈建议
 ## 不要使用任何未开放源代码的修改版！
 ## 不要使用任何未开放源代码的修改版！
@@ -21,7 +19,7 @@
 
 ### 由于下游闭源项目违反本项目开源协议，从v1.3.0-TK版本开始，前端作者将闭源前端新UI源码，本仓库仅提交发布文件，后端暂不受影响
 
-### 特别感谢这个项目的上一位维护者[@constanline](https://github.com/constanline)，以及更早的维护者[@pansong291](https://github.com/pansong291)与其他维护者们
+### 特别感谢这个项目的上一位维护者[@TKaxv-7S](https://github.com/TKaxv-7S)，以及更早的维护者[@constanline](https://github.com/constanline)、[@pansong291](https://github.com/pansong291)与其他维护者们
 ### 如果您开发了新功能，觉得开发的功能还不错，同时愿意贡献PR，非常欢迎，也非常感谢大家为这个项目的付出！
 ### 注：该项目不支持合并任何 通过修改数据而实际获利 的功能PR
 
@@ -31,7 +29,7 @@
 感谢蚂蚁森林对绿化事业的贡献。快速收取蚂蚁森林能量，也为祖国的绿化事业出一份微薄之力~
 
 ### 版本特点
-1. 重构 系统架构，**功能与配置全部模块化**，以后添加功能**无需再开发配置页面，大幅降低开发门槛，并极大节省开发成本**，欢迎有兴趣的朋友参与开发，开发指南见[维基](https://github.com/TKaxv-7S/Sesame-TK/wiki)或如下图所示，非常欢迎大家提[PR](https://github.com/TKaxv-7S/Sesame-TK/pulls)
+1. 重构 系统架构，**功能与配置全部模块化**，以后添加功能**无需再开发配置页面，大幅降低开发门槛，并极大节省开发成本**，欢迎有兴趣的朋友参与开发，开发指南见[维基](https://github.com/TKaxv-7S/Sesame-TK/wiki)或如下图所示，非常欢迎大家提[PR](https://github.com/LazyImmortal/Sesame/pulls)
 ![Sesame-TK开发指南](https://github.com/TKaxv-7S/Sesame-TK/assets/22593101/4d8451fe-2b7f-4f19-9439-b0afbf683510)
 2. 重构 **森林收能量代码**，大幅提升能量多的账号收取效率
 3. 重构 配置模块，**所有配置需要重新配置**，新配置文件名称为**config_v2.json**，旧配置文件未删除，可作参考
@@ -49,7 +47,7 @@
 6. 本APP如无意中侵犯了某个媒体或个人的知识产权，请来信或来电告之，作者将立即删除。
 
 ## 授权说明
-本项目基于 [constanline版XQuickEnergy](https://github.com/constanline/XQuickEnergy) 与 [pansong291版XQuickEnergy](https://github.com/pansong291/XQuickEnergy) 开发
+本项目基于 [TKaxv-7S版Sesame-TK](https://github.com/TKaxv-7S/Sesame-TK)、[constanline版XQuickEnergy](https://github.com/constanline/XQuickEnergy) 与 [pansong291版XQuickEnergy](https://github.com/pansong291/XQuickEnergy) 开发
 
 在 **北京时间2024年7月15日之前** 提交的所有代码 ，遵循 Apache-2.0 协议
 
@@ -59,8 +57,8 @@
 
 ## 贡献者
 
-<a href="https://github.com/TKaxv-7S/Sesame-TK/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=TKaxv-7S/Sesame-TK" />
+<a href="https://github.com/LazyImmortal/Sesame/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=LazyImmortal/Sesame" />
 </a>
 
 贡献名单使用 [contrib.rocks](https://contrib.rocks) 生成
