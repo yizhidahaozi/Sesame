@@ -848,44 +848,19 @@ public class AntFarm extends ModelTask {
                                 jo = new JSONObject(s);
                                 if (jo.optBoolean("success")) {
                                     JSONObject question = jo.getJSONObject("question");
-                                    Log.i("题目:" + question, "");
                                     long questionId = question.getLong("questionId");
                                     JSONArray labels = question.getJSONArray("label");
-                                    String answer = null;
-                                    String anotherAnswer = null;
-                                    boolean existsResult = false;
-                                    Set<String> dadaDailySet = Status.getDadaDailySet();
-                                    if (dadaDailySet.contains(TimeUtil.getDateStr() + labels.getString(0))) {
+                                    String answer = AnswerAI.getAnswer(question.getString("title"), JsonUtil.jsonArrayToList(labels));
+                                    if (answer == null || answer.isEmpty()) {
                                         answer = labels.getString(0);
-                                        anotherAnswer = labels.getString(1);
-                                        existsResult = true;
-                                    } else if (dadaDailySet.contains(TimeUtil.getDateStr() + labels.getString(1))) {
-                                        answer = labels.getString(1);
-                                        anotherAnswer = labels.getString(0);
-                                        existsResult = true;
-                                    }
-                                    if (!existsResult) {
-                                        answer = AnswerAI.getAnswer(question.getString("title"), JsonUtil.jsonArrayToList(labels));
-                                        if (answer == null || answer.isEmpty()) {
-                                            answer = labels.getString(0);
-                                        }
-                                        anotherAnswer = labels.getString(1);
                                     }
 
                                     s = DadaDailyRpcCall.submit("100", answer, questionId);
                                     JSONObject joDailySubmit = new JSONObject(s);
                                     if (joDailySubmit.optBoolean("success")) {
-                                        Log.record("提交完成");
-                                        dadaDailySet = new HashSet<>();
                                         JSONObject extInfo = joDailySubmit.getJSONObject("extInfo");
                                         boolean correct = joDailySubmit.getBoolean("correct");
-                                        if (!correct || !existsResult) {
-                                            dadaDailySet.add(TimeUtil.getDateStr() + anotherAnswer);
-                                        } else {
-                                            dadaDailySet.add(TimeUtil.getDateStr() + answer);
-                                        }
-                                        Log.record("答题" + (correct ? "正确" : "错误") + "可领取［"
-                                                + extInfo.getString("award") + "克］");
+                                        Log.record("答题" + (correct ? "正确" : "错误") + "，领取［" + extInfo.getString("award") + "克］");
                                         Status.answerQuestionToday();
 
                                         JSONArray operationConfigList = joDailySubmit
@@ -898,13 +873,10 @@ public class AntFarm extends ModelTask {
                                                 for (int k = 0; k < actionTitle.length(); k++) {
                                                     JSONObject joActionTitle = actionTitle.getJSONObject(k);
                                                     if (joActionTitle.getBoolean("correct")) {
-                                                        dadaDailySet.add(TimeUtil.getDateStr(1)
-                                                                + joActionTitle.getString("title"));
                                                     }
                                                 }
                                             }
                                         }
-                                        Status.setDadaDailySet(dadaDailySet);
                                     } else {
                                         Log.i(s);
                                     }
