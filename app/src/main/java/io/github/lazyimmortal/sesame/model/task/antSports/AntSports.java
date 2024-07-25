@@ -155,7 +155,6 @@ public class AntSports extends ModelTask {
 
             if (battleForFriends.getValue()) {
                 queryClubHome();
-                trainMember();
                 buyMember();
             }
 
@@ -988,12 +987,14 @@ public class AntSports extends ModelTask {
             processBubbleList(clubHomeData.optJSONObject("mainRoom"));
             // 处理 roomList 中的每个房间的 bubbleList
             JSONArray roomList = clubHomeData.optJSONArray("roomList");
-            if (roomList != null) {
-                for (int i = 0; i < roomList.length(); i++) {
-                    JSONObject room = roomList.optJSONObject(i);
-                    processBubbleList(room);
-                }
+            if (roomList == null) {
+                return;
             }
+            for (int i = 0; i < roomList.length(); i++) {
+                JSONObject room = roomList.optJSONObject(i);
+                processBubbleList(room);
+            }
+            trainMember();
         } catch (Throwable t) {
             Log.i(TAG, "queryClubHome err:");
             Log.printStackTrace(TAG, t);
@@ -1048,6 +1049,26 @@ public class AntSports extends ModelTask {
         return trainItem;
     }
 
+    private void autoTrainMember(String originBossId, JSONObject trainInfo) {
+        try {
+            // 获取用户名称
+            String userName = UserIdMap.getMaskName(originBossId);
+
+            Long gmtEnd = trainInfo.getLong("gmtEnd");
+            String taskId = "TRAIN|" + originBossId;
+            if (!hasChildTask(taskId)) {
+                addChildTask(new ChildModelTask(taskId, "TRAIN", this::queryClubHome, gmtEnd));
+                Log.record("添加蹲点训练🥋[" + userName + "]在[" + TimeUtil.getCommonDate(gmtEnd) + "]执行");
+            } else {
+                addChildTask(new ChildModelTask(taskId, "TRAIN", this::queryClubHome, gmtEnd));
+                Log.record("更新蹲点训练🥋[" + userName + "]在[" + TimeUtil.getCommonDate(gmtEnd) + "]执行");
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "autoTrainMember err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
     // 抢好友大战-训练好友
     private void trainMember() {
         try {
@@ -1075,17 +1096,25 @@ public class AntSports extends ModelTask {
                 // 提取 memberId 和 originBossId
                 String memberId = member.getString("memberId");
                 String originBossId = member.getString("originBossId");
-                // 获取用户名称
-                String userName = UserIdMap.getMaskName(originBossId);
+
+                JSONObject trainInfo = member.getJSONObject("trainInfo");
+                // 检查是否在训练
+                if (trainInfo.optBoolean("training")) {
+                    autoTrainMember(originBossId, trainInfo);
+                    continue;
+                }
 
                 // 调用 trainMember 方法并传递 itemType、memberId 和 originBossId 值
                 jo = new JSONObject(AntSportsRpcCall.trainMember(trainItemType, memberId, originBossId));
                 if (jo.optBoolean("success")) {
+                    // 获取用户名称
+                    String userName = UserIdMap.getMaskName(originBossId);
                     // 将用户名称和训练项目的名称添加到日志输出
                     Log.other("训练好友🥋训练[" + userName + "]" + trainItemName);
+                    autoTrainMember(originBossId, jo.getJSONObject("trainInfo"));
                 }
                 // 添加 1 秒的间隔
-                Thread.sleep(1000);
+                TimeUtil.sleep(1000);
             }
         } catch (Throwable t) {
             Log.i(TAG, "trainMember err:");
