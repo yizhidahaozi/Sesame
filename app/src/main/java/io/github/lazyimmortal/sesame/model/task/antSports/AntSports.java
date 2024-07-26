@@ -285,6 +285,7 @@ public class AntSports extends ModelTask {
             if (joinedPathId == null) {
                 String pathId = queryJoinPath(walkPathThemeId);
                 if(joinPath(pathId)) {
+                    TimeUtil.sleep(1000);
                     walk();
                 }
                 return;
@@ -295,6 +296,7 @@ public class AntSports extends ModelTask {
                 Log.record("行走路线🚶🏻‍♂️路线[" + userPathStep.getString("pathName") + "]已完成");
                 String pathId = queryJoinPath(walkPathThemeId);
                 if (joinPath(pathId)) {
+                    TimeUtil.sleep(1000);
                     walk();
                 }
                 return;
@@ -307,6 +309,7 @@ public class AntSports extends ModelTask {
             if  (remainStepCount >= minGoStepCount) {
                 int useStepCount = Math.min(remainStepCount, needStepCount);
                 walkGo(userPathStep.getString("pathId"), useStepCount, userPathStep.getString("pathName"));
+                TimeUtil.sleep(1000);
                 walk();
             }
         } catch (Throwable t) {
@@ -802,6 +805,7 @@ public class AntSports extends ModelTask {
             for (int i = 0; i < roomList.length(); i++) {
                 JSONObject room = roomList.getJSONObject(i);
                 collectBubble(room);
+                TimeUtil.sleep(1000);
             }
         } catch (Throwable t) {
             Log.i(TAG, "queryClubHomeBeforeCollect err:");
@@ -823,6 +827,7 @@ public class AntSports extends ModelTask {
             for (int i = 0; i < roomList.length(); i++) {
                 JSONObject room = roomList.getJSONObject(i);
                 trainMember(room);
+                TimeUtil.sleep(1000);
             }
         } catch (Throwable t) {
             Log.i(TAG, "queryClubHomeBeforeTrain err:");
