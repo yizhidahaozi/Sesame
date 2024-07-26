@@ -284,7 +284,9 @@ public class AntSports extends ModelTask {
             String joinedPathId = user.getJSONObject("data").getString("joinedPathId");
             if (joinedPathId == null) {
                 String pathId = queryJoinPath(walkPathThemeId);
-                joinPath(pathId);
+                if(joinPath(pathId)) {
+                    walk();
+                }
                 return;
             }
             JSONObject path = queryPath(joinedPathId);
@@ -292,7 +294,9 @@ public class AntSports extends ModelTask {
             if ("COMPLETED".equals(userPathStep.getString("pathCompleteStatus"))) {
                 Log.record("行走路线🚶🏻‍♂️路线[" + userPathStep.getString("pathName") + "]已完成");
                 String pathId = queryJoinPath(walkPathThemeId);
-                joinPath(pathId);
+                if (joinPath(pathId)) {
+                    walk();
+                }
                 return;
             }
             int minGoStepCount = path.getJSONObject("path").getInt("minGoStepCount");
@@ -303,6 +307,7 @@ public class AntSports extends ModelTask {
             if  (remainStepCount >= minGoStepCount) {
                 int useStepCount = Math.min(remainStepCount, needStepCount);
                 walkGo(userPathStep.getString("pathId"), useStepCount, userPathStep.getString("pathName"));
+                walk();
             }
         } catch (Throwable t) {
             Log.i(TAG, "walk err:");
@@ -425,7 +430,7 @@ public class AntSports extends ModelTask {
         return pathId;
     }
 
-    private void joinPath(String pathId) {
+    private boolean joinPath(String pathId) {
         if (pathId == null) {
             // 龙年祈福线
             pathId = "p0002023122214520001";
@@ -435,12 +440,15 @@ public class AntSports extends ModelTask {
             if (jo.optBoolean("success")) {
                 JSONObject path = queryPath(pathId);
                 Log.record("行走路线🚶🏻‍♂️路线[" + path.getJSONObject("path").getString("name") + "]已加入");
+                return true;
             } else {
                 Log.record("行走路线🚶🏻‍♂️路线[" + pathId + "]有误，无法加入！");
+                return false;
             }
         } catch (Throwable t) {
             Log.i(TAG, "joinPath err:");
             Log.printStackTrace(TAG, t);
+            return false;
         }
     }
 
