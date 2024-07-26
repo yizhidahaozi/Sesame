@@ -917,6 +917,10 @@ public class AntSports extends ModelTask {
             if (jo.optBoolean("success")) {
                 String userName = UserIdMap.getMaskName(originBossId);
                 Log.record("训练好友🥋训练[" + userName + "]" + trainItemName);
+                String taskId = "TRAIN|" + originBossId;
+                if (hasChildTask(taskId)) {
+                    removeChildTask(taskId);
+                }
                 autoTrainMember(memberId, originBossId, jo.getJSONObject("trainInfo"));
             }
         } catch (Throwable t) {
