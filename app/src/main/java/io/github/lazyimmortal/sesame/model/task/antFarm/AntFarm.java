@@ -1082,6 +1082,9 @@ public class AntFarm extends ModelTask {
                 }
             }
             if (!signed) {
+                if (awardCount +  foodStock > foodStockLimit) {
+                    return;
+                }
                 JSONObject joSign = new JSONObject(AntFarmRpcCall.sign());
                 if ("SUCCESS".equals(joSign.getString("memo"))) {
                     Log.farm("庄园签到📅获得饲料" + awardCount + "g");
