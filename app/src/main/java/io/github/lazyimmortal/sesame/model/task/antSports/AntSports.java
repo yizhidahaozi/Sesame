@@ -2,8 +2,10 @@ package io.github.lazyimmortal.sesame.model.task.antSports;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
@@ -126,8 +128,6 @@ public class AntSports extends ModelTask {
                     }
                 }));
             }
-            if (sportsTasks.getValue())
-                sportsTasks();
 
             ClassLoader loader = ApplicationHook.getClassLoader();
             if (walk.getValue()) {
@@ -154,6 +154,9 @@ public class AntSports extends ModelTask {
                 queryClubHomeBeforeTrain();
                 buyMember();
             }
+
+            if (sportsTasks.getValue())
+                sportsTasks();
 
             if (receiveCoinAsset.getValue())
                 receiveCoinAsset();
@@ -195,51 +198,54 @@ public class AntSports extends ModelTask {
                     String taskStatus = taskDetail.getString("taskStatus");
                     int currentNum = taskDetail.getInt("currentNum");
                     // 要完成的次数
-                    int limitConfigNum = taskDetail.getInt("limitConfigNum")-currentNum;
+                    int limitConfigNum = taskDetail.getInt("limitConfigNum") - currentNum;
 
                     if (taskStatus.equals("HAS_RECEIVED"))
                         return;
-                    for (int i1 = 0; i1 < limitConfigNum; i1++) {
+                    while (limitConfigNum > 0) {
                         jo = new JSONObject(AntSportsRpcCall.completeExerciseTasks(taskId));
                         if (jo.optBoolean("success")) {
                             Log.record("做任务得运动币👯[完成任务：" + taskName + "，得" + prizeAmount + "🪙]");
+                            TimeUtil.sleep(1000);
                             receiveCoinAsset();
                         }
-                        if (limitConfigNum>1)
-                            Thread.sleep(10000);
-                        else
-                            Thread.sleep(1000);
+                        limitConfigNum--;
+                        if (limitConfigNum > 0) {
+                            TimeUtil.sleep(10000);
+                        } else {
+                            TimeUtil.sleep(1000);
+                        }
                     }
-
-
                 }
             }
-        } catch (Exception e) {
-            Log.printStackTrace(e);
+        } catch (Throwable t) {
+            Log.i(TAG, "sportsTasks err:");
+            Log.printStackTrace(TAG, t);
         }
     }
+
     private void sportsCheck_in() {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.sportsCheck_in());
             if (jo.optBoolean("success")) {
                 JSONObject data = jo.getJSONObject("data");
-                if(!data.getBoolean("signed")){
+                if (!data.getBoolean("signed")) {
                     JSONObject subscribeConfig;
                     if (data.has("subscribeConfig")) {
                         subscribeConfig = data.getJSONObject("subscribeConfig");
-                        Log.record("做任务得运动币👯[完成任务：签到" + subscribeConfig.getString("subscribeExpireDays")+"天，"+data.getString("toast") + "🪙]");
-                    }else {
+                        Log.record("做任务得运动币👯[完成任务：签到" + subscribeConfig.getString("subscribeExpireDays") + "天，" + data.getString("toast") + "🪙]");
+                    } else {
 //                        Log.record("没有签到");
                     }
-                }else {
+                } else {
                     Log.record("运动签到今日已签到");
                 }
-            }else {
+            } else {
                 Log.record(jo.toString());
             }
-        } catch (Exception e) {
-            Log.record("sportsCheck_in err");
-            Log.printStackTrace(e);
+        } catch (Throwable t) {
+            Log.i(TAG, "sportsCheck_in err:");
+            Log.printStackTrace(TAG, t);
         }
     }
 
@@ -307,7 +313,7 @@ public class AntSports extends ModelTask {
             int remainStepCount = userPathStep.getInt("remainStepCount");
             int useStepCount = Math.min(remainStepCount,
                     pathStepCount == forwardStepCount ? pathStepCount : pathStepCount - forwardStepCount);
-            if  (useStepCount >= minGoStepCount) {
+            if (useStepCount >= minGoStepCount) {
                 walkGo(userPathStep.getString("pathId"), useStepCount, userPathStep.getString("pathName"));
                 TimeUtil.sleep(1000);
                 walk();
@@ -486,7 +492,7 @@ public class AntSports extends ModelTask {
                     }
                     donate(loader, donateCharityCoinAmount.getValue(), jo.getString("projectId"), jo.getString("title"));
                     Status.donateCharityCoin();
-                    charityCoinCount -=  donateCharityCoinAmount.getValue();
+                    charityCoinCount -= donateCharityCoinAmount.getValue();
                     if (donateCharityCoinType.getValue() == DonateCharityCoinType.ONE) {
                         break;
                     }
@@ -908,7 +914,7 @@ public class AntSports extends ModelTask {
                 trainItem = trainItemList.getJSONObject(i);
                 String itemType = trainItem.getString("itemType");
                 if (itemType.equals(selectedTrainItemType)) {
-                    return  trainItem;
+                    return trainItem;
                 }
             }
         } catch (Throwable t) {
@@ -935,7 +941,7 @@ public class AntSports extends ModelTask {
                 autoTrainMember(memberId, originBossId, jo.getJSONObject("trainInfo"));
             }
         } catch (Throwable t) {
-            Log.i(TAG, "collectBubble err:");
+            Log.i(TAG, "trainMember err:");
             Log.printStackTrace(TAG, t);
         }
     }
