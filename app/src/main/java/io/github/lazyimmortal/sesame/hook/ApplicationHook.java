@@ -28,6 +28,7 @@ import io.github.lazyimmortal.sesame.entity.RpcEntity;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.normal.base.BaseModel;
 import io.github.lazyimmortal.sesame.model.task.antMember.AntMemberRpcCall;
+import io.github.lazyimmortal.sesame.model.testRpc.TestRpc;
 import io.github.lazyimmortal.sesame.rpc.bridge.NewRpcBridge;
 import io.github.lazyimmortal.sesame.rpc.bridge.OldRpcBridge;
 import io.github.lazyimmortal.sesame.rpc.bridge.RpcBridge;
@@ -870,6 +871,18 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                             Log.printStackTrace(TAG, th);
                         }
                         break;
+                    case "com.eg.android.AlipayGphone.sesame.rpctest":
+                        try {
+                            String method = intent.getStringExtra("method");
+                            String data = intent.getStringExtra("data");
+                            String type = intent.getStringExtra("type");
+                            // Log.record("收到测试消息:\n方法:" + method + "\n数据:" + data + "\n类型:" + type);
+                            TestRpc.start(method, data, type);
+                        } catch (Throwable th) {
+                            Log.i(TAG, "sesame rpctest err:");
+                            Log.printStackTrace(TAG, th);
+                        }
+                        break;
                 }
             }
         }
@@ -883,6 +896,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
             intentFilter.addAction("com.eg.android.AlipayGphone.sesame.execute");
             intentFilter.addAction("com.eg.android.AlipayGphone.sesame.reLogin");
             intentFilter.addAction("com.eg.android.AlipayGphone.sesame.status");
+            intentFilter.addAction("com.eg.android.AlipayGphone.sesame.rpctest");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 context.registerReceiver(new AlipayBroadcastReceiver(), intentFilter, Context.RECEIVER_EXPORTED);
             } else {
