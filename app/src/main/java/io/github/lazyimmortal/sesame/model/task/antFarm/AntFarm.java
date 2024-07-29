@@ -97,6 +97,7 @@ public class AntFarm extends ModelTask {
     private BooleanModelField useAccelerateToolContinue;
     private BooleanModelField useAccelerateToolWhenMaxEmotion;
     private SelectAndCountModelField feedFriendAnimalList;
+    private BooleanModelField feedVisitAnimal;
     private BooleanModelField notifyFriend;
     private ChoiceModelField notifyFriendType;
     private SelectModelField notifyFriendList;
@@ -122,6 +123,7 @@ public class AntFarm extends ModelTask {
         modelFields.addField(rewardFriend = new BooleanModelField("rewardFriend", "打赏好友", false));
         modelFields.addField(feedAnimal = new BooleanModelField("feedAnimal", "自动喂小鸡", false));
         modelFields.addField(feedFriendAnimalList = new SelectAndCountModelField("feedFriendAnimalList", "喂小鸡好友列表", new LinkedHashMap<>(), AlipayUser::getList));
+        modelFields.addField(feedVisitAnimal = new BooleanModelField("feedVisitAnimal", "投喂到访小鸡", false));
         modelFields.addField(getFeed = new BooleanModelField("getFeed", "一起拿饲料", false));
         modelFields.addField(getFeedType = new ChoiceModelField("getFeedType", "一起拿饲料 | 动作", GetFeedType.GIVE, GetFeedType.nickNames));
         modelFields.addField(getFeedlList = new SelectModelField("getFeedlList", "一起拿饲料 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
@@ -341,7 +343,9 @@ public class AntFarm extends ModelTask {
             }
 
             // 到访小鸡送礼
-            visitAnimal();
+            if (feedVisitAnimal.getValue()) {
+                visitAnimal();
+            }
 
             // 送麦子
             visit();
