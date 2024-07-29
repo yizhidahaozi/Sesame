@@ -1791,33 +1791,45 @@ public class AntFarm extends ModelTask {
     private void visitAnimal() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.visitAnimal());
-            if ("SUCCESS".equals(jo.getString("memo"))) {
-                if (!jo.has("talkConfigs"))
-                    return;
-                JSONArray talkConfigs = jo.getJSONArray("talkConfigs");
-                JSONArray talkNodes = jo.getJSONArray("talkNodes");
-                JSONObject data = talkConfigs.getJSONObject(0);
-                String farmId = data.getString("farmId");
-                jo = new JSONObject(AntFarmRpcCall.feedFriendAnimalVisit(farmId));
+            if (!"SUCCESS".equals(jo.getString("memo"))) {
+                Log.i(jo.getString("resultDesc"), jo.toString());
+                return;
+            }
+            if (!jo.has("talkConfigs"))
+                return;
+
+            JSONArray talkNodes = jo.getJSONArray("talkNodes");
+            JSONArray talkConfigs = jo.getJSONArray("talkConfigs");
+            JSONObject data = talkConfigs.getJSONObject(0);
+            String farmId = data.getString("farmId");
+            jo = new JSONObject(AntFarmRpcCall.feedFriendAnimalVisit(farmId));
+            if (!"SUCCESS".equals(jo.getString("memo"))) {
+                Log.i(jo.getString("memo"), jo.toString());
+                return;
+            }
+            JSONArray actionNodes = null;
+            for (int i = 0; i < talkNodes.length(); i++) {
+                jo = talkNodes.getJSONObject(i);
+                if (jo.has("actionNodes")) {
+                    actionNodes = jo.getJSONArray("actionNodes");
+                    break;
+                }
+            }
+            if (actionNodes == null) {
+                return;
+            }
+            for (int i = 0; i < actionNodes.length(); i++) {
+                jo = actionNodes.getJSONObject(i);
+                if (!"FEED".equals(jo.getString("type")))
+                    continue;
+                String consistencyKey = jo.getString("consistencyKey");
+                jo = new JSONObject(AntFarmRpcCall.visitAnimalSendPrize(consistencyKey));
                 if ("SUCCESS".equals(jo.getString("memo"))) {
-                    for (int i = 0; i < talkNodes.length(); i++) {
-                        jo = talkNodes.getJSONObject(i);
-                        if (!"FEED".equals(jo.getString("type")))
-                            continue;
-                        String consistencyKey = jo.getString("consistencyKey");
-                        jo = new JSONObject(AntFarmRpcCall.visitAnimalSendPrize(consistencyKey));
-                        if ("SUCCESS".equals(jo.getString("memo"))) {
-                            String prizeName = jo.getString("prizeName");
-                            Log.farm("小鸡到访💞[" + prizeName + "]");
-                        } else {
-                            Log.i(jo.getString("memo"), jo.toString());
-                        }
-                    }
+                    String prizeName = jo.getString("prizeName");
+                    Log.farm("小鸡到访💞[" + prizeName + "]");
                 } else {
                     Log.i(jo.getString("memo"), jo.toString());
                 }
-            } else {
-                Log.i(jo.getString("resultDesc"), jo.toString());
             }
         } catch (Throwable t) {
             Log.i(TAG, "visitAnimal err:");
