@@ -1086,7 +1086,7 @@ public class AntFarm extends ModelTask {
                 }
             }
             if (!signed) {
-                if (awardCount +  foodStock > foodStockLimit) {
+                if (awardCount + foodStock > foodStockLimit) {
                     return;
                 }
                 JSONObject joSign = new JSONObject(AntFarmRpcCall.sign());
@@ -1587,17 +1587,19 @@ public class AntFarm extends ModelTask {
             String name = null;
             for (int i = 0; i < cuisineList.length(); i++) {
                 jo = cuisineList.getJSONObject(i);
-                if (jo.getInt("count") <= 0)
-                    continue;
+                int count = jo.getInt("count");
+                if (count <= 0) continue;
                 cookbookId = jo.getString("cookbookId");
                 cuisineId = jo.getString("cuisineId");
                 name = jo.getString("name");
-                jo = new JSONObject(AntFarmRpcCall.useFarmFood(cookbookId, cuisineId));
-                if ("SUCCESS".equals(jo.getString("memo"))) {
-                    double deltaProduce = jo.getJSONObject("foodEffect").getDouble("deltaProduce");
-                    Log.farm("使用美食🍱[" + name + "]#加速" + deltaProduce + "颗爱心鸡蛋");
-                } else {
-                    Log.i(TAG, jo.toString());
+                for (int j = 0; j < count; j++) {
+                    jo = new JSONObject(AntFarmRpcCall.useFarmFood(cookbookId, cuisineId));
+                    if ("SUCCESS".equals(jo.getString("memo"))) {
+                        double deltaProduce = jo.getJSONObject("foodEffect").getDouble("deltaProduce");
+                        Log.farm("使用美食🍱[" + name + "]#加速" + deltaProduce + "颗爱心鸡蛋");
+                    } else {
+                        Log.i(TAG, jo.toString());
+                    }
                 }
             }
         } catch (Throwable t) {
