@@ -1944,6 +1944,9 @@ public class AntFarm extends ModelTask {
             if (jsonObject == null) {
                 return;
             }
+            if (AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus)) {
+                return;
+            }
             if ("SUCCESS".equals(jsonObject.getString("memo"))) {
                 JSONObject farmVO = jsonObject.getJSONObject("farmVO");
                 JSONObject subFarmVO = farmVO.getJSONObject("subFarmVO");
