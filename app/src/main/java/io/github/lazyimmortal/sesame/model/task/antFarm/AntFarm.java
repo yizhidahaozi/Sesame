@@ -1120,6 +1120,9 @@ public class AntFarm extends ModelTask {
                     Log.record(memo);
                     Log.i(s);
                 }
+                long updateTime = System.currentTimeMillis() + 1000 * 10;
+                String taskId = "UPDATE|FA|" + farmId;
+                addChildTask(new ChildModelTask(taskId, "UPDATE", this::autoFeedAnimal, updateTime));
             }
         } catch (Throwable t) {
             Log.i(TAG, "feedAnimal err:");
