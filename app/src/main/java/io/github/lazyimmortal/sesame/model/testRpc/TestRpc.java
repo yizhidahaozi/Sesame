@@ -317,7 +317,7 @@ public class TestRpc {
                     jo = ja.getJSONObject(i);
                     if (!jo.has("projectType"))
                         continue;
-                    if (!"AVAILABLE".equals(jo.getString("applyAction")))
+                    if ("NO_STOCK".equals(jo.optString("applyAction")))// AVAILABLE ENERGY_LACK NO_STOCK
                         continue;
                     String projectId = jo.getString("itemId");
                     String itemName = jo.getString("itemName");
