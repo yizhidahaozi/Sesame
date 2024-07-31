@@ -475,9 +475,12 @@ public class AntFarm extends ModelTask {
     private void autoFeedAnimal() {
         if (feedAnimal.getValue()) {
             syncAnimalStatus(ownerFarmId);
+            if (AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus)) {
+                return;
+            }
             if (AnimalFeedStatus.HUNGRY.name().equals(ownerAnimal.animalFeedStatus)) {
                 feedAnimal(ownerFarmId);
-                syncAnimalStatus(ownerFarmId);
+                return;
             }
             try {
                 double foodHaveEatten = 0d;
@@ -1120,14 +1123,14 @@ public class AntFarm extends ModelTask {
                     Log.record(memo);
                     Log.i(s);
                 }
-                long updateTime = System.currentTimeMillis() + 1000 * 10;
-                String taskId = "UPDATE|FA|" + farmId;
-                addChildTask(new ChildModelTask(taskId, "UPDATE", this::autoFeedAnimal, updateTime));
             }
         } catch (Throwable t) {
             Log.i(TAG, "feedAnimal err:");
             Log.printStackTrace(TAG, t);
         }
+        long updateTime = System.currentTimeMillis() + 1000 * 10;
+        String taskId = "UPDATE|FA|" + farmId;
+        addChildTask(new ChildModelTask(taskId, "UPDATE", this::autoFeedAnimal, updateTime));
         return false;
     }
 
