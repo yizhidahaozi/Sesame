@@ -918,7 +918,7 @@ public class AntForestV2 extends ModelTask {
                     }
                     if (tryCount < tryCountInt) {
                         collectEnergyEntity.setNeedRetry();
-                        collectEnergy(collectEnergyEntity);
+                        collectEnergy(collectEnergyEntity, true);
                     }
                     return;
                 }
@@ -932,7 +932,7 @@ public class AntForestV2 extends ModelTask {
                     Log.record("[" + UserIdMap.getMaskName(userId) + "]" + jo.getString("resultDesc"));
                     if (tryCount < tryCountInt) {
                         collectEnergyEntity.setNeedRetry();
-                        collectEnergy(collectEnergyEntity);
+                        collectEnergy(collectEnergyEntity, true);
                     }
                     return;
                 }
@@ -966,7 +966,7 @@ public class AntForestV2 extends ModelTask {
                         collectEnergyEntity.setRpcEntity(AntForestRpcCall.getCollectBatchEnergyRpcEntity(userId, newBubbleIdList));
                         collectEnergyEntity.setNeedDouble();
                         collectEnergyEntity.resetTryCount();
-                        collectEnergy(collectEnergyEntity);
+                        collectEnergy(collectEnergyEntity, true);
                         return;
                     }
                 } else if (jaBubbleLength == 1) {
@@ -991,7 +991,7 @@ public class AntForestV2 extends ModelTask {
                     if (bubble.getBoolean("canBeRobbedAgain")) {
                         collectEnergyEntity.setNeedDouble();
                         collectEnergyEntity.resetTryCount();
-                        collectEnergy(collectEnergyEntity);
+                        collectEnergy(collectEnergyEntity, true);
                         return;
                     }
                     JSONObject userHome = collectEnergyEntity.getUserHome();
