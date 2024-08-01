@@ -32,4 +32,11 @@ public class TestRpcCall {
                                                 + "\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
         }
 
+        
+        /* 查询地图树苗 */
+        public static String queryAreaTrees() {
+                return ApplicationHook.requestString("alipay.antmember.forest.h5.queryAreaTrees",
+                                "[{\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"userId\":\"\",\"version\":\"20221215\"}]");
+        }
+
 }
