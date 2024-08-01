@@ -25,6 +25,8 @@ public class ExtendActivity extends BaseActivity {
 
     Button btnGetTreeItems;
     Button btnGetNewTreeItems;
+    Button btnQueryAreaTrees;
+    Button btnGetUnlockTreeItems;
 
     @Override
     protected void onCreate(Bundle bundle) {
@@ -32,6 +34,8 @@ public class ExtendActivity extends BaseActivity {
         setContentView(R.layout.activity_extend);
         btnGetTreeItems = findViewById(R.id.get_tree_items);
         btnGetNewTreeItems = findViewById(R.id.get_newTree_items);
+        btnQueryAreaTrees = findViewById(R.id.query_area_trees);
+        btnGetUnlockTreeItems = findViewById(R.id.get_unlock_treeItems);
 
         setBaseTitle("扩展功能");
 
@@ -47,6 +51,22 @@ public class ExtendActivity extends BaseActivity {
             @Override
             public final void onClick(View view) {
                 sendItemsBroadcast("getNewTreeItems");
+                Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnQueryAreaTrees.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public final void onClick(View view) {
+                sendItemsBroadcast("queryAreaTrees");
+                Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnGetUnlockTreeItems.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public final void onClick(View view) {
+                sendItemsBroadcast("getUnlockTreeItems");
                 Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
             }
         });

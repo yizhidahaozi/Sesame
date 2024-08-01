@@ -3,6 +3,7 @@ package io.github.lazyimmortal.sesame.model.testRpc;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 
 public class TestRpcCall {
+        private static final String VERSION = "20240704";
 
         public static String queryEnvironmentCertDetailList(String alias, int pageNum, String targetUserID) {
                 return ApplicationHook.requestString("alipay.antforest.forest.h5.queryEnvironmentCertDetailList",
@@ -17,4 +18,18 @@ public class TestRpcCall {
                                                 + "\",\"friendUserId\":\"" + friendUserId
                                                 + "\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
         }
+
+        public static String queryTreeItemsForExchange(String applyActions) {
+                return ApplicationHook.requestString("alipay.antforest.forest.h5.queryTreeItemsForExchange",
+                                "[{\"applyActions\":\"" + applyActions
+                                                + "\",\"itemTypes\":\"\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\""
+                                                + VERSION + "\"}]");
+        }
+
+        public static String queryTreeForExchange(String projectId) {
+                return ApplicationHook.requestString("alipay.antforest.forest.h5.queryTreeForExchange",
+                                "[{\"projectId\":\"" + projectId + "\",\"version\":\"" + VERSION
+                                                + "\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
+        }
+
 }

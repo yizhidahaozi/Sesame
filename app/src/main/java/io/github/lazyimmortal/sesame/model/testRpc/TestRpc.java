@@ -8,7 +8,6 @@ import java.util.List;
 
 import io.github.lazyimmortal.sesame.model.task.antForest.AntForestRpcCall;
 import io.github.lazyimmortal.sesame.model.task.antDodo.AntDodoRpcCall;
-import io.github.lazyimmortal.sesame.model.task.reserve.ReserveRpcCall;
 import io.github.lazyimmortal.sesame.model.task.antOrchard.AntOrchardRpcCall;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.util.*;
@@ -57,6 +56,12 @@ public class TestRpc {
                 }
                 if ("batchHireAnimalRecommend".equals(testType)) {
                     batchHireAnimalRecommend();
+                }
+                if ("queryAreaTrees".equals(testType)) {
+                    queryAreaTrees();
+                }
+                if ("getUnlockTreeItems".equals(testType)) {
+                    getUnlockTreeItems();
                 }
             }
         }.setData(broadcastFun, broadcastData, testType).start();
@@ -183,10 +188,14 @@ public class TestRpc {
 
     private static void getNewTreeItems() {
         try {
-            String s = ReserveRpcCall.queryTreeItemsForExchange();
+            String s = TestRpcCall.queryTreeItemsForExchange("COMING");
             JSONObject jo = new JSONObject(s);
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
                 JSONArray ja = jo.getJSONArray("treeItems");
+                if (ja.length() == 0) {
+                    Log.forest("新树上苗🌱[当前没有新树上苗信息!]");
+                    return;
+                }
                 for (int i = 0; i < ja.length(); i++) {
                     jo = ja.getJSONObject(i);
                     if (!jo.has("projectType"))
@@ -209,7 +218,7 @@ public class TestRpc {
 
     private static void queryTreeForExchange(String projectId) {
         try {
-            String s = ReserveRpcCall.queryTreeForExchange(projectId);
+            String s = TestRpcCall.queryTreeForExchange(projectId);
             JSONObject jo = new JSONObject(s);
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
                 JSONObject exchangeableTree = jo.getJSONObject("exchangeableTree");
@@ -307,17 +316,16 @@ public class TestRpc {
         }
     }
 
+
     private static void getTreeItems() {
         try {
-            String s = ReserveRpcCall.queryTreeItemsForExchange();
+            String s = TestRpcCall.queryTreeItemsForExchange("AVAILABLE,ENERGY_LACK");
             JSONObject jo = new JSONObject(s);
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
                 JSONArray ja = jo.getJSONArray("treeItems");
                 for (int i = 0; i < ja.length(); i++) {
                     jo = ja.getJSONObject(i);
                     if (!jo.has("projectType"))
-                        continue;
-                    if ("NO_STOCK".equals(jo.optString("applyAction")))// AVAILABLE ENERGY_LACK NO_STOCK
                         continue;
                     String projectId = jo.getString("itemId");
                     String itemName = jo.getString("itemName");
@@ -335,7 +343,7 @@ public class TestRpc {
 
     private static void getTreeCurrentBudget(String projectId, String treeName) {
         try {
-            String s = ReserveRpcCall.queryTreeForExchange(projectId);
+            String s = TestRpcCall.queryTreeForExchange(projectId);
             JSONObject jo = new JSONObject(s);
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
                 JSONObject exchangeableTree = jo.getJSONObject("exchangeableTree");
@@ -380,6 +388,58 @@ public class TestRpc {
             }
         } catch (Throwable t) {
             Log.i(TAG, "batchHireAnimalRecommend err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private static void queryAreaTrees() {
+        try {
+            String s = TestRpcCall.queryAreaTrees();
+            JSONObject jo = new JSONObject(s);
+            if ("SUCCESS".equals(jo.getString("resultCode"))) {
+                JSONObject areaTrees = jo.getJSONObject("areaTrees");
+                JSONObject regionConfig = jo.getJSONObject("regionConfig");
+                Iterator<String> regionKeys = regionConfig.keys();
+                while (regionKeys.hasNext()) {
+                    String regionKey = regionKeys.next();
+                    if (!areaTrees.has(regionKey)) {
+                        JSONObject region = regionConfig.getJSONObject(regionKey);
+                        String regionName = region.optString("regionName");
+                        Log.forest("未解锁地区🗺️[" + regionName + "]");
+                    }
+                }
+            } else {
+                Log.i(TAG, jo.getString("resultDesc"));
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "queryAreaTrees err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private static void getUnlockTreeItems() {
+        try {
+            String s = TestRpcCall.queryTreeItemsForExchange("");
+            JSONObject jo = new JSONObject(s);
+            if ("SUCCESS".equals(jo.getString("resultCode"))) {
+                JSONArray ja = jo.getJSONArray("treeItems");
+                for (int i = 0; i < ja.length(); i++) {
+                    jo = ja.getJSONObject(i);
+                    if (!jo.has("projectType"))
+                        continue;
+                    int certCountForAlias = jo.optInt("certCountForAlias", -1);
+                    if (certCountForAlias == 0) {
+                        String itemName = jo.optString("itemName");
+                        String region = jo.optString("region");
+                        String organization = jo.optString("organization");
+                        Log.forest("未解锁项目🐘[" + region + "-" + itemName + "]#" + organization);
+                    }
+                }
+            } else {
+                Log.i(TAG, jo.getString("resultDesc"));
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "getUnlockTreeItems err:");
             Log.printStackTrace(TAG, t);
         }
     }
