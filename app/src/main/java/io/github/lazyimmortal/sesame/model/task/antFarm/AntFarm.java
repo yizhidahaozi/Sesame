@@ -2038,7 +2038,7 @@ public class AntFarm extends ModelTask {
             if (!"SUCCESS".equals(jo.getString("memo"))) {
                 Log.i(jo.getString("memo"), jo.toString());
             }
-            jo = jo.getJSONObject("farmVo").getJSONObject("subFarmVO");
+            jo = jo.getJSONObject("farmVO").getJSONObject("subFarmVO");
             String farmId = jo.getString("farmId");
             JSONArray animals = jo.getJSONArray("animals");
             for (int i = 0, len = animals.length(); i < len; i++) {
