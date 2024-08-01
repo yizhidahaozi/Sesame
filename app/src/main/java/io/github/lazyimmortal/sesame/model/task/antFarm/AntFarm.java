@@ -276,6 +276,7 @@ public class AntFarm extends ModelTask {
             }
 
             if (chickenDiary.getValue()) {
+                queryChickenDiary("");
                 queryChickenDiaryList();
             }
 
