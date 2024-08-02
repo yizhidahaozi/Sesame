@@ -1926,7 +1926,7 @@ public class AntFarm extends ModelTask {
         try {
             JSONObject jo = enterFarm();
             if (jo == null
-                    || AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus)) {
+                    || !AnimalFeedStatus.EATING.name().equals(ownerAnimal.animalFeedStatus)) {
                 return;
             }
             if (!"SUCCESS".equals(jo.getString("memo"))) {
@@ -1937,7 +1937,7 @@ public class AntFarm extends ModelTask {
                     .getJSONObject("subFarmVO").getJSONArray("animals");
             for (int i = 0, len = animals.length(); i < len; i++) {
                 jo = animals.getJSONObject(i);
-                if ("GUEST".equals(jo.getString("subAnimalType"))) {
+                if ("WORK".equals(jo.getString("subAnimalType"))) {
                     autoHireAnimal(jo);
                 }
             }
