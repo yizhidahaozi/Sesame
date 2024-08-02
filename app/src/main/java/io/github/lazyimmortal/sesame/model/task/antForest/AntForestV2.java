@@ -80,6 +80,7 @@ public class AntForestV2 extends ModelTask {
     private final Object doubleCardLockObj = new Object();
 
     private BooleanModelField collectEnergy;
+    private BooleanModelField expiredEnergy;
     private BooleanModelField energyRain;
     private IntegerModelField advanceTime;
     private IntegerModelField tryCount;
@@ -153,6 +154,7 @@ public class AntForestV2 extends ModelTask {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(collectEnergy = new BooleanModelField("collectEnergy", "收集能量", false));
         modelFields.addField(batchRobEnergy = new BooleanModelField("batchRobEnergy", "一键收取", false));
+        modelFields.addField(expiredEnergy = new BooleanModelField("expiredEnergy", "收过期能量", false));
         modelFields.addField(queryInterval = new StringModelField("queryInterval", "查询间隔(毫秒或毫秒范围)", "500-1000"));
         modelFields.addField(collectInterval = new StringModelField("collectInterval", "收取间隔(毫秒或毫秒范围)", "1000-1500"));
         modelFields.addField(doubleCollectInterval = new StringModelField("doubleCollectInterval", "双击间隔(毫秒或毫秒范围)", "50-150"));
@@ -437,7 +439,9 @@ public class AntForestV2 extends ModelTask {
                         queryAnimalPropList();
                     }
                 }
-                popupTask();
+                if (expiredEnergy.getValue()) {
+                    popupTask();
+                }
                 if (energyRain.getValue()) {
                     energyRain();
                 }
