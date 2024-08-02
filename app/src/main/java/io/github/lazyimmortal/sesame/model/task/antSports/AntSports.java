@@ -131,7 +131,7 @@ public class AntSports extends ModelTask {
 
             ClassLoader loader = ApplicationHook.getClassLoader();
             if (walk.getValue()) {
-                walkPathThemeId = WalkPathTheme.walkPathThemeId[walkPathTheme.getValue()];
+                walkPathThemeId = WalkPathTheme.walkPathThemeIds[walkPathTheme.getValue()];
                 walk();
             }
 
@@ -1056,7 +1056,7 @@ public class AntSports extends ModelTask {
         int LONG_NIAN_QI_FU = 4;
 
         String[] nickNames = {"大美中国", "公益一小步", "登顶芝麻山", "维C大挑战", "龙年祈福"};
-        String[] walkPathThemeId = {"M202308082226", "M202401042147", "V202405271625", "202404221422", "WF202312050200"};
+        String[] walkPathThemeIds = {"M202308082226", "M202401042147", "V202405271625", "202404221422", "WF202312050200"};
     }
 
     public interface DonateCharityCoinType {
