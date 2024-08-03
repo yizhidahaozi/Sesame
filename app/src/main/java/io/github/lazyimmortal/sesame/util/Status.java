@@ -51,6 +51,7 @@ public class Status {
 
     // other
     private Set<String> memberSignInList = new HashSet<>();
+    private Set<String> memberPointExchangeBenefitList = new HashSet<>();
 
     // 保存时间
     private Long saveTime = 0L;
@@ -170,6 +171,18 @@ public class Status {
         String v = uid + "_" + coopId;
         if (!stat.cooperateWaterList.contains(v)) {
             stat.cooperateWaterList.add(v);
+            save();
+        }
+    }
+
+    public static Boolean canMemberPointExchangeBenefit(String benefitId) {
+        return !INSTANCE.memberPointExchangeBenefitList.contains(benefitId);
+    }
+
+    public static void memberPointExchangeBenefit(String benefitId) {
+        Status stat = INSTANCE;
+        if (!stat.memberPointExchangeBenefitList.contains(benefitId)) {
+            stat.cooperateWaterList.add(benefitId);
             save();
         }
     }

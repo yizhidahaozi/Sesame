@@ -55,6 +55,7 @@ public class SettingsActivity extends BaseActivity {
         UserIdMap.setCurrentUserId(userId);
         UserIdMap.load(userId);
         CooperationIdMap.load(userId);
+        MemberBenefitIdMap.load(userId);
         ReserveIdMap.load();
         BeachIdMap.load();
         ConfigV2.load(userId);
@@ -301,6 +302,7 @@ public class SettingsActivity extends BaseActivity {
         if (!StringUtil.isEmpty(userId)) {
             UserIdMap.save(userId);
             CooperationIdMap.save(userId);
+            MemberBenefitIdMap.save(userId);
         }
     }
 

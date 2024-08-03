@@ -157,6 +157,14 @@ public class FileUtil {
         return file;
     }
 
+    public static File getMemberBenefitIdMapFile(String userId) {
+        File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "memberBenefit.json");
+        if (file.exists() && file.isDirectory()) {
+            file.delete();
+        }
+        return file;
+    }
+
     public static File getStatusFile(String userId) {
         File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "status.json");
         if (file.exists() && file.isDirectory()) {

@@ -6,11 +6,14 @@ import org.json.JSONObject;
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
+import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
+import io.github.lazyimmortal.sesame.entity.MemberBenefit;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.util.*;
 
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 
 public class AntMember extends ModelTask {
     private static final String TAG = AntMember.class.getSimpleName();
@@ -35,7 +38,8 @@ public class AntMember extends ModelTask {
     private BooleanModelField merchantKmdk;
     private BooleanModelField beanSignIn;
     private BooleanModelField beanExchangeBubbleBoost;
-    private BooleanModelField redemptionOfPoints;
+    private BooleanModelField memberPointExchangeBenefit;
+    private SelectModelField memberPointExchangeBenefitList;
 
     @Override
     public ModelFields getFields() {
@@ -50,8 +54,8 @@ public class AntMember extends ModelTask {
         modelFields.addField(merchantKmdk = new BooleanModelField("merchantKmdk", "商户开门打卡", false));
         modelFields.addField(beanSignIn = new BooleanModelField("beanSignIn", "安心豆签到", false));
         modelFields.addField(beanExchangeBubbleBoost = new BooleanModelField("beanExchangeBubbleBoost", "安心豆兑换时光加速器", false));
-        modelFields.addField(redemptionOfPoints = new BooleanModelField("redemptionOfPoints", "会员积分兑换道具", false));
-
+        modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分兑换福利", false));
+        modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分兑换福利列表", new LinkedHashSet<>(), MemberBenefit::getList));
         return modelFields;
     }
 
@@ -63,9 +67,6 @@ public class AntMember extends ModelTask {
     @Override
     public void run() {
         try {
-            if (redemptionOfPoints.getValue())
-                queryDeliveryZoneDetail();
-
             if (memberSign.getValue()) {
                 memberSign();
             }
@@ -87,6 +88,11 @@ public class AntMember extends ModelTask {
             if (beanExchangeBubbleBoost.getValue()) {
                 beanExchangeBubbleBoost();
             }
+
+            if (memberPointExchangeBenefit.getValue()) {
+                memberPointExchangeBenefit();
+            }
+
             if (zcjSignIn.getValue() || merchantKmdk.getValue()) {
                 JSONObject jo = new JSONObject(AntMemberRpcCall.transcodeCheck());
                 if (!jo.optBoolean("success")) {
@@ -112,42 +118,7 @@ public class AntMember extends ModelTask {
             Log.printStackTrace(TAG, t);
         }
     }
-    private void queryDeliveryZoneDetail(){
-        try {
-            String userId = UserIdMap.getCurrentUid();
-            String s = AntMemberRpcCall.queryDeliveryZoneDetail(userId);
-            JSONObject jo = new JSONObject(s);
-            if(jo.getBoolean("success")){
-                if (!jo.has("entityInfoList")){
-                    Log.record("会员积分兑换道具[未实名账号无道具可兑换]");
-                    return;
-                }
-                JSONArray entityInfoList = jo.getJSONArray("entityInfoList");
-                for (int i = 0; i < entityInfoList.length(); i++) {
-                    JSONObject entityInfoDetail = entityInfoList.getJSONObject(i);
-                    JSONObject benefitInfo = entityInfoDetail.getJSONObject("benefitInfo");
-                    String catCode = benefitInfo.getJSONArray("catCode").getString(0);
-                    String name = benefitInfo.getString("name");
-                    String itemId = benefitInfo.getString("itemId");
-                    String benefitId = benefitInfo.getString("benefitId");
-                    JSONObject pricePresentation = benefitInfo.getJSONObject("pricePresentation");
-                    String point = pricePresentation.getString("point");
 
-                    if(catCode.equals("zhihuan_1")){
-                        s = AntMemberRpcCall.exchangeBenefit(benefitId,itemId,userId,i);
-                        jo = new JSONObject(s);
-                        if(jo.getBoolean("success")){
-                            Log.record("会员积分兑换道具["+name+"*1]#花费"+point+"积分");
-                        }else {
-//                            Log.record(jo.toString());
-                        }
-                    }
-                }
-            }
-        } catch (JSONException e) {
-            Log.record("queryDeliveryZoneDetail err"+e);
-        }
-    }
     private void memberSign() {
         try {
             if (Status.canMemberSignInToday(UserIdMap.getCurrentUid())) {
@@ -856,5 +827,63 @@ public class AntMember extends ModelTask {
             Log.i(TAG, "beanExchangeBubbleBoost err:");
             Log.printStackTrace(TAG, t);
         }
+    }
+
+    private void memberPointExchangeBenefit() {
+        try {
+            String userId = UserIdMap.getCurrentUid();
+//            JSONObject jo = new JSONObject(AntMemberRpcCall.queryIndexNaviBenefitFlowV2(userId, "14"));
+            JSONObject jo = new JSONObject(AntMemberRpcCall.queryDeliveryZoneDetail(userId, "全积分"));
+            if (!"SUCCESS".equals(jo.getString("resultCode"))) {
+                Log.record(jo.getString("resultDesc"));
+                Log.i(jo.getString("resultDesc"), jo.toString());
+                return;
+            }
+            if (!jo.has("entityInfoList")) {
+                Log.record("会员积分[未实名账号无可兑换福利]");
+                return;
+            }
+            JSONArray entityInfoList = jo.getJSONArray("entityInfoList");
+            for (int i = 0; i < entityInfoList.length(); i++) {
+                JSONObject entityInfo = entityInfoList.getJSONObject(i);
+                JSONObject benefitInfo = entityInfo.getJSONObject("benefitInfo");
+                JSONObject pricePresentation = benefitInfo.getJSONObject("pricePresentation");
+                if (!"POINT_PAY".equals(pricePresentation.optString("strategyType"))) {
+                    continue;
+                }
+                String name = benefitInfo.getString("name");
+                String benefitId = benefitInfo.getString("benefitId");
+                MemberBenefitIdMap.add(benefitId, name);
+                if (!Status.canMemberPointExchangeBenefit(benefitId)
+                        || !memberPointExchangeBenefitList.getValue().contains(benefitId)) {
+                    continue;
+                }
+                String itemId = benefitInfo.getString("itemId");
+                if (exchangeBenefit(benefitId, itemId)) {
+                    String point = pricePresentation.getString("point");
+                    Log.record("会员积分🎐兑换福利[" + name + "]#花费" + point + "积分");
+                }
+            }
+            MemberBenefitIdMap.save(userId);
+        } catch (Throwable t) {
+            Log.i(TAG, "pointExchangeBenefit err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private Boolean exchangeBenefit(String benefitId, String itemId) {
+        try {
+            JSONObject jo = new JSONObject(AntMemberRpcCall.exchangeBenefit(benefitId, itemId));
+            if (!"SUCCESS".equals(jo.getString("resultCode"))) {
+                Log.record(jo.getString("resultDesc"));
+                Log.i(jo.getString("resultDesc"), jo.toString());
+                return false;
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.i(TAG, "exchangeBenefit err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
     }
 }
