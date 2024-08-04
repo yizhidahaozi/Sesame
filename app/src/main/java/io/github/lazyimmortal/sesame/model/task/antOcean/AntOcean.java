@@ -15,6 +15,7 @@ import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm.TaskStatus;
 import io.github.lazyimmortal.sesame.model.task.antForest.AntForestRpcCall;
 import io.github.lazyimmortal.sesame.util.Log;
+import io.github.lazyimmortal.sesame.util.Statistics;
 import io.github.lazyimmortal.sesame.util.StringUtil;
 import io.github.lazyimmortal.sesame.util.TimeUtil;
 import io.github.lazyimmortal.sesame.util.UserIdMap;
@@ -167,8 +168,10 @@ public class AntOcean extends ModelTask {
                                     int collectedEnergy = retBubble.getInt("collectedEnergy");
                                     Log.forest("神奇海洋🐳收取[" + UserIdMap.getMaskName(userId) + "]的海洋能量#"
                                             + collectedEnergy + "g");
+                                    Statistics.addData(Statistics.DataType.COLLECTED, collectedEnergy);
                                 }
                             }
+                            Statistics.save();
                         }
                     } else {
                         Log.i(TAG, jo.getString("resultDesc"));
