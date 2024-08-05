@@ -1456,6 +1456,7 @@ public class AntFarm extends ModelTask {
                 animal.animalInteractStatus = animalStatusVO.getString("animalInteractStatus");
                 animal.animalInteractStatus = animalStatusVO.getString("animalInteractStatus");
                 animal.startEatTime = animalJsonObject.optLong("startEatTime");
+                animal.beHiredEndTime = animalJsonObject.optLong("beHiredEndTime");
                 animal.consumeSpeed = animalJsonObject.optDouble("consumeSpeed");
                 animal.foodHaveEatten = animalJsonObject.optDouble("foodHaveEatten");
                 if (animal.masterFarmId.equals(ownerFarmId)) {
@@ -1933,24 +1934,8 @@ public class AntFarm extends ModelTask {
     /* 雇佣好友小鸡 */
     private void hireAnimal() {
         try {
-            JSONObject jo = enterFarm();
-            if (jo == null
-                    || !AnimalFeedStatus.EATING.name().equals(ownerAnimal.animalFeedStatus)) {
-                return;
-            }
-            if (!"SUCCESS".equals(jo.getString("memo"))) {
-                Log.i(jo.getString("memo"), jo.toString());
-                return;
-            }
-            JSONArray animals = jo.getJSONObject("farmVO")
-                    .getJSONObject("subFarmVO").getJSONArray("animals");
-            for (int i = 0, len = animals.length(); i < len; i++) {
-                jo = animals.getJSONObject(i);
-                if ("WORK".equals(jo.getString("subAnimalType"))) {
-                    autoHireAnimal(jo);
-                }
-            }
-            int count = 3 - animals.length();
+            syncAnimalStatus(ownerFarmId);
+            int count = 3 - animals.length;
             if (count <= 0) {
                 return;
             }
@@ -1964,7 +1949,7 @@ public class AntFarm extends ModelTask {
             int pageStartSum = 0;
             Set<String> hireAnimalSet = hireAnimalList.getValue();
             do {
-                jo = new JSONObject(AntFarmRpcCall.rankingList(pageStartSum));
+                JSONObject jo = new JSONObject(AntFarmRpcCall.rankingList(pageStartSum));
                 if (!"SUCCESS".equals(jo.getString("memo"))) {
                     Log.i(jo.getString("memo"), jo.toString());
                     return;
@@ -1998,20 +1983,26 @@ public class AntFarm extends ModelTask {
         } catch (Throwable t) {
             Log.i(TAG, "hireAnimal err:");
             Log.printStackTrace(TAG, t);
+        } finally {
+            long updateTime = System.currentTimeMillis() + 1000 * 10;
+            String taskId = "UPDATE|HIRE|" + ownerFarmId;
+            addChildTask(new ChildModelTask(taskId, "UPDATE", this::autoHireAnimal, updateTime));
         }
     }
 
-    private void autoHireAnimal(JSONObject animal) {
+    private void autoHireAnimal() {
         try {
-            String taskId = "HIRE|" + animal.getString("animalId");
-            if (!hasChildTask(taskId)) {
-                long beHiredEndTime = animal.getLong("beHiredEndTime");
-                addChildTask(new ChildModelTask(taskId, "HIRE", () -> {
-                    if (hireAnimal.getValue()) {
-                        hireAnimal();
-                    }
-                }, beHiredEndTime));
-                Log.record("添加蹲点雇佣👷在[" + TimeUtil.getCommonDate(beHiredEndTime) + "]执行");
+            syncAnimalStatus(ownerFarmId);
+            for (Animal animal : animals) {
+                if (!"WORK".equals(animal.subAnimalType)) {
+                    continue;
+                }
+                String taskId = "HIRE|" + animal.animalId;
+                if (!hasChildTask(taskId)) {
+                    long beHiredEndTime = animal.beHiredEndTime;
+                    addChildTask(new ChildModelTask(taskId, "HIRE", this::hireAnimal, beHiredEndTime));
+                    Log.record("添加蹲点雇佣👷在[" + TimeUtil.getCommonDate(beHiredEndTime) + "]执行");
+                }
             }
         } catch (Throwable t) {
             Log.i(TAG, "autoHireAnimal err:");
@@ -2039,11 +2030,6 @@ public class AntFarm extends ModelTask {
                         return false;
                     }
                     Log.farm("雇佣小鸡👷[" + UserIdMap.getMaskName(userId) + "]成功");
-                    long updateTime = System.currentTimeMillis() + 1000 * 30;
-                    String taskId = "UPDATE|HIRE|" + farmId;
-                    addChildTask(new ChildModelTask(taskId, "UPDATE", () -> {
-                        autoHireAnimal(animal);
-                    }, updateTime));
                     return true;
                 }
             }
@@ -2328,7 +2314,7 @@ public class AntFarm extends ModelTask {
 
         public String currentFarmMasterUserId;
 
-        public Long startEatTime;
+        public Long startEatTime, beHiredEndTime;
 
         public Double consumeSpeed;
 
