@@ -1093,24 +1093,33 @@ public class AntFarm extends ModelTask {
 
     private void feedAnimal(String farmId) {
         try {
+            syncAnimalStatus(ownerFarmId);
+            if (!AnimalFeedStatus.HUNGRY.name().equals(ownerAnimal.animalFeedStatus)) {
+                return;
+            }
+            if (foodStock < 180) {
+                Log.record("剩余饲料不足以投喂小鸡");
+                return;
+            }
             JSONObject jo = new JSONObject(AntFarmRpcCall.feedAnimal(farmId));
-            if ("SUCCESS".equals(jo.getString("memo"))) {
-                int feedFood = foodStock - jo.getInt("foodStock");
-                add2FoodStock(-feedFood);
-                Log.farm("投喂小鸡🥣[" + feedFood + "g]#剩余" + foodStock + "g");
-                if (useAccelerateTool.getValue()) {
-                    useAccelerateTool();
-                }
-            } else {
+            if (!"SUCCESS".equals(jo.getString("memo"))) {
                 Log.record(jo.getString("memo"));
                 Log.i(jo.getString("memo"), jo.toString());
+                return;
             }
-            long updateTime = System.currentTimeMillis() + 1000 * 10;
-            String taskId = "UPDATE|FA|" + farmId;
-            addChildTask(new ChildModelTask(taskId, "UPDATE", this::autoFeedAnimal, updateTime));
+            int feedFood = foodStock - jo.getInt("foodStock");
+            add2FoodStock(-feedFood);
+            Log.farm("投喂小鸡🥣[" + feedFood + "g]#剩余" + foodStock + "g");
+            if (useAccelerateTool.getValue()) {
+                useAccelerateTool();
+            }
         } catch (Throwable t) {
             Log.i(TAG, "feedAnimal err:");
             Log.printStackTrace(TAG, t);
+        } finally {
+            long updateTime = System.currentTimeMillis() + 1000 * 10;
+            String taskId = "UPDATE|FA|" + farmId;
+            addChildTask(new ChildModelTask(taskId, "UPDATE", this::autoFeedAnimal, updateTime));
         }
     }
 
