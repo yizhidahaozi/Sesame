@@ -1645,15 +1645,12 @@ public class AntForestV2 extends ModelTask {
             boolean needStealth = stealthCard.getValue() && stealthEndTime < System.currentTimeMillis();
             if (needDouble || needStealth) {
                 synchronized (doubleCardLockObj) {
-                    if (allSkuInfo.length() == 0) {
-                        getAllSkuInfo();
-                    }
                     JSONObject bagObject = null;
-                    if (needDouble) {
+                    if (doubleCard.getValue() && doubleEndTime < System.currentTimeMillis()) {
                         bagObject = getBag();
                         useDoubleCard(bagObject);
                     }
-                    if (needStealth) {
+                    if (stealthCard.getValue() && stealthEndTime < System.currentTimeMillis()) {
                         if (bagObject == null) {
                             bagObject = getBag();
                         }
@@ -1708,6 +1705,9 @@ public class AntForestV2 extends ModelTask {
             // 没有限时隐身卡 且 开启了限时隐身永动机
             if (jo == null && stealthCardConstant.getValue()) {
                 // 商店兑换 限时隐身卡
+                if (allSkuInfo.length() == 0) {
+                    getAllSkuInfo();
+                }
                 if (exchangeBenefit(allSkuInfo.getJSONObject("限时3天内使用隐身卡"), 1)) {
                     bagObject = getBag();
                     jo = findPropBag(bagObject, "LIMIT_TIME_STEALTH_CARD");
