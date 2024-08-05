@@ -312,9 +312,11 @@ public class AntFarm extends ModelTask {
                 } else if (AnimalFeedStatus.EATING.name().equals(ownerAnimal.animalFeedStatus)) {
                     if (useAccelerateTool.getValue()) {
                         useAccelerateTool();
+                        TimeUtil.sleep(1000);
                     }
                     if (feedAnimal.getValue()) {
                         autoFeedAnimal();
+                        TimeUtil.sleep(1000);
                     }
                 }
                 // if (AnimalBuff.ACCELERATING.name().equals(ownerAnimal.animalBuff)) {
@@ -1111,6 +1113,7 @@ public class AntFarm extends ModelTask {
             add2FoodStock(-feedFood);
             Log.farm("投喂小鸡🥣[" + feedFood + "g]#剩余" + foodStock + "g");
             if (useAccelerateTool.getValue()) {
+                TimeUtil.sleep(1000);
                 useAccelerateTool();
             }
         } catch (Throwable t) {
@@ -1169,19 +1172,14 @@ public class AntFarm extends ModelTask {
         }
         // consumeSpeed: g/s
         // AccelerateTool: -1h = -60m = -3600s
-        boolean isUseAccelerateTool = false;
         while (foodInTrough - foodHaveEatten >= consumeSpeed * 3600
                 && useFarmTool(ownerFarmId, ToolType.ACCELERATETOOL)) {
             foodHaveEatten += consumeSpeed * 3600;
-            isUseAccelerateTool = true;
             Status.useAccelerateTool();
             TimeUtil.sleep(1000);
             if (!useAccelerateToolContinue.getValue()) {
                 break;
             }
-        }
-        if (isUseAccelerateTool) {
-            enterFarm();
         }
     }
 
