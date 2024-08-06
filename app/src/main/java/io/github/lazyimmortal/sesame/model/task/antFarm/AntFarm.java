@@ -1096,9 +1096,6 @@ public class AntFarm extends ModelTask {
     private void feedAnimal(String farmId) {
         try {
             syncAnimalStatus(ownerFarmId);
-            if (!AnimalFeedStatus.HUNGRY.name().equals(ownerAnimal.animalFeedStatus)) {
-                return;
-            }
             if (foodStock < 180) {
                 Log.record("剩余饲料不足以投喂小鸡");
                 return;
