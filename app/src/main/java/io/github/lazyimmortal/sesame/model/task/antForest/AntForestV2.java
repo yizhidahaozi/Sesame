@@ -1668,16 +1668,19 @@ public class AntForestV2 extends ModelTask {
             if (hasDoubleCardTime() && Status.canDoubleToday()) {
                 // 背包查找 限时能量双击卡
                 JSONObject jo = findPropBag(bagObject, "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
+                if (jo == null) {
+                    // 背包查找 31天长效双击卡
+                    jo = findPropBag(bagObject, "ENERGY_DOUBLE_CLICK_31DAYS");
+                }
                 // 没有限时能量双击卡 且 开启了限时双击永动机
                 if (jo == null && doubleCardConstant.getValue()) {
-                    // 商店兑换 限时能量双击卡
+                    // 商店兑换 31天长效双击卡
                     if (allSkuInfo.length() == 0) {
                         getAllSkuInfo();
                     }
-                    if (exchangeBenefit(allSkuInfo.getJSONObject("限时3天内使用能量双击卡"), Status.INSTANCE.getExchangeTimes() + 1)) {
-                        Status.exchangeDoubleCardToday(true);
+                    if (exchangeBenefit(allSkuInfo.getJSONObject("限时31天内使用31天长效双击卡"), 1)) {
                         bagObject = getBag();
-                        jo = findPropBag(bagObject, "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
+                        jo = findPropBag(bagObject, "ENERGY_DOUBLE_CLICK_31DAYS");
                     }
                 }
                 if (jo == null) {
@@ -1686,7 +1689,12 @@ public class AntForestV2 extends ModelTask {
                 }
                 // 使用能量双击卡
                 if (jo != null && consumeProp(jo)) {
-                    doubleEndTime = System.currentTimeMillis() + 1000 * 60 * 5;
+                    long nowTime = System.currentTimeMillis();
+                    if ("ENERGY_DOUBLE_CLICK_31DAYS".equals(jo.optString("propType"))) {
+                        doubleEndTime = nowTime + TimeUnit.DAYS.toMillis(31);
+                    } else {
+                        doubleEndTime = nowTime + TimeUnit.MINUTES.toMillis(5);
+                    }
                     Status.DoubleToday();
                 } else {
                     updateDoubleTime();
@@ -2244,22 +2252,20 @@ public class AntForestV2 extends ModelTask {
      * propGroup, propType, holdsNum, propIdList[], propConfigVO[propName]
      */
     private JSONObject findPropBag(JSONObject bagObject, String propType) {
-        JSONObject prop = null;
         try {
             // 遍历背包查找道具
             JSONArray forestPropVOList = bagObject.getJSONArray("forestPropVOList");
             for (int i = 0; i < forestPropVOList.length(); i++) {
                 JSONObject forestPropVO = forestPropVOList.getJSONObject(i);
                 if (forestPropVO.getString("propType").equals(propType)) {
-                    prop = forestPropVO;
-                    break;
+                    return forestPropVO;
                 }
             }
         } catch (Throwable th) {
             Log.i(TAG, "findPropBag err:");
             Log.printStackTrace(TAG, th);
         }
-        return prop;
+        return null;
     }
 
     /*
