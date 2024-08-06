@@ -2,9 +2,11 @@ package io.github.lazyimmortal.sesame.model.task.antForest;
 
 import de.robv.android.xposed.XposedHelpers;
 import lombok.Getter;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import io.github.lazyimmortal.sesame.data.ConfigV2;
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
@@ -1312,6 +1314,7 @@ public class AntForestV2 extends ModelTask {
     }
 
     JSONObject allSkuInfo = new JSONObject();
+
     private void exchangeProp() {
         // 兑换 限时能量双击卡
         if (exchangeEnergyDoubleClick.getValue() && Status.canExchangeDoubleCardToday()) {
@@ -1674,13 +1677,18 @@ public class AntForestV2 extends ModelTask {
                 }
                 // 没有限时能量双击卡 且 开启了限时双击永动机
                 if (jo == null && doubleCardConstant.getValue()) {
-                    // 商店兑换 31天长效双击卡
+                    // 商店兑换 限时能量双击卡
                     if (allSkuInfo.length() == 0) {
                         getAllSkuInfo();
                     }
                     if (exchangeBenefit(allSkuInfo.getJSONObject("限时31天内使用31天长效双击卡"), 1)) {
                         bagObject = getBag();
                         jo = findPropBag(bagObject, "ENERGY_DOUBLE_CLICK_31DAYS");
+                    } else if (exchangeBenefit(allSkuInfo.getJSONObject("限时3天内使用能量双击卡"),
+                            Status.INSTANCE.getExchangeTimes() + 1)) {
+                        Status.exchangeDoubleCardToday(true);
+                        bagObject = getBag();
+                        jo = findPropBag(bagObject, "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
                     }
                 }
                 if (jo == null) {
