@@ -2208,11 +2208,11 @@ public class AntForestV2 extends ModelTask {
 
     // 获取活力值商店列表
     private JSONArray getVitalityItemList(String labelType) {
-        JSONArray itemList = null;
+        JSONArray itemInfoVOList = null;
         try {
             JSONObject jo = new JSONObject(AntForestRpcCall.itemList(labelType));
             if (jo.optBoolean("success")) {
-                itemList = jo.optJSONArray("itemInfoVOList");
+                itemInfoVOList = jo.optJSONArray("itemInfoVOList");
             } else {
                 Log.record(jo.getString("desc"));
                 Log.i(jo.getString("desc"), jo.toString());
@@ -2221,34 +2221,58 @@ public class AntForestV2 extends ModelTask {
             Log.i(TAG, "getVitalityItemList err:");
             Log.printStackTrace(TAG, th);
         }
-        return itemList;
+        return itemInfoVOList;
     }
 
     // 获取活力值商店所有商品信息
     private void getAllSkuInfo() {
         try {
-            JSONArray itemList = getVitalityItemList("SC_ASSETS");
-            if (itemList == null) {
+            JSONArray itemInfoVOList = getVitalityItemList("SC_ASSETS");
+            if (itemInfoVOList == null) {
                 return;
             }
-            for (int i = 0; i < itemList.length(); i++) {
-                JSONObject item = itemList.getJSONObject(i);
-                JSONArray skuModelList = item.getJSONArray("skuModelList");
-                for (int j = 0; j < skuModelList.length(); j++) {
-                    JSONObject skuModel = skuModelList.getJSONObject(j);
-                    String skuId = skuModel.getString("skuId");
-                    String skuName = skuModel.getString("skuName");
-                    skuInfo.put(skuId, skuModel);
-                    VitalityBenefitIdMap.add(skuId, skuName);
-                }
+            for (int i = 0; i < itemInfoVOList.length(); i++) {
+                JSONObject itemInfoVO = itemInfoVOList.getJSONObject(i);
+                getSkuInfoByItemInfoVO(itemInfoVO);
             }
-            VitalityBenefitIdMap.save(UserIdMap.getCurrentUid());
         } catch (Throwable th) {
             Log.i(TAG, "getAllSkuInfo err:");
             Log.printStackTrace(TAG, th);
         }
     }
 
+    private void getSkuInfoBySpuId(String spuId) {
+        try {
+            JSONObject jo = new JSONObject(AntForestRpcCall.itemDetail(spuId));
+            if (!jo.optBoolean("success")) {
+                Log.record(jo.getString("desc"));
+                Log.i(jo.getString("desc"), jo.toString());
+                return;
+            }
+            JSONObject spuItemInfoVo = jo.getJSONObject("spuItemInfoVO");
+            getSkuInfoByItemInfoVO(spuItemInfoVo);
+        } catch (Throwable th) {
+            Log.i(TAG, "getSkuInfoBySpuId err:");
+            Log.printStackTrace(TAG, th);
+        }
+    }
+
+    private void getSkuInfoByItemInfoVO(JSONObject spuItem) {
+        try {
+            JSONArray skuModelList = spuItem.getJSONArray("skuModelList");
+            for (int i = 0; i < skuModelList.length(); i++) {
+                JSONObject skuModel = skuModelList.getJSONObject(i);
+                String skuId = skuModel.getString("skuId");
+                String skuName = skuModel.getString("skuName");
+                skuInfo.put(skuId, skuModel);
+                VitalityBenefitIdMap.add(skuId, skuName);
+            }
+            VitalityBenefitIdMap.save(UserIdMap.getCurrentUid());
+        } catch (Throwable th) {
+            Log.i(TAG, "getSkuInfoByItemInfoVO err:");
+            Log.printStackTrace(TAG, th);
+        }
+    }
     /*
      * 兑换活力值商品
      * sku
@@ -2266,24 +2290,25 @@ public class AntForestV2 extends ModelTask {
         }
         try {
             String skuName = sku.getString("skuName");
-            if (sku.has("itemStatusList")) {
-                JSONArray itemStatusList = sku.getJSONArray("itemStatusList");
-                for (int i = 0; i < itemStatusList.length(); i++) {
-                    if ("REACH_LIMIT".equals(itemStatusList.getString(i))) {
-                        Log.record("活力兑换🎐[" + skuName + "]停止:已达兑换次数上限！");
-                        return false;
-                    } else if ("NO_ENOUGH_POINT".equals(itemStatusList.getString(i))) {
-                        Log.record("活力兑换🎐[" + skuName + "]停止:活力值不足以兑换！");
-                        return false;
-                    }
+            JSONArray itemStatusList = sku.getJSONArray("itemStatusList");
+            for (int i = 0; i < itemStatusList.length(); i++) {
+                String itemStatus = itemStatusList.getString(i);
+                if ("REACH_LIMIT".equals(itemStatus)) {
+                    Log.record("活力兑换🎐[" + skuName + "]停止:已达兑换次数上限！");
+                    return false;
+                } else if ("NO_ENOUGH_POINT".equals(itemStatus)) {
+                    Log.record("活力兑换🎐[" + skuName + "]停止:活力值不足以兑换！");
+                    return false;
+                } else if ("NO_ENOUGH_STOCK".equals(itemStatus)) {
+                    Log.record("活力兑换🎐[" + skuName + "]停止:库存量不足以兑换！");
+                    return false;
                 }
             }
             String spuId = sku.getString("spuId");
             if (exchangeBenefit(spuId, skuId, skuName)) {
                 return true;
-            } else {
-                getAllSkuInfo();
             }
+            getSkuInfoBySpuId(spuId);
         } catch (Throwable th) {
             Log.i(TAG, "exchangeBenefit err:");
             Log.printStackTrace(TAG, th);
