@@ -70,6 +70,7 @@ public class NewSettingsActivity extends BaseActivity {
         UserIdMap.setCurrentUserId(userId);
         UserIdMap.load(userId);
         CooperationIdMap.load(userId);
+        VitalityBenefitIdMap.load(userId);
         MemberBenefitIdMap.load(userId);
         ReserveIdMap.load();
         BeachIdMap.load();

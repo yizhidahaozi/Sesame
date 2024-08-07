@@ -54,8 +54,8 @@ public class AntMember extends ModelTask {
         modelFields.addField(merchantKmdk = new BooleanModelField("merchantKmdk", "商户开门打卡", false));
         modelFields.addField(beanSignIn = new BooleanModelField("beanSignIn", "安心豆签到", false));
         modelFields.addField(beanExchangeBubbleBoost = new BooleanModelField("beanExchangeBubbleBoost", "安心豆兑换时光加速器", false));
-        modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分兑换福利", false));
-        modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分兑换福利列表", new LinkedHashSet<>(), MemberBenefit::getList));
+        modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分 | 开启兑换", false));
+        modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分 | 兑换列表", new LinkedHashSet<>(), MemberBenefit::getList));
         return modelFields;
     }
 

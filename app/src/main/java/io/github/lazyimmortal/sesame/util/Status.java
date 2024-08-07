@@ -17,17 +17,12 @@ public class Status {
 
     // forest
     private Map<String, Integer> waterFriendLogList = new HashMap<>();
+    private Map<String, Integer> vitalityExchangeBenefitList = new HashMap<>();
     private Set<String> cooperateWaterList = new HashSet<>();
     private Map<String, Integer> reserveLogList = new HashMap<>();
     private Set<String> ancientTreeCityCodeList = new HashSet<>();
     private Set<String> protectBubbleList = new HashSet<>();
-    private int exchangeDoubleCard = 0;
-    private int exchangeTimes = 0;
-    private int exchangeTimesLongTime = 0;
     private int doubleTimes = 0;
-    private boolean exchangeEnergyShield = false;
-    private boolean exchangeCollectHistoryAnimal7Days = false;
-    private boolean exchangeCollectToFriendTimes7Days = false;
 
     // farm
     private Boolean answerQuestion = false;
@@ -78,42 +73,6 @@ public class Status {
     // 农场助力
     private Set<String> antOrchardAssistFriend = new HashSet<>();
 
-    public static boolean canExchangeEnergyShield() {
-        return !INSTANCE.exchangeEnergyShield;
-    }
-
-    public static void exchangeEnergyShield() {
-        Status stat = INSTANCE;
-        if (!stat.exchangeEnergyShield) {
-            stat.exchangeEnergyShield = true;
-            save();
-        }
-    }
-
-    public static boolean canExchangeCollectHistoryAnimal7Days() {
-        return !INSTANCE.exchangeCollectHistoryAnimal7Days;
-    }
-
-    public static void exchangeCollectHistoryAnimal7Days() {
-        Status stat = INSTANCE;
-        if (!stat.exchangeCollectHistoryAnimal7Days) {
-            stat.exchangeCollectHistoryAnimal7Days = true;
-            save();
-        }
-    }
-
-    public static boolean canExchangeCollectToFriendTimes7Days() {
-        return !INSTANCE.exchangeCollectToFriendTimes7Days;
-    }
-
-    public static void exchangeCollectToFriendTimes7Days() {
-        Status stat = INSTANCE;
-        if (!stat.exchangeCollectToFriendTimes7Days) {
-            stat.exchangeCollectToFriendTimes7Days = true;
-            save();
-        }
-    }
-
     public static boolean canAnimalSleep() {
         return !INSTANCE.animalSleep;
     }
@@ -138,6 +97,24 @@ public class Status {
     public static void waterFriendToday(String id, int count) {
         id = UserIdMap.getCurrentUid() + "-" + id;
         INSTANCE.waterFriendLogList.put(id, count);
+        save();
+    }
+
+    public static int getVitalityExchangeBenefitCount(String skuId) {
+        Integer exchangedCount = INSTANCE.vitalityExchangeBenefitList.get(skuId);
+        if (exchangedCount == null) {
+            exchangedCount = 0;
+        }
+        return exchangedCount;
+    }
+
+    public static Boolean canVitalityExchangeBenefit(String skuId, int count) {
+        return getVitalityExchangeBenefitCount(skuId) < count;
+    }
+
+    public static void vitalityExchangeBenefit(String skuId) {
+        int count = getVitalityExchangeBenefitCount(skuId) + 1;
+        INSTANCE.vitalityExchangeBenefitList.put(skuId, count);
         save();
     }
 
@@ -369,61 +346,6 @@ public class Status {
             stat.protectBubbleList.add(uid);
             save();
         }
-    }
-
-    public static boolean canExchangeDoubleCardToday() {
-        Status stat = INSTANCE;
-        if (stat.exchangeDoubleCard < Statistics.INSTANCE.getDay().time) {
-            return true;
-        }
-        AntForestV2 task = ModelTask.getModel(AntForestV2.class);
-        if (task == null) {
-            return false;
-        }
-        return stat.exchangeTimes < task.getExchangeEnergyDoubleClickCount().getValue();
-    }
-
-    public static void exchangeDoubleCardToday(boolean isSuccess) {
-        Status stat = INSTANCE;
-        if (stat.exchangeDoubleCard != Statistics.INSTANCE.getDay().time) {
-            stat.exchangeDoubleCard = Statistics.INSTANCE.getDay().time;
-        }
-        if (isSuccess) {
-            stat.exchangeTimes += 1;
-        } else {
-            AntForestV2 task = ModelTask.getModel(AntForestV2.class);
-            if (task == null) {
-                stat.exchangeTimes = 0;
-            } else {
-                stat.exchangeTimes = task.getExchangeEnergyDoubleClickCount().getValue();
-            }
-        }
-        save();
-    }
-
-    public static boolean canExchangeDoubleCardTodayLongTime() {
-        Status stat = INSTANCE;
-        if (stat.exchangeDoubleCard < Statistics.INSTANCE.getDay().time) {
-            return true;
-        }
-        AntForestV2 task = ModelTask.getModel(AntForestV2.class);
-        if (task == null) {
-            return false;
-        }
-        return stat.exchangeTimesLongTime < task.getExchangeEnergyDoubleClickCountLongTime().getValue();
-    }
-
-    public static void exchangeDoubleCardTodayLongTime(boolean isSuccess) {
-        Status stat = INSTANCE;
-        if (stat.exchangeDoubleCard != Statistics.INSTANCE.getDay().time) {
-            stat.exchangeDoubleCard = Statistics.INSTANCE.getDay().time;
-        }
-        if (isSuccess) {
-            stat.exchangeTimesLongTime += 1;
-        } /*else {
-            stat.exchangeTimesLongTime = AntForestV2.exchangeEnergyDoubleClickCountLongTime.getValue();
-        }*/
-        save();
     }
 
     /**
