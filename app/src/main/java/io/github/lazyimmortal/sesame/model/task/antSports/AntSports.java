@@ -39,6 +39,7 @@ public class AntSports extends ModelTask {
     private BooleanModelField donateCharityCoin;
     private ChoiceModelField donateCharityCoinType;
     private IntegerModelField donateCharityCoinAmount;
+    private BooleanModelField coinExchangeDoubleCard;
     private IntegerModelField minExchangeCount;
     private IntegerModelField latestExchangeTime;
     private IntegerModelField syncStepCount;
@@ -71,6 +72,7 @@ public class AntSports extends ModelTask {
         modelFields.addField(donateCharityCoin = new BooleanModelField("donateCharityCoin", "捐运动币 | 开启", false));
         modelFields.addField(donateCharityCoinType = new ChoiceModelField("donateCharityCoinType", "捐运动币 | 方式", DonateCharityCoinType.ONE, DonateCharityCoinType.nickNames));
         modelFields.addField(donateCharityCoinAmount = new IntegerModelField("donateCharityCoinAmount", "捐运动币 | 数量(每次)", 100));
+        modelFields.addField(coinExchangeDoubleCard = new BooleanModelField("coinExchangeDoubleCard", "运动币兑换限时能量双击卡", false));
         modelFields.addField(battleForFriends = new BooleanModelField("battleForFriends", "抢好友 | 开启", false));
         modelFields.addField(trainItemType = new ChoiceModelField("trainItemType", "抢好友 | 训练项目", TrainItemType.BARBELL, TrainItemType.nickNames));
         modelFields.addField(battleForFriendType = new ChoiceModelField("battleForFriendType", "抢好友 | 动作", BattleForFriendType.ROB, BattleForFriendType.nickNames));
@@ -137,6 +139,10 @@ public class AntSports extends ModelTask {
 
             if (donateCharityCoin.getValue() && Status.canDonateCharityCoin())
                 queryProjectList(loader);
+
+            if (coinExchangeDoubleCard.getValue()) {
+                coinExchangeItem("AMS2024032927086104");
+            }
 
             if (minExchangeCount.getValue() > 0 && Status.canExchangeToday(UserIdMap.getCurrentUid()))
                 queryWalkStep(loader);
@@ -937,7 +943,7 @@ public class AntSports extends ModelTask {
                 String taskId = "UPDATE|TRAIN|" + originBossId;
                 long updateTime = System.currentTimeMillis() + 1000 * 10;
                 JSONObject trainInfo = jo.getJSONObject("trainInfo");
-                addChildTask(new ChildModelTask(taskId, "UPDATE",() -> {
+                addChildTask(new ChildModelTask(taskId, "UPDATE", () -> {
                     autoTrainMember(memberId, originBossId, trainInfo);
                 }, updateTime));
             }
@@ -1044,6 +1050,35 @@ public class AntSports extends ModelTask {
             }
         } catch (Throwable t) {
             Log.i(TAG, "buyMember err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private void coinExchangeItem(String itemId) {
+        try {
+            JSONObject jo = new JSONObject(AntSportsRpcCall.queryItemDetail(itemId));
+            if (!jo.optBoolean("success")) {
+                Log.record(jo.toString());
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            if (!"OK".equals(jo.optString("exchangeBtnStatus"))) {
+                return;
+            }
+            jo = jo.getJSONObject("itemBaseInfo");
+            String itemTitle = jo.getString("itemTitle");
+            int valueCoinCount = jo.getInt("valueCoinCount");
+            jo = new JSONObject(AntSportsRpcCall.exchangeItem(itemId, valueCoinCount));
+            if (!jo.optBoolean("success")) {
+                Log.record(jo.toString());
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            if (jo.optBoolean("exgSuccess")) {
+                Log.record("运动好礼🎐兑换[" + itemTitle + "]#花费" + valueCoinCount + "运动币");
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "trainMember err:");
             Log.printStackTrace(TAG, t);
         }
     }
