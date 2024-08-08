@@ -455,4 +455,76 @@ public class AntMemberRpcCall {
 
         return formattedUUID;
     }
+
+    // 我的快递任务
+    public static String queryRecommendTask() {
+        String args1 = "[{\"consultAccessFlag\":true,\"extInfo\":{\"componentCode\":\"musi_test\"},\"taskCenInfo\":\"MZVPQ0DScvD6NjaPJzk8iCCWtq%2FRt4kh\"}]";
+        return ApplicationHook.requestString("alipay.promoprod.task.listQuery", args1);
+    }
+
+    // 积分、肥料
+    public static String trigger(String appletId) {
+        String args1 = "[{\"appletId\":\"" + appletId + "\",\"taskCenInfo\":\"MZVPQ0DScvD6NjaPJzk8iNRgSSvWpCuA\",\"stageCode\":\"send\"}]";
+        return ApplicationHook.requestString("alipay.promoprod.applet.trigger", args1);
+    }
+
+    // 森林活力值
+    public static String queryforestHomePage() {
+        String args1 = "[{\"activityParam\":{},\"configVersionMap\":{\"wateringBubbleConfig\":\"0\"},\"skipWhackMole\":false,\"source\":\"kuaidivitality\",\"version\":\"20240606\"}]";
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.queryHomePage", args1);
+    }
+
+    public static String forestTask() {
+        String args1 = "[{\"extend\":{\"firstTaskType\":\"KUAIDI_VITALITY\"},\"fromAct\":\"home_task_list\",\"source\":\"kuaidivitality\",\"version\":\"20240105\"}]";
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.queryTaskList", args1);
+    }
+
+    public static String forestreceiveTaskAward() {
+        String args1 = "[{\"ignoreLimit\":false,\"requestType\":\"H5\",\"sceneCode\":\"ANTFOREST_VITALITY_TASK\",\"source\":\"ANTFOREST\",\"taskType\":\"KUAIDI_VITALITY\"}]";
+        return ApplicationHook.requestString("com.alipay.antiep.receiveTaskAward", args1);
+    }
+
+    // 海洋碎片
+    public static String queryoceanHomePage() {
+        String args1 = "[{\"firstTaskType\":\"DAOLIU_WODEKUAIDIQUANYI\",\"source\":\"wodekuaidiquanyi\",\"uniqueId\":\"" + getUniqueId() + "\",\"version\":\"20240115\"}]";
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryHomePage", args1);
+    }
+
+    public static String oceanTask() {
+        String args1 = "[{\"extend\":{\"firstTaskType\":\"DAOLIU_WODEKUAIDIQUANYI\"},\"fromAct\":\"dynamic_task\",\"sceneCode\":\"ANTOCEAN_TASK\",\"source\":\"wodekuaidiquanyi\",\"uniqueId\":\"" +
+                getUniqueId() + "\",\"version\":\"20240115\"}]";
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryTaskList", args1);
+    }
+
+    public static String oceanreceiveTaskAward() {
+        String args1 = "[{\"ignoreLimit\":false,\"requestType\":\"RPC\",\"sceneCode\":\"ANTOCEAN_TASK\",\"source\":\"ANT_FOREST\",\"taskType\":\"DAOLIU_WODEKUAIDIQUANYI\",\"uniqueId\":\"" + getUniqueId() + "\"}]";
+        return ApplicationHook.requestString("com.alipay.antiep.receiveTaskAward", args1);
+    }
+
+    // 普通任务
+    public static String queryOrdinaryTask() {
+        String args1 = "[{\"consultAccessFlag\":true,\"taskCenInfo\":\"MZVPQ0DScvD6NjaPJzk8iNRgSSvWpCuA\"}]";
+        return ApplicationHook.requestString("alipay.promoprod.task.listQuery", args1);
+    }
+
+    public static String signuptrigger(String appletId) {
+        String args1 = "[{\"appletId\":\"" + appletId + "\",\"taskCenInfo\":\"MZVPQ0DScvD6NjaPJzk8iNRgSSvWpCuA\",\"stageCode\":\"signup\"}]";
+        return ApplicationHook.requestString("alipay.promoprod.applet.trigger", args1);
+    }
+
+    public static String sendtrigger(String appletId) {
+        String args1 = "[{\"appletId\":\"" + appletId + "\",\"taskCenInfo\":\"MZVPQ0DScvD6NjaPJzk8iNRgSSvWpCuA\",\"stageCode\":\"send\"}]";
+        return ApplicationHook.requestString("alipay.promoprod.applet.trigger", args1);
+    }
+
+    // 消费金签到
+    public static String signinCalendar() {
+        return ApplicationHook.requestString("alipay.mobile.ipsponsorprod.consume.gold.task.signin.calendar",
+                "[{}]");
+    }
+
+    public static String openBoxAward() {
+        return ApplicationHook.requestString("alipay.mobile.ipsponsorprod.consume.gold.task.openBoxAward",
+                "[{\"actionAwardDetails\":[{\"actionType\":\"date_sign_start\"}],\"bizType\":\"CONSUME_GOLD\",\"boxType\":\"CONSUME_GOLD_SIGN_DATE\",\"clientVersion\":\"6.3.0\",\"timeScaleType\":0,\"userType\":\"new\"}]");
+    }
 }
