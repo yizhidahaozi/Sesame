@@ -51,8 +51,8 @@ public class AntMember extends ModelTask {
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(memberSign = new BooleanModelField("memberSign", "会员 | 签到", false));
-        modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分 | 兑换开启", false));
-        modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分 | 兑换列表", new LinkedHashSet<>(), MemberBenefit::getList));
+        modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分 | 兑换权益", false));
+        modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分 | 权益列表", new LinkedHashSet<>(), MemberBenefit::getList));
         modelFields.addField(collectSesame = new BooleanModelField("collectSesame", "芝麻粒 | 领取", false));
         modelFields.addField(LifeRecords = new BooleanModelField("LifeRecords", "生活记录 | 开启", false));
         modelFields.addField(saveinsuniversal = new BooleanModelField("saveinsuniversal", "生活记录 | 坚持攒保障金", false));
@@ -947,7 +947,7 @@ public class AntMember extends ModelTask {
                 return;
             }
             if (!jo.has("entityInfoList")) {
-                Log.record("会员积分[未实名账号无可兑换福利]");
+                Log.record("会员积分[未实名账号无可兑换权益]");
                 return;
             }
             JSONArray entityInfoList = jo.getJSONArray("entityInfoList");
@@ -968,7 +968,7 @@ public class AntMember extends ModelTask {
                 String itemId = benefitInfo.getString("itemId");
                 if (exchangeBenefit(benefitId, itemId)) {
                     String point = pricePresentation.getString("point");
-                    Log.record("会员积分🎐兑换福利[" + name + "]#花费" + point + "积分");
+                    Log.record("会员积分🎐兑换权益[" + name + "]#花费" + point + "积分");
                 }
             }
             MemberBenefitIdMap.save(userId);

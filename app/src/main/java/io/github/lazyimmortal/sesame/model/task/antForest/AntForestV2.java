@@ -172,8 +172,8 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(helpFriendCollect = new BooleanModelField("helpFriendCollect", "复活能量 | 开启", false));
         modelFields.addField(helpFriendCollectType = new ChoiceModelField("helpFriendCollectType", "复活能量 | 动作", HelpFriendCollectType.HELP, HelpFriendCollectType.nickNames));
         modelFields.addField(helpFriendCollectList = new SelectModelField("helpFriendCollectList", "复活能量 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(vitalityExchangeBenefit = new BooleanModelField("vitalityExchangeBenefit", "活力值 | 开启兑换", false));
-        modelFields.addField(vitalityExchangeBenefitList = new SelectAndCountModelField("vitalityExchangeBenefitList", "活力值 | 兑换列表", new LinkedHashMap<>(), VitalityBenefit::getList));
+        modelFields.addField(vitalityExchangeBenefit = new BooleanModelField("vitalityExchangeBenefit", "活力值 | 兑换权益", false));
+        modelFields.addField(vitalityExchangeBenefitList = new SelectAndCountModelField("vitalityExchangeBenefitList", "活力值 | 权益列表", new LinkedHashMap<>(), VitalityBenefit::getList));
         modelFields.addField(closeWhackMole = new BooleanModelField("closeWhackMole", "自动关闭6秒拼手速", true));
         modelFields.addField(collectProp = new BooleanModelField("collectProp", "收集道具", false));
         modelFields.addField(collectWateringBubble = new BooleanModelField("collectWateringBubble", "收金球", false));
@@ -2285,7 +2285,7 @@ public class AntForestV2 extends ModelTask {
         }
         JSONObject sku = skuInfo.get(skuId);
         if (sku == null) {
-            Log.record("活力兑换🎐找不到要兑换的道具！");
+            Log.record("活力兑换🎐找不到要兑换的权益！");
             return false;
         }
         try {
