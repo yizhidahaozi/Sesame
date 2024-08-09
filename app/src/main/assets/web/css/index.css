@@ -119,6 +119,7 @@ video {
 
 .van-radio {
   min-height: 26px !important;
+  justify-content: end!important;
 }
 
 .van-dialog__content {
@@ -231,6 +232,10 @@ video {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.align-start {
+  align-items: start;
 }
 
 .flex-center {
