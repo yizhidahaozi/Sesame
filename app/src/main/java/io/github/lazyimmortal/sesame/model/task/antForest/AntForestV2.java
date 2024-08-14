@@ -2299,6 +2299,7 @@ public class AntForestV2 extends ModelTask {
                 String itemStatus = itemStatusList.getString(i);
                 if ("REACH_LIMIT".equals(itemStatus)) {
                     Log.record("活力兑换🎐[" + skuName + "]停止:已达兑换次数上限！");
+                    Status.setVitalityExchangeBenefitCount(skuId, vitalityExchangeBenefitList.getValue().get(skuId));
                     return false;
                 } else if ("NO_ENOUGH_POINT".equals(itemStatus)) {
                     Log.record("活力兑换🎐[" + skuName + "]停止:活力值不足以兑换！");

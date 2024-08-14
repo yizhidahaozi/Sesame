@@ -108,6 +108,12 @@ public class Status {
         return exchangedCount;
     }
 
+    public static void setVitalityExchangeBenefitCount(String skuId, int count) {
+        int exchangedCount = getVitalityExchangeBenefitCount(skuId);
+        INSTANCE.vitalityExchangeBenefitList.put(skuId, Math.max(exchangedCount, count));
+        save();
+    }
+
     public static Boolean canVitalityExchangeBenefit(String skuId, int count) {
         return getVitalityExchangeBenefitCount(skuId) < count;
     }
