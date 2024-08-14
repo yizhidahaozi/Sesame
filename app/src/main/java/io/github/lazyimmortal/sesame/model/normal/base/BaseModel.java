@@ -111,6 +111,7 @@ public class BaseModel extends Model {
 
     private static void initReserve() {
         try {
+            ReserveIdMap.load();
             String s = ReserveRpcCall.queryTreeItemsForExchange();
             if (s == null) {
                 Thread.sleep(RandomUtil.delay());
@@ -137,12 +138,12 @@ public class BaseModel extends Model {
             }
         } catch (Throwable t) {
             Log.printStackTrace(t);
-            ReserveIdMap.load();
         }
     }
 
     private static void initBeach() {
         try {
+            BeachIdMap.load();
             String s = AntOceanRpcCall.queryCultivationList();
             JSONObject jo = new JSONObject(s);
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
@@ -167,7 +168,6 @@ public class BaseModel extends Model {
             }
         } catch (Throwable t) {
             Log.printStackTrace(t);
-            BeachIdMap.load();
         }
     }
 
