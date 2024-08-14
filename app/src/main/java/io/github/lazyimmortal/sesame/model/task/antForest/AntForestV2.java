@@ -2259,11 +2259,15 @@ public class AntForestV2 extends ModelTask {
 
     private void getSkuInfoByItemInfoVO(JSONObject spuItem) {
         try {
+            String spuId = spuItem.getString("spuId");
             JSONArray skuModelList = spuItem.getJSONArray("skuModelList");
             for (int i = 0; i < skuModelList.length(); i++) {
                 JSONObject skuModel = skuModelList.getJSONObject(i);
                 String skuId = skuModel.getString("skuId");
                 String skuName = skuModel.getString("skuName");
+                if (!skuModel.has("spuId")) {
+                    skuModel.put("spuId", spuId);
+                }
                 skuInfo.put(skuId, skuModel);
                 VitalityBenefitIdMap.add(skuId, skuName);
             }
