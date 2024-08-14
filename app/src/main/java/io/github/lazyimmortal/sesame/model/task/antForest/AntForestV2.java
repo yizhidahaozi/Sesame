@@ -130,6 +130,7 @@ public class AntForestV2 extends ModelTask {
 
     private int totalCollected = 0;
     private int totalHelpCollected = 0;
+    private boolean hasErrorWait = false;
 
     @Getter
     private Set<String> dontCollectMap = new HashSet<>();
@@ -241,6 +242,7 @@ public class AntForestV2 extends ModelTask {
 
             taskCount.set(0);
             selfId = UserIdMap.getCurrentUid();
+            hasErrorWait = false;
 
             JSONObject selfHomeObject = collectSelfEnergy();
             try {
@@ -667,7 +669,7 @@ public class AntForestV2 extends ModelTask {
                 if (batchRobEnergy.getValue()) {
                     Iterator<Long> iterator = bubbleIdList.iterator();
                     List<Long> batchBubbleIdList = new ArrayList<>();
-                    while (iterator.hasNext()) {
+                    while (iterator.hasNext() && !hasErrorWait) {
                         batchBubbleIdList.add(iterator.next());
                         if (batchBubbleIdList.size() >= 6) {
                             collectEnergy(new CollectEnergyEntity(userId, userHomeObject, AntForestRpcCall.getCollectBatchEnergyRpcEntity(userId, batchBubbleIdList)));
@@ -675,7 +677,7 @@ public class AntForestV2 extends ModelTask {
                         }
                     }
                     int size = batchBubbleIdList.size();
-                    if (size > 0) {
+                    if (size > 0 && !hasErrorWait) {
                         if (size == 1) {
                             collectEnergy(new CollectEnergyEntity(userId, userHomeObject, AntForestRpcCall.getCollectEnergyRpcEntity(null, userId, batchBubbleIdList.get(0))));
                         } else {
@@ -685,6 +687,9 @@ public class AntForestV2 extends ModelTask {
                 } else {
                     for (Long bubbleId : bubbleIdList) {
                         collectEnergy(new CollectEnergyEntity(userId, userHomeObject, AntForestRpcCall.getCollectEnergyRpcEntity(null, userId, bubbleId)));
+                        if (hasErrorWait) {
+                            break;
+                        }
                     }
                 }
             }
@@ -889,6 +894,7 @@ public class AntForestV2 extends ModelTask {
                             RuntimeInfo.getInstance().put(RuntimeInfo.RuntimeInfoKey.ForestPauseTime, waitTime);
                             NotificationUtil.updateStatusText("异常");
                             Log.record("触发异常,等待至" + TimeUtil.getCommonDate(waitTime));
+                            hasErrorWait = true;
                             return;
                         }
                         TimeUtil.sleep(600 + RandomUtil.delay());
