@@ -453,8 +453,10 @@ public class AntFarm extends ModelTask {
 
             if (useSpecialFood.getValue()) {
                 JSONArray cuisineList = jo.getJSONArray("cuisineList");
-                if (!AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus))
+                if (AnimalInteractStatus.HOME.name().equals(ownerAnimal.animalInteractStatus)
+                        && !AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus)) {
                     useFarmFood(cuisineList);
+                }
             }
 
             if (jo.has("lotteryPlusInfo")) {
