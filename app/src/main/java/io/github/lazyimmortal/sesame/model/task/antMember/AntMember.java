@@ -417,11 +417,12 @@ public class AntMember extends ModelTask {
                 JSONArray categoryTaskList = jo.getJSONArray("categoryTaskList");
                 for (int i = 0; i < categoryTaskList.length(); i++) {
                     jo = categoryTaskList.getJSONObject(i);
-                    if (!"BROWSE".equals(jo.getString("type"))) {
-                        continue;
-                    }
                     JSONArray taskList = jo.getJSONArray("taskList");
-                    doubleCheck = doTask(taskList);
+                    if ("BROWSE".equals(jo.getString("type"))) {
+                        doubleCheck = doTask(taskList);
+                    } else if ("OTHERS".equals(jo.getString("type"))) {
+                        doOtherTask(taskList);
+                    }
                 }
                 if (doubleCheck) {
                     continue;
@@ -711,6 +712,66 @@ public class AntMember extends ModelTask {
         }
         return doubleCheck;
     }
+
+// 蚂蚁积分-做其他任务
+private void doOtherTask(JSONArray taskList) {
+    try {
+        for (int j = 0; j < taskList.length(); j++) {
+            JSONObject task = taskList.getJSONObject(j);
+            int count = 1;
+            boolean hybrid = task.getBoolean("hybrid");
+            int periodCurrentCount = 0;
+            int periodTargetCount = 0;
+            if (hybrid) {
+                periodCurrentCount = Integer
+                        .parseInt(task.getJSONObject("extInfo").getString("PERIOD_CURRENT_COUNT"));
+                periodTargetCount = Integer
+                        .parseInt(task.getJSONObject("extInfo").getString("PERIOD_TARGET_COUNT"));
+                count = periodTargetCount > periodCurrentCount ? periodTargetCount - periodCurrentCount : 0;
+            }
+            if (count <= 0) {
+                continue;
+            }
+            // String status = task.optString("status");
+            JSONObject taskConfigInfo = task.getJSONObject("taskConfigInfo");
+            String name = taskConfigInfo.getString("name");
+            Long id = taskConfigInfo.getLong("id");
+            String awardParamPoint = taskConfigInfo.getJSONObject("awardParam")
+                    .getString("awardParamPoint");
+            String targetBusiness = taskConfigInfo.getJSONArray("targetBusiness").getString(0);
+            if (!targetBusiness.startsWith("ngfe"))
+                continue;
+            String businessType = taskConfigInfo.getString("businessType");
+            if ("uvChangeBusinessType".equals(businessType)) {
+                String[] targetBusinessArray = targetBusiness.split("#");
+                String tagCode = targetBusinessArray[0];
+                for (int k = 0; k < count; k++) {
+                    JSONObject jo = new JSONObject(AntMemberRpcCall.applyTask(name, id));
+                    TimeUtil.sleep(300);
+                    if (!"SUCCESS".equals(jo.getString("resultCode"))) {
+                        Log.i(TAG, "signPageTaskList.applyTask err:" + jo.optString("resultDesc"));
+                        continue;
+                    }
+                    jo = new JSONObject(AntMemberRpcCall.ngfeUpdate(tagCode));
+                    TimeUtil.sleep(300);
+                    if (!jo.optBoolean("success")) {
+                        Log.i(TAG, "signPageTaskList.update err:" + jo.toString());
+                        continue;
+                    }
+                    String ex = "";
+                    if (hybrid) {
+                        ex = "(" + (periodCurrentCount + k + 1) + "/" + periodTargetCount + ")";
+                    }
+                    Log.other("会员任务🎖️[" + name + ex + "]#" + awardParamPoint + "积分");
+                }
+            }
+
+        }
+    } catch (Throwable t) {
+        Log.i(TAG, "doOtherTask err:");
+        Log.printStackTrace(TAG, t);
+    }
+}
 
     private void goldTicket() {
         try {

@@ -202,7 +202,7 @@ public class AntDodo extends ModelTask {
                                     Log.record("领取失败，" + s);
                                 Log.i(joAward.toString());
                             } else if (TaskStatus.TODO.name().equals(taskStatus)) {
-                                if ("SEND_FRIEND_CARD".equals(taskType)) {
+                                if ("SEND_FRIEND_CARD".equals(taskType) || "AD_BIODIVERSITY_MASTERCARD".equals(taskType)) {
                                     JSONObject joFinishTask = new JSONObject(
                                             AntDodoRpcCall.finishTask(sceneCode, taskType));
                                     if (joFinishTask.optBoolean("success")) {
