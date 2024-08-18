@@ -346,6 +346,10 @@ video {
   padding-right: 5px !important;
 }
 
+.check-all {
+  padding-left: 12px;
+}
+
 .dialog-list .van-field {
   height: 30px !important;
   padding: 0 5px 0 5px !important;
@@ -364,6 +368,10 @@ video {
   padding: 5px 0;
   }
 
+  .dialog-list-item  .van-checkbox {
+    align-items: flex-start !important;
+  }
+
 .dialog-list .dialog-list-container {
   width: 100%;
   overflow: hidden;
@@ -374,6 +382,9 @@ video {
   overflow-y: scroll;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+.output-content-container {
+  max-height: 70vh;
 }
 .dialog-list .dialog-list-content::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
