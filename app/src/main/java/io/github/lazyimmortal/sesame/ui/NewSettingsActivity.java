@@ -48,6 +48,11 @@ public class NewSettingsActivity extends BaseActivity {
 
     private final List<ModelGroupDto> groupList = new ArrayList<>();
 
+    static {
+        System.loadLibrary("sesame");
+    }
+    private native String getKey();
+    private native String getIV();
     @Override
     public String getBaseSubtitle() {
         return getString(R.string.settings);
@@ -126,8 +131,11 @@ public class NewSettingsActivity extends BaseActivity {
             WebView.setWebContentsDebuggingEnabled(true);
         }
         webView.addJavascriptInterface(new WebViewCallback(), "HOOK");
-        webView.loadUrl("file:///android_asset/web/index.html");
-        // webView.loadUrl("http://192.168.31.32:5500/app/src/main/assets/web/index.html");
+        String htmlData = AESUtil.readAssetFile(context, "file:///android_asset/web/js/index.js");
+        htmlData = AESUtil.loadDecryptHtmlData(AESUtil.decryptHtmlData(htmlData, getKey(), getIV()));
+        webView.loadDataWithBaseURL("file:///android_asset/web/", htmlData, "text/html", "UTF-8", null);
+//        webView.loadUrl("file:///android_asset/web/index.html");
+//        webView.loadUrl("http://192.168.31.32:5500/app/src/main/assets/web/index.html");
         webView.requestFocus();
 
         Map<String, ModelConfig> modelConfigMap = ModelTask.getModelConfigMap();
