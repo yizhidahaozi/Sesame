@@ -37,6 +37,10 @@ public class AntMember extends ModelTask {
     private BooleanModelField goalipaysportsroute;
     private BooleanModelField collectmemberpoint;
     private BooleanModelField xiaofeijinvisit;
+    private BooleanModelField saveenergynew;
+    private BooleanModelField spreadmanurenew;
+    private BooleanModelField mazyfeedanimalnew;
+    private BooleanModelField collectvillagecoinnew;
     private BooleanModelField KuaiDiFuLiJia;
     private BooleanModelField signinCalendar;
     private BooleanModelField enableGoldTicket;
@@ -56,9 +60,13 @@ public class AntMember extends ModelTask {
         modelFields.addField(collectSesame = new BooleanModelField("collectSesame", "芝麻粒 | 领取", false));
         modelFields.addField(LifeRecords = new BooleanModelField("LifeRecords", "生活记录 | 开启", false));
         modelFields.addField(saveinsuniversal = new BooleanModelField("saveinsuniversal", "生活记录 | 坚持攒保障金", false));
-        modelFields.addField(goalipaysportsroute = new BooleanModelField("goalipaysportsroute", "生活记录 | 坚持锻炼，走运动路线", false));
+        modelFields.addField(goalipaysportsroute = new BooleanModelField("goalipaysportsroute", "生活记录 | 坚持锻炼走运动路线", false));
         modelFields.addField(collectmemberpoint = new BooleanModelField("collectmemberpoint", "生活记录 | 坚持领会员积分", false));
         modelFields.addField(xiaofeijinvisit = new BooleanModelField("xiaofeijinvisit", "生活记录 | 坚持攒消费金金币", false));
+        modelFields.addField(saveenergynew = new BooleanModelField("saveenergynew", "生活记录 | 坚持在蚂蚁森林收能量", false));
+        modelFields.addField(spreadmanurenew = new BooleanModelField("spreadmanurenew", "生活记录 | 坚持在芭芭农场施肥", false));
+        modelFields.addField(mazyfeedanimalnew = new BooleanModelField("mazyfeedanimalnew", "生活记录 | 坚持在蚂蚁庄园喂小鸡", false));
+        modelFields.addField(collectvillagecoinnew = new BooleanModelField("collectvillagecoinnew", "生活记录 | 坚持收木兰币", false));
         modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 任务", false));
         modelFields.addField(signinCalendar = new BooleanModelField("signinCalendar", "消费金 | 签到", false));
         modelFields.addField(enableGoldTicket = new BooleanModelField("enableGoldTicket", "黄金票 | 签到", false));
@@ -475,6 +483,10 @@ public class AntMember extends ModelTask {
             boolean isSportsRoute = true;
             boolean isCollectMemberPoint = true;
             boolean isXiaofeijinVisit = true;
+            boolean isSaveenergynew = true;
+            boolean isSpreadmanurenew = true;
+            boolean isMazyfeedanimalnew = true;
+            boolean isCollectvillagecoinnew = true;
             for (int i = 0; i < jsonArray.length(); i++) {
                 jsonObject = jsonArray.getJSONObject(i);
                 String recordId = jsonObject.getString("recordId");
@@ -496,6 +508,18 @@ public class AntMember extends ModelTask {
                 if ("坚持攒消费金金币".equals(promiseName)) {
                     isXiaofeijinVisit = false;
                 }
+                if ("坚持在蚂蚁森林收能量".equals(promiseName)) {
+                    isSaveenergynew = false;
+                }
+                if ("坚持在芭芭农场施肥".equals(promiseName)) {
+                    isSpreadmanurenew = false;
+                }
+                if ("坚持在蚂蚁庄园喂小鸡".equals(promiseName)) {
+                    isMazyfeedanimalnew = false;
+                }
+                if ("坚持收木兰币".equals(promiseName)) {
+                    isCollectvillagecoinnew = false;
+                }
             }// 坚持攒保障金
             if (isSaveinsuniVersal && saveinsuniversal.getValue()) {
                 joinsaveinsuniversal();
@@ -511,6 +535,22 @@ public class AntMember extends ModelTask {
             // 坚持攒消费金金币
             if (isXiaofeijinVisit && xiaofeijinvisit.getValue()) {
                 joinxiaofeijinvisit();
+            }
+            // 坚持在蚂蚁森林收能量
+            if (isSaveenergynew && saveenergynew.getValue()) {
+                joinsaveenergynew();
+            }
+            // 坚持在芭芭农场施肥
+            if (isSpreadmanurenew && spreadmanurenew.getValue()) {
+                joinspreadmanurenew();
+            }
+            // 坚持在蚂蚁庄园喂小鸡
+            if (isMazyfeedanimalnew && mazyfeedanimalnew.getValue()) {
+                joinmazyfeedanimalnew();
+            }
+            // 坚持收木兰币
+            if (isCollectvillagecoinnew && collectvillagecoinnew.getValue()) {
+                joincollectvillagecoinnew();
             }
         } catch (Throwable t) {
             Log.i(TAG, "LifeRecords err:");
@@ -647,6 +687,78 @@ public class AntMember extends ModelTask {
             Log.other("生活记录📝[加入:" + JsonUtil.getValueByPath(jsonObject, "data.promiseName") + "]");
         } catch (Throwable t) {
             Log.i(TAG, "joinxiaofeijinvisit err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    // 生活记录-加入坚持在蚂蚁森林收能量
+    private void joinsaveenergynew() {
+        try {
+            String str = AntMemberRpcCall.promiseJoin("{\"autoRenewStatus\":false,\"dataSourceRule\":{\"selectValue\":\"mayisenlin\"}," +
+                    "\"joinFromOuter\":false,\"joinGuarantyRule\":{\"joinGuarantyRuleType\":\"POINT\",\"selectValue\":\"0\"}," +
+                    "\"joinRule\":{\"joinRuleType\":\"DYNAMIC_DAY\",\"selectValue\":\"7\"},\"periodTargetRule\":{\"periodTargetRuleType\":\"CAL_COUNT\",\"selectValue\":\"3\"}," +
+                    "\"templateId\":\"save_energy_new\"}");
+            JSONObject jsonObject = new JSONObject(str);
+            if (!jsonObject.optBoolean("success")) {
+                return;
+            }
+            Log.other("生活记录📝[加入:" + JsonUtil.getValueByPath(jsonObject, "data.promiseName") + "]");
+        } catch (Throwable t) {
+            Log.i(TAG, "joinsaveenergynew err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    // 生活记录-加入坚持在芭芭农场施肥
+    private void joinspreadmanurenew() {
+        try {
+            String str = AntMemberRpcCall.promiseJoin("{\"autoRenewStatus\":false,\"dataSourceRule\":{\"selectValue\":\"ant_farm\"}," +
+                    "\"joinFromOuter\":false,\"joinGuarantyRule\":{\"joinGuarantyRuleType\":\"POINT\",\"selectValue\":\"0\"}," +
+                    "\"joinRule\":{\"joinRuleType\":\"DYNAMIC_DAY\",\"selectValue\":\"7\"},\"periodTargetRule\":{\"periodTargetRuleType\":\"CAL_COUNT\",\"selectValue\":\"3\"}," +
+                    "\"templateId\":\"spread_manure_new\"}");
+            JSONObject jsonObject = new JSONObject(str);
+            if (!jsonObject.optBoolean("success")) {
+                return;
+            }
+            Log.other("生活记录📝[加入:" + JsonUtil.getValueByPath(jsonObject, "data.promiseName") + "]");
+        } catch (Throwable t) {
+            Log.i(TAG, "joinspreadmanurenew err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    // 生活记录-加入坚持在蚂蚁庄园喂小鸡
+    private void joinmazyfeedanimalnew() {
+        try {
+            String str = AntMemberRpcCall.promiseJoin("{\"autoRenewStatus\":false,\"dataSourceRule\":{\"selectValue\":\"mayizhuangyuan\"}," +
+                    "\"joinFromOuter\":false,\"joinGuarantyRule\":{\"joinGuarantyRuleType\":\"POINT\",\"selectValue\":\"0\"}," +
+                    "\"joinRule\":{\"joinRuleType\":\"DYNAMIC_DAY\",\"selectValue\":\"7\"},\"periodTargetRule\":{\"periodTargetRuleType\":\"CAL_COUNT\",\"selectValue\":\"3\"}," +
+                    "\"templateId\":\"mazy_feed_animal_new\"}");
+            JSONObject jsonObject = new JSONObject(str);
+            if (!jsonObject.optBoolean("success")) {
+                return;
+            }
+            Log.other("生活记录📝[加入:" + JsonUtil.getValueByPath(jsonObject, "data.promiseName") + "]");
+        } catch (Throwable t) {
+            Log.i(TAG, "joinmazyfeedanimalnew err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    // 生活记录-加入坚持收木兰币
+    private void joincollectvillagecoinnew() {
+        try {
+            String str = AntMemberRpcCall.promiseJoin("{\"autoRenewStatus\":false,\"dataSourceRule\":{\"selectValue\":\"ant_new_village\"}," +
+                    "\"joinFromOuter\":false,\"joinGuarantyRule\":{\"joinGuarantyRuleType\":\"POINT\",\"selectValue\":\"0\"}," +
+                    "\"joinRule\":{\"joinRuleType\":\"DYNAMIC_DAY\",\"selectValue\":\"7\"},\"periodTargetRule\":{\"periodTargetRuleType\":\"CAL_COUNT\",\"selectValue\":\"3\"}," +
+                    "\"templateId\":\"collect_village_coin_new\"}");
+            JSONObject jsonObject = new JSONObject(str);
+            if (!jsonObject.optBoolean("success")) {
+                return;
+            }
+            Log.other("生活记录📝[加入:" + JsonUtil.getValueByPath(jsonObject, "data.promiseName") + "]");
+        } catch (Throwable t) {
+            Log.i(TAG, "joincollectvillagecoinnew err:");
             Log.printStackTrace(TAG, t);
         }
     }
