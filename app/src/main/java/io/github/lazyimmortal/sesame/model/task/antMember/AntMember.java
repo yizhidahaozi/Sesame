@@ -9,6 +9,7 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.MemberBenefit;
+import io.github.lazyimmortal.sesame.entity.PromiseSimpleTemplate;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.util.*;
 
@@ -33,14 +34,7 @@ public class AntMember extends ModelTask {
     private BooleanModelField memberPointExchangeBenefit;
     private SelectModelField memberPointExchangeBenefitList;
     private BooleanModelField LifeRecords;
-    private BooleanModelField saveinsuniversal;
-    private BooleanModelField goalipaysportsroute;
-    private BooleanModelField collectmemberpoint;
-    private BooleanModelField xiaofeijinvisit;
-    private BooleanModelField saveenergynew;
-    private BooleanModelField spreadmanurenew;
-    private BooleanModelField mazyfeedanimalnew;
-    private BooleanModelField collectvillagecoinnew;
+    private SelectModelField lifeRecordsList;
     private BooleanModelField KuaiDiFuLiJia;
     private BooleanModelField signinCalendar;
     private BooleanModelField enableGoldTicket;
@@ -58,15 +52,8 @@ public class AntMember extends ModelTask {
         modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分 | 兑换权益", false));
         modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分 | 权益列表", new LinkedHashSet<>(), MemberBenefit::getList));
         modelFields.addField(collectSesame = new BooleanModelField("collectSesame", "芝麻粒 | 领取", false));
-        modelFields.addField(LifeRecords = new BooleanModelField("LifeRecords", "生活记录 | 开启", false));
-        modelFields.addField(saveinsuniversal = new BooleanModelField("saveinsuniversal", "生活记录 | 坚持攒保障金", false));
-        modelFields.addField(goalipaysportsroute = new BooleanModelField("goalipaysportsroute", "生活记录 | 坚持锻炼走运动路线", false));
-        modelFields.addField(collectmemberpoint = new BooleanModelField("collectmemberpoint", "生活记录 | 坚持领会员积分", false));
-        modelFields.addField(xiaofeijinvisit = new BooleanModelField("xiaofeijinvisit", "生活记录 | 坚持攒消费金金币", false));
-        modelFields.addField(saveenergynew = new BooleanModelField("saveenergynew", "生活记录 | 坚持在蚂蚁森林收能量", false));
-        modelFields.addField(spreadmanurenew = new BooleanModelField("spreadmanurenew", "生活记录 | 坚持在芭芭农场施肥", false));
-        modelFields.addField(mazyfeedanimalnew = new BooleanModelField("mazyfeedanimalnew", "生活记录 | 坚持在蚂蚁庄园喂小鸡", false));
-        modelFields.addField(collectvillagecoinnew = new BooleanModelField("collectvillagecoinnew", "生活记录 | 坚持收木兰币", false));
+        modelFields.addField(LifeRecords = new BooleanModelField("LifeRecords", "生活记录 | 坚持做", false));
+        modelFields.addField(lifeRecordsList = new SelectModelField("lifeRecordsList", "生活记录 | 坚持做列表", new LinkedHashSet<>(), PromiseSimpleTemplate::getList));
         modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 任务", false));
         modelFields.addField(signinCalendar = new BooleanModelField("signinCalendar", "消费金 | 签到", false));
         modelFields.addField(enableGoldTicket = new BooleanModelField("enableGoldTicket", "黄金票 | 签到", false));
@@ -425,12 +412,11 @@ public class AntMember extends ModelTask {
                 JSONArray categoryTaskList = jo.getJSONArray("categoryTaskList");
                 for (int i = 0; i < categoryTaskList.length(); i++) {
                     jo = categoryTaskList.getJSONObject(i);
-                    JSONArray taskList = jo.getJSONArray("taskList");
-                    if ("BROWSE".equals(jo.getString("type"))) {
-                        doubleCheck = doTask(taskList);
-                    } else if ("OTHERS".equals(jo.getString("type"))) {
-                        doOtherTask(taskList);
+                    if (!"BROWSE".equals(jo.getString("type"))) {
+                        continue;
                     }
+                    JSONArray taskList = jo.getJSONArray("taskList");
+                    doubleCheck = doTask(taskList);
                 }
                 if (doubleCheck) {
                     continue;
@@ -475,83 +461,60 @@ public class AntMember extends ModelTask {
             if (!jsonObject.optBoolean("success")) {
                 return;
             }
-            JSONArray jsonArray = (JSONArray) JsonUtil.getValueByPathObject(jsonObject, "data.processingPromises");
-            if (jsonArray == null) {
-                return;
-            }
-            boolean isSaveinsuniVersal = true;
-            boolean isSportsRoute = true;
-            boolean isCollectMemberPoint = true;
-            boolean isXiaofeijinVisit = true;
-            boolean isSaveenergynew = true;
-            boolean isSpreadmanurenew = true;
-            boolean isMazyfeedanimalnew = true;
-            boolean isCollectvillagecoinnew = true;
-            for (int i = 0; i < jsonArray.length(); i++) {
+            JSONArray jsonArray = (JSONArray) JsonUtil.getValueByPathObject(jsonObject, "data.promiseSimpleTemplates");
+            for (int i = 0; jsonArray != null && i < jsonObject.length(); i++) {
                 jsonObject = jsonArray.getJSONObject(i);
                 String recordId = jsonObject.getString("recordId");
                 boolean isRepeat = jsonObject.getInt("totalNums") - jsonObject.getInt("finishNums") == 1;
                 String promiseName = jsonObject.getString("promiseName");
-                if ("坚持攒保障金".equals(promiseName) && saveinsuniversal.getValue()) {
-                    isSaveinsuniVersal = false;
+                if ("坚持攒保障金".equals(promiseName)) {
                     promiseQueryDetail(recordId);
                     securityFund(isRepeat, recordId);
                     promiseQueryDetail(recordId);
                     promiseQueryDetail(recordId);
                 }
+            }
+            JSONArray ja = (JSONArray) JsonUtil.getValueByPathObject(jsonObject, "data.promiseSimpleTemplates");
+            if (ja == null) {
+                return;
+            }
+            for (int i = 0; i < ja.length(); i++) {
+                JSONObject jo = ja.getJSONObject(i);
+                if ("has_join".equals(jo.optString("status"))) {
+                    continue;
+                }
+                String promiseName = jo.getString("promiseName");
+                String templateId = jo.getString("templateId");
+                Boolean isSelect = lifeRecordsList.getValue().contains(templateId);
+                if (!isSelect) {
+                    continue;
+                }
                 if ("坚持锻炼，走运动路线".equals(promiseName)) {
-                    isSportsRoute = false;
+                    joingoalipaysportsroute();
                 }
                 if ("坚持领会员积分".equals(promiseName)) {
-                    isCollectMemberPoint = false;
+                    joincollectmemberpoint();
                 }
                 if ("坚持攒消费金金币".equals(promiseName)) {
-                    isXiaofeijinVisit = false;
+                    joinxiaofeijinvisit();
                 }
                 if ("坚持在蚂蚁森林收能量".equals(promiseName)) {
-                    isSaveenergynew = false;
+                    joinsaveenergynew();
                 }
                 if ("坚持在芭芭农场施肥".equals(promiseName)) {
-                    isSpreadmanurenew = false;
+                    joinspreadmanurenew();
                 }
                 if ("坚持在蚂蚁庄园喂小鸡".equals(promiseName)) {
-                    isMazyfeedanimalnew = false;
+                    joinmazyfeedanimalnew();
                 }
                 if ("坚持收木兰币".equals(promiseName)) {
-                    isCollectvillagecoinnew = false;
+                    joincollectvillagecoinnew();
                 }
-            }// 坚持攒保障金
-            if (isSaveinsuniVersal && saveinsuniversal.getValue()) {
-                joinsaveinsuniversal();
+                if ("坚持攒保障金".equals(promiseName)) {
+                    joinsaveinsuniversal();
+                }
             }
-            // 坚持锻炼，走运动路线
-            if (isSportsRoute && goalipaysportsroute.getValue()) {
-                joingoalipaysportsroute();
-            }
-            // 坚持领会员积分
-            if (isCollectMemberPoint && collectmemberpoint.getValue()) {
-                joincollectmemberpoint();
-            }
-            // 坚持攒消费金金币
-            if (isXiaofeijinVisit && xiaofeijinvisit.getValue()) {
-                joinxiaofeijinvisit();
-            }
-            // 坚持在蚂蚁森林收能量
-            if (isSaveenergynew && saveenergynew.getValue()) {
-                joinsaveenergynew();
-            }
-            // 坚持在芭芭农场施肥
-            if (isSpreadmanurenew && spreadmanurenew.getValue()) {
-                joinspreadmanurenew();
-            }
-            // 坚持在蚂蚁庄园喂小鸡
-            if (isMazyfeedanimalnew && mazyfeedanimalnew.getValue()) {
-                joinmazyfeedanimalnew();
-            }
-            // 坚持收木兰币
-            if (isCollectvillagecoinnew && collectvillagecoinnew.getValue()) {
-                joincollectvillagecoinnew();
-            }
+
         } catch (Throwable t) {
             Log.i(TAG, "LifeRecords err:");
             Log.printStackTrace(TAG, t);
@@ -824,66 +787,6 @@ public class AntMember extends ModelTask {
         }
         return doubleCheck;
     }
-
-// 蚂蚁积分-做其他任务
-private void doOtherTask(JSONArray taskList) {
-    try {
-        for (int j = 0; j < taskList.length(); j++) {
-            JSONObject task = taskList.getJSONObject(j);
-            int count = 1;
-            boolean hybrid = task.getBoolean("hybrid");
-            int periodCurrentCount = 0;
-            int periodTargetCount = 0;
-            if (hybrid) {
-                periodCurrentCount = Integer
-                        .parseInt(task.getJSONObject("extInfo").getString("PERIOD_CURRENT_COUNT"));
-                periodTargetCount = Integer
-                        .parseInt(task.getJSONObject("extInfo").getString("PERIOD_TARGET_COUNT"));
-                count = periodTargetCount > periodCurrentCount ? periodTargetCount - periodCurrentCount : 0;
-            }
-            if (count <= 0) {
-                continue;
-            }
-            // String status = task.optString("status");
-            JSONObject taskConfigInfo = task.getJSONObject("taskConfigInfo");
-            String name = taskConfigInfo.getString("name");
-            Long id = taskConfigInfo.getLong("id");
-            String awardParamPoint = taskConfigInfo.getJSONObject("awardParam")
-                    .getString("awardParamPoint");
-            String targetBusiness = taskConfigInfo.getJSONArray("targetBusiness").getString(0);
-            if (!targetBusiness.startsWith("ngfe"))
-                continue;
-            String businessType = taskConfigInfo.getString("businessType");
-            if ("uvChangeBusinessType".equals(businessType)) {
-                String[] targetBusinessArray = targetBusiness.split("#");
-                String tagCode = targetBusinessArray[0];
-                for (int k = 0; k < count; k++) {
-                    JSONObject jo = new JSONObject(AntMemberRpcCall.applyTask(name, id));
-                    TimeUtil.sleep(300);
-                    if (!"SUCCESS".equals(jo.getString("resultCode"))) {
-                        Log.i(TAG, "signPageTaskList.applyTask err:" + jo.optString("resultDesc"));
-                        continue;
-                    }
-                    jo = new JSONObject(AntMemberRpcCall.ngfeUpdate(tagCode));
-                    TimeUtil.sleep(300);
-                    if (!jo.optBoolean("success")) {
-                        Log.i(TAG, "signPageTaskList.update err:" + jo.toString());
-                        continue;
-                    }
-                    String ex = "";
-                    if (hybrid) {
-                        ex = "(" + (periodCurrentCount + k + 1) + "/" + periodTargetCount + ")";
-                    }
-                    Log.other("会员任务🎖️[" + name + ex + "]#" + awardParamPoint + "积分");
-                }
-            }
-
-        }
-    } catch (Throwable t) {
-        Log.i(TAG, "doOtherTask err:");
-        Log.printStackTrace(TAG, t);
-    }
-}
 
     private void goldTicket() {
         try {

@@ -127,11 +127,6 @@ public class AntMemberRpcCall {
                 "[{\"sourceBusiness\":\"signInAd\",\"sourcePassMap\":{\"innerSource\":\"\",\"source\":\"myTab\",\"unid\":\"\"}}]");
     }
 
-    public static String ngfeUpdate(String tagCode) {
-        return ApplicationHook.requestString("com.alipay.csprod.prom.camp.ngfe.update",
-                "[{\"tagCode\":\"" + tagCode + "\"}]");
-    }
-
     /**
      * 黄金票收取
      *
