@@ -48,21 +48,21 @@ public class AntMember extends ModelTask {
     @Override
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
-        modelFields.addField(memberSign = new BooleanModelField("memberSign", "会员 | 签到", false));
+        modelFields.addField(memberSign = new BooleanModelField("memberSign", "会员签到", false));
         modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分 | 兑换权益", false));
         modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分 | 权益列表", new LinkedHashSet<>(), MemberBenefit::getList));
         modelFields.addField(collectSesame = new BooleanModelField("collectSesame", "芝麻粒 | 领取", false));
         modelFields.addField(LifeRecords = new BooleanModelField("LifeRecords", "生活记录 | 坚持做", false));
         modelFields.addField(lifeRecordsList = new SelectModelField("lifeRecordsList", "生活记录 | 坚持做列表", new LinkedHashSet<>(), PromiseSimpleTemplate::getList));
-        modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 任务", false));
+        modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 福利加", false));
+        modelFields.addField(beanSignIn = new BooleanModelField("beanSignIn", "安心豆 | 签到", false));
+        modelFields.addField(beanExchangeGoldenTicket = new BooleanModelField("beanExchangeGoldenTicket", "安心豆 | 兑换黄金票", false));
+        modelFields.addField(beanExchangeBubbleBoost = new BooleanModelField("beanExchangeBubbleBoost", "安心豆 | 兑换时光加速器", false));
         modelFields.addField(signinCalendar = new BooleanModelField("signinCalendar", "消费金 | 签到", false));
         modelFields.addField(enableGoldTicket = new BooleanModelField("enableGoldTicket", "黄金票 | 签到", false));
-        modelFields.addField(enableGameCenter = new BooleanModelField("enableGameCenter", "游戏中心 | 签到", false));
         modelFields.addField(zcjSignIn = new BooleanModelField("zcjSignIn", "招财金 | 签到", false));
+        modelFields.addField(enableGameCenter = new BooleanModelField("enableGameCenter", "游戏中心 | 签到", false));
         modelFields.addField(merchantKmdk = new BooleanModelField("merchantKmdk", "商户开门 | 打卡", false));
-        modelFields.addField(beanSignIn = new BooleanModelField("beanSignIn", "安心豆 | 签到", false));
-        modelFields.addField(beanExchangeBubbleBoost = new BooleanModelField("beanExchangeBubbleBoost", "安心豆 | 兑换时光加速器", false));
-        modelFields.addField(beanExchangeGoldenTicket = new BooleanModelField("beanExchangeGoldenTicket", "安心豆 | 兑换黄金票", false));
         return modelFields;
     }
 
