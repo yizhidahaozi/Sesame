@@ -461,20 +461,24 @@ public class AntMember extends ModelTask {
             if (!jsonObject.optBoolean("success")) {
                 return;
             }
-            JSONArray jsonArray = (JSONArray) JsonUtil.getValueByPathObject(jsonObject, "data.promiseSimpleTemplates");
-            for (int i = 0; jsonArray != null && i < jsonObject.length(); i++) {
+            JSONArray jsonArray = (JSONArray) JsonUtil.getValueByPathObject(jsonObject, "data.processingPromises");
+            JSONArray ja = (JSONArray) JsonUtil.getValueByPathObject(jsonObject, "data.promiseSimpleTemplates");
+            for (int i = 0; jsonArray != null && i < jsonArray.length(); i++) {
                 jsonObject = jsonArray.getJSONObject(i);
                 String recordId = jsonObject.getString("recordId");
                 boolean isRepeat = jsonObject.getInt("totalNums") - jsonObject.getInt("finishNums") == 1;
                 String promiseName = jsonObject.getString("promiseName");
                 if ("坚持攒保障金".equals(promiseName)) {
+                    String templateId = jsonObject.getString("templateId");
+                    if (!lifeRecordsList.getValue().contains(templateId)) {
+                        break;
+                    }
                     promiseQueryDetail(recordId);
                     securityFund(isRepeat, recordId);
                     promiseQueryDetail(recordId);
                     promiseQueryDetail(recordId);
                 }
             }
-            JSONArray ja = (JSONArray) JsonUtil.getValueByPathObject(jsonObject, "data.promiseSimpleTemplates");
             if (ja == null) {
                 return;
             }
