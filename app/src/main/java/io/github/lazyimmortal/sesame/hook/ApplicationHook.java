@@ -143,7 +143,9 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                                 Log.i(TAG, "Activity onResume");
                                 String targetUid = getUserId();
                                 if (targetUid == null) {
-                                    init = false;
+                                    Log.record("用户未登录");
+                                    Toast.show("用户未登录");
+                                    return;
                                 }
                                 if (!init) {
                                     if (initHandler(true)) {
