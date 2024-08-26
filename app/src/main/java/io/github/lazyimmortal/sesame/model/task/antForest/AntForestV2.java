@@ -110,8 +110,8 @@ public class AntForestV2 extends ModelTask {
     private IntegerModelField returnWater18;
     private IntegerModelField returnWater10;
     private BooleanModelField receiveForestTaskAward;
+    private ChoiceModelField waterFriendType;
     private SelectAndCountModelField waterFriendList;
-    private IntegerModelField waterFriendCount;
     private SelectModelField giveEnergyRainList;
     private BooleanModelField vitalityExchangeBenefit;
     private SelectAndCountModelField vitalityExchangeBenefitList;
@@ -168,8 +168,8 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(returnWater10 = new IntegerModelField("returnWater10", "返水 | 10克需收能量(关闭:0)", 0));
         modelFields.addField(returnWater18 = new IntegerModelField("returnWater18", "返水 | 18克需收能量(关闭:0)", 0));
         modelFields.addField(returnWater33 = new IntegerModelField("returnWater33", "返水 | 33克需收能量(关闭:0)", 0));
+        modelFields.addField(waterFriendType = new ChoiceModelField("waterFriendType", "浇水 | 动作", WaterFriendType.WATER_00, WaterFriendType.nickNames));
         modelFields.addField(waterFriendList = new SelectAndCountModelField("waterFriendList", "浇水 | 好友列表", new LinkedHashMap<>(), AlipayUser::getList));
-        modelFields.addField(waterFriendCount = new IntegerModelField("waterFriendCount", "浇水 | 克数(10 18 33 66)", 66));
         modelFields.addField(helpFriendCollect = new BooleanModelField("helpFriendCollect", "复活能量 | 开启", false));
         modelFields.addField(helpFriendCollectType = new ChoiceModelField("helpFriendCollectType", "复活能量 | 动作", HelpFriendCollectType.HELP, HelpFriendCollectType.nickNames));
         modelFields.addField(helpFriendCollectList = new SelectModelField("helpFriendCollectList", "复活能量 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
@@ -443,43 +443,7 @@ public class AntForestV2 extends ModelTask {
                 if (ecoLifeTick.getValue() || photoGuangPan.getValue()) {
                     ecoLife();
                 }
-                Map<String, Integer> friendMap = waterFriendList.getValue();
-                for (Map.Entry<String, Integer> friendEntry : friendMap.entrySet()) {
-                    String uid = friendEntry.getKey();
-                    if (selfId.equals(uid)) {
-                        continue;
-                    }
-                    Integer waterCount = friendEntry.getValue();
-                    if (waterCount == null || waterCount <= 0) {
-                        continue;
-                    }
-                    if (waterCount > 3)
-                        waterCount = 3;
-                    if (Status.canWaterFriendToday(uid, waterCount)) {
-                        try {
-                            String s = AntForestRpcCall.queryFriendHomePage(uid);
-                            TimeUtil.sleep(100);
-                            JSONObject jo = new JSONObject(s);
-                            if ("SUCCESS".equals(jo.getString("resultCode"))) {
-                                String bizNo = jo.getString("bizNo");
-                                KVNode<Integer, Boolean> waterCountKVNode = returnFriendWater(uid, bizNo, waterCount, waterFriendCount.getValue());
-                                waterCount = waterCountKVNode.getKey();
-                                if (waterCount > 0) {
-                                    Status.waterFriendToday(uid, waterCount);
-                                }
-                                if (!waterCountKVNode.getValue()) {
-                                    break;
-                                }
-                            } else {
-                                Log.record(jo.getString("resultDesc"));
-                                Log.i(s);
-                            }
-                        } catch (Throwable t) {
-                            Log.i(TAG, "waterFriendEnergy err:");
-                            Log.printStackTrace(TAG, t);
-                        }
-                    }
-                }
+                waterFriendEnergy();
                 Set<String> set = whoYouWantToGiveTo.getValue();
                 if (!set.isEmpty()) {
                     for (String userId : set) {
@@ -1258,6 +1222,50 @@ public class AntForestV2 extends ModelTask {
         } catch (Throwable t) {
             Log.i(TAG, "popupTask err:");
             Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private void waterFriendEnergy() {
+        int waterEnergy = WaterFriendType.waterEnergy[waterFriendType.getValue()];
+        if (waterEnergy == 0) {
+            return;
+        }
+        Map<String, Integer> friendMap = waterFriendList.getValue();
+        for (Map.Entry<String, Integer> friendEntry : friendMap.entrySet()) {
+            String uid = friendEntry.getKey();
+            if (selfId.equals(uid)) {
+                continue;
+            }
+            Integer waterCount = friendEntry.getValue();
+            if (waterCount == null || waterCount <= 0) {
+                continue;
+            }
+            if (waterCount > 3)
+                waterCount = 3;
+            if (Status.canWaterFriendToday(uid, waterCount)) {
+                try {
+                    String s = AntForestRpcCall.queryFriendHomePage(uid);
+                    TimeUtil.sleep(100);
+                    JSONObject jo = new JSONObject(s);
+                    if ("SUCCESS".equals(jo.getString("resultCode"))) {
+                        String bizNo = jo.getString("bizNo");
+                        KVNode<Integer, Boolean> waterCountKVNode = returnFriendWater(uid, bizNo, waterCount, waterEnergy);
+                        waterCount = waterCountKVNode.getKey();
+                        if (waterCount > 0) {
+                            Status.waterFriendToday(uid, waterCount);
+                        }
+                        if (!waterCountKVNode.getValue()) {
+                            break;
+                        }
+                    } else {
+                        Log.record(jo.getString("resultDesc"));
+                        Log.i(s);
+                    }
+                } catch (Throwable t) {
+                    Log.i(TAG, "waterFriendEnergy err:");
+                    Log.printStackTrace(TAG, t);
+                }
+            }
         }
     }
 
@@ -2427,6 +2435,18 @@ public class AntForestV2 extends ModelTask {
 
     public static String getBubbleTimerTid(String ui, long bi) {
         return "BT|" + ui + "|" + bi;
+    }
+
+    public interface WaterFriendType {
+
+        int WATER_00 = 0;
+        int WATER_10 = 1;
+        int WATER_18 = 2;
+        int WATER_33 = 3;
+        int WATER_66 = 4;
+
+        String[] nickNames = {"不浇水", "浇水10克", "浇水18克", "浇水33克", "浇水66克"};
+        int[] waterEnergy = {0, 10, 18, 33, 66};
     }
 
     public interface HelpFriendCollectType {
