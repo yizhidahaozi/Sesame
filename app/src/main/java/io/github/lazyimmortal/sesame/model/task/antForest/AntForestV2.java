@@ -598,6 +598,9 @@ public class AntForestV2 extends ModelTask {
     }
 
     private JSONObject collectFriendEnergy(String userId) {
+        if (hasErrorWait) {
+            return null;
+        }
         try {
             JSONObject userHomeObject = queryFriendHome(userId);
             if (userHomeObject != null) {
@@ -669,7 +672,7 @@ public class AntForestV2 extends ModelTask {
                 if (batchRobEnergy.getValue()) {
                     Iterator<Long> iterator = bubbleIdList.iterator();
                     List<Long> batchBubbleIdList = new ArrayList<>();
-                    while (iterator.hasNext() && !hasErrorWait) {
+                    while (iterator.hasNext()) {
                         batchBubbleIdList.add(iterator.next());
                         if (batchBubbleIdList.size() >= 6) {
                             collectEnergy(new CollectEnergyEntity(userId, userHomeObject, AntForestRpcCall.getCollectBatchEnergyRpcEntity(userId, batchBubbleIdList)));
@@ -677,7 +680,7 @@ public class AntForestV2 extends ModelTask {
                         }
                     }
                     int size = batchBubbleIdList.size();
-                    if (size > 0 && !hasErrorWait) {
+                    if (size > 0) {
                         if (size == 1) {
                             collectEnergy(new CollectEnergyEntity(userId, userHomeObject, AntForestRpcCall.getCollectEnergyRpcEntity(null, userId, batchBubbleIdList.get(0))));
                         } else {
@@ -687,9 +690,6 @@ public class AntForestV2 extends ModelTask {
                 } else {
                     for (Long bubbleId : bubbleIdList) {
                         collectEnergy(new CollectEnergyEntity(userId, userHomeObject, AntForestRpcCall.getCollectEnergyRpcEntity(null, userId, bubbleId)));
-                        if (hasErrorWait) {
-                            break;
-                        }
                     }
                 }
             }
@@ -703,6 +703,9 @@ public class AntForestV2 extends ModelTask {
 
     private void collectFriendsEnergy(List<String> idList) {
         try {
+            if (hasErrorWait) {
+                return;
+            }
             collectFriendsEnergy(new JSONObject(AntForestRpcCall.fillUserRobFlag(new JSONArray(idList).toString())));
         } catch (Exception e) {
             Log.printStackTrace(e);
@@ -710,6 +713,9 @@ public class AntForestV2 extends ModelTask {
     }
 
     private void collectFriendsEnergy(JSONObject friendsObject) {
+        if (hasErrorWait) {
+            return;
+        }
         try {
             JSONArray jaFriendRanking = friendsObject.optJSONArray("friendRanking");
             if (jaFriendRanking == null) {
@@ -854,6 +860,9 @@ public class AntForestV2 extends ModelTask {
     }
 
     private void collectEnergy(CollectEnergyEntity collectEnergyEntity, Boolean joinThread) {
+        if (hasErrorWait) {
+            return;
+        }
         Runnable runnable = () -> {
             try {
                 String userId = collectEnergyEntity.getUserId();
