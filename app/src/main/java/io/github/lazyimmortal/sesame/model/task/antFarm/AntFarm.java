@@ -1951,6 +1951,9 @@ public class AntFarm extends ModelTask {
     private void hireAnimal() {
         try {
             syncAnimalStatus(ownerFarmId);
+            if (!AnimalFeedStatus.EATING.name().equals(ownerAnimal.animalFeedStatus)) {
+                return;
+            }
             int count = 3 - animals.length;
             if (count <= 0) {
                 return;
