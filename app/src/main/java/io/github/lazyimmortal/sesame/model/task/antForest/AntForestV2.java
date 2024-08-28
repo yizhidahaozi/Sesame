@@ -1594,26 +1594,12 @@ public class AntForestV2 extends ModelTask {
     private void useDoubleCard(JSONObject bagObject) {
         try {
             if (hasDoubleCardTime() && Status.canDoubleToday()) {
-                // 背包筛选双击卡
-                JSONObject bagObjectByGroup = getPropGroupByBag(bagObject, "doubleClick");
+                // 背包查找 限时能量双击卡
                 JSONObject jo = null;
-                if (bagObjectByGroup == null) {
-                    if (!doubleCardConstant.getValue()) {
-                        return;
-                    }
-                }
-                else if (bagObjectByGroup.has("LIMIT_TIME_ENERGY_DOUBLE_CLICK")) {
-                    jo = bagObjectByGroup.getJSONObject("LIMIT_TIME_ENERGY_DOUBLE_CLICK");
-                } else if (bagObjectByGroup.has("ENERGY_DOUBLE_CLICK_31DAYS")) {
-                    jo = bagObjectByGroup.getJSONObject("ENERGY_DOUBLE_CLICK_31DAYS");
-                } else if (bagObjectByGroup.has("8ZN_ENERGY_DOUBLE_CLICK_7DAYS_2")) {
-                    jo = bagObjectByGroup.getJSONObject("8ZN_ENERGY_DOUBLE_CLICK_7DAYS_2");
-                } else if (bagObjectByGroup.has("8ZN_ENERGY_DOUBLE_CLICK_14DAYS_2")) {
-                    jo = bagObjectByGroup.getJSONObject("8ZN_ENERGY_DOUBLE_CLICK_14DAYS_2");
-                } else if (bagObjectByGroup.has("8ZN_ENERGY_DOUBLE_CLICK_31DAYS_2")) {
-                    jo = bagObjectByGroup.getJSONObject("8ZN_ENERGY_DOUBLE_CLICK_31DAYS_2");
-                }
-                if (jo == null && doubleCardConstant.getValue()) {
+                JSONArray ja = getLimitTimeProp(bagObject, "doubleClick");
+                if (ja != null) {
+                    jo = ja.getJSONObject(0);
+                } else if (doubleCardConstant.getValue()) {
                     // 商店兑换 限时能量双击卡
                     if (exchangeBenefit("SK20240805004754")) {
                         bagObject = getBag();
@@ -1623,12 +1609,15 @@ public class AntForestV2 extends ModelTask {
                         jo = findPropBag(bagObject, "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
                     }
                 }
-                if (jo == null && bagObjectByGroup != null && bagObjectByGroup.has("ENERGY_DOUBLE_CLICK")) {
-                    jo = bagObjectByGroup.getJSONObject("ENERGY_DOUBLE_CLICK");
+                if (jo == null) {
+                    // 背包查找 能量双击卡
+                    jo = findPropBag(bagObject, "ENERGY_DOUBLE_CLICK");
                 }
                 // 使用能量双击卡
                 if (jo != null && consumeProp(jo)) {
-                    doubleEndTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(jo.optLong("durationTime"));
+                    doubleEndTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(
+                            jo.getJSONObject("propConfigVO").getLong("durationTime")
+                    );
                     Status.DoubleToday();
                 } else {
                     updateDoubleTime();
@@ -2177,28 +2166,46 @@ public class AntForestV2 extends ModelTask {
         return null;
     }
 
-    private JSONObject getPropGroupByBag(JSONObject bagObject, String propGroup) {
-        JSONObject group = new JSONObject();
+    // 获取限时道具
+    private JSONArray getLimitTimeProp(JSONObject bagObject, String propGroup) {
         try {
+            ArrayList<JSONObject> list = new ArrayList<>();
             // 遍历背包查找道具
             JSONArray forestPropVOList = bagObject.getJSONArray("forestPropVOList");
-            JSONArray forestPropVOListByGroup = new JSONArray();
             for (int i = 0; i < forestPropVOList.length(); i++) {
                 JSONObject forestPropVO = forestPropVOList.getJSONObject(i);
-                if (forestPropVO.getString("propGroup").equals(propGroup)) {
-                    forestPropVOListByGroup.put(forestPropVO);
-                    group.put(forestPropVO.getString("propType"), forestPropVO);
+                if (forestPropVO.getString("propGroup").equals(propGroup)
+                        && forestPropVO.has("recentExpireTime")) {
+                    list.add(forestPropVO);
                 }
             }
-            if (forestPropVOListByGroup.length() > 0) {
-                group.put("forestPropVOList", forestPropVOListByGroup);
+            if (list.isEmpty()) {
+                return null;
             }
+            Collections.sort(list, new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject jsonObject1, JSONObject jsonObject2) {
+                    try {
+                        int durationTime1 = jsonObject1.getJSONObject("propConfigVO").getInt("durationTime");
+                        int durationTime2 = jsonObject2.getJSONObject("propConfigVO").getInt("durationTime");
+                        long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(durationTime1);
+                        long recentExpireTime = jsonObject2.getLong("recentExpireTime");
+                        if (endTime < recentExpireTime) {
+                            return -1;
+                        } else return durationTime2 - durationTime1;
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            return new JSONArray(list);
         } catch (Throwable th) {
-            Log.i(TAG, "getPropGroupByBag err:");
+            Log.i(TAG, "getLimitTimeProp err:");
             Log.printStackTrace(TAG, th);
         }
-        return group.has("forestPropVOList") ? group : null;
+        return null;
     }
+
     /*
      * 查找背包道具
      * prop
