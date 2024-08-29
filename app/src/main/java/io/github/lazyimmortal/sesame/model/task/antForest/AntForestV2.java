@@ -12,6 +12,7 @@ import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.RuntimeInfo;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.*;
+import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.*;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
@@ -1784,6 +1785,46 @@ public class AntForestV2 extends ModelTask {
     /**
      * 光盘行动
      */
+    private void getDishImage() {
+        try {
+            TokenConfig.load();
+            ArrayList<String> beforeImageList = TokenConfig.INSTANCE.getBeforeImageList();
+            ArrayList<String> afterImageList = TokenConfig.INSTANCE.getAfterImageList();
+            if (beforeImageList.size() != afterImageList.size()) {
+                Log.record("光盘行动照片存储有误！");
+                return;
+            }
+            if (!beforeImageList.isEmpty()) {
+                int pos = RandomUtil.nextInt(0, beforeImageList.size() - 1);
+                photoGuangPanBefore.setValue(beforeImageList.get(pos));
+                photoGuangPanAfter.setValue(afterImageList.get(pos));
+            }
+        } catch (Throwable th) {
+            Log.i(TAG, "getDishImage err:");
+            Log.printStackTrace(TAG, th);
+        }
+    }
+
+    private void setDishImage() {
+        try {
+            TokenConfig.load();
+            ArrayList<String> beforeImageList = TokenConfig.INSTANCE.getBeforeImageList();
+            ArrayList<String> afterImageList = TokenConfig.INSTANCE.getAfterImageList();
+            String beforeImage = photoGuangPanBefore.getValue();
+            String afterImage = photoGuangPanAfter.getValue();
+            if (!beforeImageList.contains(beforeImage) && !afterImageList.contains(afterImage)) {
+                beforeImageList.add(beforeImage);
+                afterImageList.add(afterImage);
+                TokenConfig.INSTANCE.setBeforeImageList(beforeImageList);
+                TokenConfig.INSTANCE.setAfterImageList(afterImageList);
+                TokenConfig.save();
+            }
+        } catch (Throwable th) {
+            Log.i(TAG, "setDishImage err:");
+            Log.printStackTrace(TAG, th);
+        }
+    }
+
     private void photoGuangPan(String dayPoint) {
         try {
             String source = "renwuGD";
@@ -1795,6 +1836,7 @@ public class AntForestV2 extends ModelTask {
                 return;
             }
             boolean isDone = false;
+            getDishImage();
             String photoGuangPanBeforeStr = photoGuangPanBefore.getValue();
             String photoGuangPanAfterStr = photoGuangPanAfter.getValue();
             if (StringUtil.isEmpty(photoGuangPanBeforeStr) || StringUtil.isEmpty(photoGuangPanAfterStr) || Objects.equals(photoGuangPanBeforeStr, photoGuangPanAfterStr)) {
@@ -1853,6 +1895,7 @@ public class AntForestV2 extends ModelTask {
                 return;
             }
             Log.forest("光盘行动💿任务完成");
+            setDishImage();
         } catch (Throwable t) {
             Log.i(TAG, "photoGuangPan err:");
             Log.printStackTrace(TAG, t);

@@ -118,6 +118,14 @@ public class FileUtil {
         return write2File(json, new File(CONFIG_DIRECTORY_FILE + "/" + userId, "config_v2.json"));
     }
 
+    public static File getTokenConfigFile() {
+        return new File(MAIN_DIRECTORY_FILE, "tokenConfig.json");
+    }
+
+    public static boolean setTokenConfigFile(String json) {
+        return write2File(json, new File(MAIN_DIRECTORY_FILE, "tokenConfig.json"));
+    }
+
     public static boolean setUIConfigFile(String json) {
         return write2File(json, new File(MAIN_DIRECTORY_FILE, "ui_config.json"));
     }
