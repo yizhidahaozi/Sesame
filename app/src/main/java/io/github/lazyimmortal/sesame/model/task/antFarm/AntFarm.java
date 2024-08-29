@@ -87,6 +87,7 @@ public class AntFarm extends ModelTask {
     private ListModelField.ListJoinCommaToStringModelField farmGameTime;
     private BooleanModelField kitchen;
     private BooleanModelField useSpecialFood;
+    private IntegerModelField useSpecialFoodCountLimit;
     private BooleanModelField useNewEggTool;
     private BooleanModelField harvestProduce;
     private BooleanModelField donation;
@@ -144,7 +145,8 @@ public class AntFarm extends ModelTask {
         modelFields.addField(useAccelerateTool = new BooleanModelField("useAccelerateTool", "加速卡 | 使用", false));
         modelFields.addField(useAccelerateToolContinue = new BooleanModelField("useAccelerateToolContinue", "加速卡 | 连续使用", false));
         modelFields.addField(useAccelerateToolWhenMaxEmotion = new BooleanModelField("useAccelerateToolWhenMaxEmotion", "加速卡 | 仅在满状态时使用", false));
-        modelFields.addField(useSpecialFood = new BooleanModelField("useSpecialFood", "使用特殊食品", false));
+        modelFields.addField(useSpecialFood = new BooleanModelField("useSpecialFood", "特殊食品 | 使用", false));
+        modelFields.addField(useSpecialFoodCountLimit = new IntegerModelField("useSpecialFoodCountLimit", "特殊食品 | 使用上限(无限:0)", 0));
         modelFields.addField(useNewEggTool = new BooleanModelField("useNewEggTool", "使用新蛋卡", false));
         modelFields.addField(receiveFarmTaskAward = new BooleanModelField("receiveFarmTaskAward", "收取饲料奖励", false));
         modelFields.addField(receiveFarmToolReward = new BooleanModelField("receiveFarmToolReward", "收取道具奖励", false));
@@ -1585,25 +1587,41 @@ public class AntFarm extends ModelTask {
     }
 
     private void useFarmFood(JSONArray cuisineList) {
+        int countLimit = useSpecialFoodCountLimit.getValue();
+        if (!Status.canUseSpecialFood(countLimit)) {
+            return;
+        }
         try {
-            JSONObject jo = new JSONObject();
-            String cookbookId = null;
-            String cuisineId = null;
-            String name = null;
+            ArrayList<JSONObject> list = new ArrayList<>();
             for (int i = 0; i < cuisineList.length(); i++) {
-                jo = cuisineList.getJSONObject(i);
+                list.add(cuisineList.getJSONObject(i));
+            }
+            Collections.sort(list, new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject jsonObject1, JSONObject jsonObject2) {
+                    int count1 = jsonObject1.optInt("count");
+                    int count2 = jsonObject2.optInt("count");
+                    return count2 - count1;
+                }
+            });
+            for (int i = 0; i < list.size(); i++) {
+                JSONObject jo = list.get(i);
+                String cookbookId = jo.getString("cookbookId");
+                String cuisineId = jo.getString("cuisineId");
+                String name = jo.getString("name");
                 int count = jo.getInt("count");
-                if (count <= 0) continue;
-                cookbookId = jo.getString("cookbookId");
-                cuisineId = jo.getString("cuisineId");
-                name = jo.getString("name");
                 for (int j = 0; j < count; j++) {
                     jo = new JSONObject(AntFarmRpcCall.useFarmFood(cookbookId, cuisineId));
                     if ("SUCCESS".equals(jo.getString("memo"))) {
                         double deltaProduce = jo.getJSONObject("foodEffect").getDouble("deltaProduce");
                         Log.farm("使用美食🍱[" + name + "]#加速" + deltaProduce + "颗爱心鸡蛋");
+                        Status.useSpecialFood();
                     } else {
                         Log.i(TAG, jo.toString());
+                        return;
+                    }
+                    if (!Status.canUseSpecialFood(countLimit)) {
+                        return;
                     }
                 }
             }

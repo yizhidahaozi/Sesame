@@ -1,6 +1,7 @@
 package io.github.lazyimmortal.sesame.util;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+
 import lombok.Data;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.model.task.antForest.AntForestV2;
@@ -30,6 +31,7 @@ public class Status {
     private Map<String, Integer> visitFriendLogList = new HashMap<>();
     private Set<String> donationEggList = new HashSet<>();
     private int useAccelerateToolCount = 0;
+    private int useSpecialFoodCount = 0;
     private Boolean canOrnament = true;
     private Boolean animalSleep = false;
 
@@ -266,6 +268,18 @@ public class Status {
 
     public static void useAccelerateTool() {
         INSTANCE.useAccelerateToolCount += 1;
+        save();
+    }
+
+    public static boolean canUseSpecialFood(int countLimit) {
+        if (countLimit == 0) {
+            return true;
+        }
+        return INSTANCE.useSpecialFoodCount < countLimit;
+    }
+
+    public static void useSpecialFood() {
+        INSTANCE.useSpecialFoodCount += 1;
         save();
     }
 
@@ -537,7 +551,7 @@ public class Status {
         try {
             INSTANCE.saveTime = System.currentTimeMillis();
             FileUtil.write2File(JsonUtil.toFormatJsonString(INSTANCE), FileUtil.getStatusFile(currentUid));
-        } catch (Exception e){
+        } catch (Exception e) {
             INSTANCE.saveTime = lastSaveTime;
             throw e;
         }
