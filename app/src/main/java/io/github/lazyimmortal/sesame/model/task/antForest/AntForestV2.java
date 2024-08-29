@@ -101,6 +101,7 @@ public class AntForestV2 extends ModelTask {
     @Getter
     private IntegerModelField doubleCountLimit;
     private BooleanModelField doubleCardConstant;
+    private BooleanModelField doubleCardOnlyLimitTime;
     private BooleanModelField stealthCard;
     private BooleanModelField stealthCardConstant;
     private BooleanModelField helpFriendCollect;
@@ -163,6 +164,7 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(doubleCountLimit = new IntegerModelField("doubleCountLimit", "双击卡 | 使用次数", 6));
         modelFields.addField(doubleCardTime = new ListModelField.ListJoinCommaToStringModelField("doubleCardTime", "双击卡 | 使用时间(范围)", ListUtil.newArrayList("0700-0730")));
         modelFields.addField(doubleCardConstant = new BooleanModelField("DoubleCardConstant", "双击卡 | 限时双击永动机", false));
+        modelFields.addField(doubleCardOnlyLimitTime = new BooleanModelField("doubleCardOnlyLimitTime", "双击卡 | 仅使用限时双击卡", false));
         modelFields.addField(stealthCard = new BooleanModelField("stealthCard", "隐身卡 | 使用", false));
         modelFields.addField(stealthCardConstant = new BooleanModelField("stealthCardConstant", "隐身卡 | 限时隐身永动机", false));
         modelFields.addField(returnWater10 = new IntegerModelField("returnWater10", "返水 | 10克需收能量(关闭:0)", 0));
@@ -1609,7 +1611,7 @@ public class AntForestV2 extends ModelTask {
                         jo = findPropBag(bagObject, "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
                     }
                 }
-                if (jo == null) {
+                if (jo == null && !doubleCardOnlyLimitTime.getValue()) {
                     // 背包查找 能量双击卡
                     jo = findPropBag(bagObject, "ENERGY_DOUBLE_CLICK");
                 }
