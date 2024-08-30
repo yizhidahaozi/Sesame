@@ -195,6 +195,11 @@ public class NewSettingsActivity extends BaseActivity {
         }
 
         @JavascriptInterface
+        public String getUserId() {
+            return userId;
+        }
+
+        @JavascriptInterface
         public String getGroup() {
             return JsonUtil.toJsonString(groupList);
         }

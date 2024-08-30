@@ -1343,7 +1343,7 @@ public class AntForestV2 extends ModelTask {
                     continue;
                 }
                 while (Status.canVitalityExchangeBenefit(skuId, count) && exchangeBenefit(skuId)) {
-                    TimeUtil.sleep(1000);
+                    TimeUtil.sleep(3000);
                 }
             }
         } catch (Throwable t) {
