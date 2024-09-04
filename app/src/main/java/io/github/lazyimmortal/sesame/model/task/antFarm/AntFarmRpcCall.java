@@ -1,5 +1,7 @@
 package io.github.lazyimmortal.sesame.model.task.antFarm;
 
+import org.json.JSONArray;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -461,5 +463,58 @@ public class AntFarmRpcCall {
     public static String saveOrnaments(String animalId, String farmId, String ornaments) {
         return ApplicationHook.requestString("com.alipay.antfarm.saveOrnaments",
                 "[{\"animalId\":\"" + animalId + "\",\"farmId\":\"" + farmId + "\",\"ornaments\":\"" + ornaments + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"version\":\"" + VERSION + "\"}]");
+    }
+
+    // 亲密家庭
+    public static String enterFamily() {
+        String args = "[{\"fromAnn\":false,\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.enterFamily", args);
+    }
+
+    public static String familyFeedFriendAnimal(String groupId, String friendFarmId) {
+        String args = "[{\"friendFarmId\":\"" + friendFarmId + "\",\"groupId\":\"" + groupId + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ChickFamily\",\"source\":\"H5\",\"spaceType\":\"ChickFamily\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.feedFriendAnimal", args);
+    }
+
+    public static String syncFamilyStatus(String groupId, String operType, String syncUserIds) {
+        // INTIMACY_VALUE
+        // FAMILY_INTERACT_ACTION
+        String args = "[{\"groupId\":\"" + groupId + "\",\"operType\":\"" + operType + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"syncUserIds\":[\"" + syncUserIds + "\"]}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.syncFamilyStatus", args);
+    }
+
+//    public static String familyListFarmTask() {
+//        String args = "[{\"bizKey\":\"FAMILY_SIGN_TASK\",\"requestType\":\"NORMAL\",\"sceneCode\":\"familySign\",\"signSceneCode\":\"\",\"source\":\"H5\",\"taskSceneCode\":\"ANTFARM_FAMILY_TASK\"}]";
+//        return ApplicationHook.requestString("com.alipay.antfarm.listFarmTask", args);
+//    }
+
+    public static String familyReceiveFarmTaskAward(String taskId) {
+        String args = "[{\"awardType\":\"FAMILY_INTIMACY\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"taskId\":\"" + taskId + "\",\"taskSceneCode\":\"ANTFARM_FAMILY_TASK\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.receiveFarmTaskAward", args);
+    }
+
+    public static String familyAwardList() {
+        String args = "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.familyAwardList", args);
+    }
+
+    public static String receiveFamilyAward(String rightId) {
+        String args = "[{\"requestType\":\"NORMAL\",\"rightId\":\"" + rightId + "\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.receiveFamilyAward", args);
+    }
+
+    public static String familySleep(String groupId) {
+        String args = "[{\"groupId\":\"" + groupId + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"spaceType\":\"ChickFamily\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.sleep", args);
+    }
+
+    public static String familyWakeUp() {
+        String args = "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"aixinxiaowutojiating\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.wakeUp", args);
+    }
+
+    public static String familyEatTogether(String groupId, JSONArray cuisines, JSONArray friendUserIdList) {
+        String args = "[{\"cuisines\":" + cuisines + ",\"friendUserIds\":" + friendUserIdList + ",\"groupId\":\"" + groupId + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"spaceType\":\"ChickFamily\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.familyEatTogether", args);
     }
 }
