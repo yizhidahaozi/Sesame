@@ -120,6 +120,10 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     context = (Context) param.args[0];
+                    String libSesamePath = context.getPackageManager()
+                            .getApplicationInfo("io.github.lazyimmortal.sesame", 0)
+                            .nativeLibraryDir + "/libsesame.so";
+                    System.load(libSesamePath);
                     try {
                         alipayVersion = new AlipayVersion(context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName);
                     } catch (Exception e) {
@@ -791,7 +795,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
         try {
             return XposedHelpers.callMethod(getMicroApplicationContext(), "findServiceByInterface", service);
         } catch (Throwable th) {
-            Log.i(TAG, "getUserObject err");
+            Log.i(TAG, "getServiceObject err");
             Log.printStackTrace(TAG, th);
         }
         return null;

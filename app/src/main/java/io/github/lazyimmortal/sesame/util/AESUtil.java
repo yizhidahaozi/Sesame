@@ -28,7 +28,7 @@ public class AESUtil {
      * @return 生成的密钥
      * @throws Exception 异常
      */
-    public static SecretKey generateKey() throws Exception {
+    private static SecretKey generateKey() throws Exception {
         KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITHM);
         keyGen.init(256); // 可以使用 128, 192 或 256 位密钥
         return keyGen.generateKey();
@@ -39,7 +39,7 @@ public class AESUtil {
      * @param secretKey SecretKey 对象
      * @return Base64 编码的密钥字符串
      */
-    public static String keyToString(SecretKey secretKey) {
+    private static String keyToString(SecretKey secretKey) {
         return Base64.encodeToString(secretKey.getEncoded(), Base64.DEFAULT);
     }
 
@@ -48,7 +48,7 @@ public class AESUtil {
      * @param keyString Base64 编码的密钥字符串
      * @return SecretKey 对象
      */
-    public static SecretKey stringToKey(String keyString) {
+    private static SecretKey stringToKey(String keyString) {
         byte[] decodedKey = Base64.decode(keyString, Base64.DEFAULT);
         return new SecretKeySpec(decodedKey, 0, decodedKey.length, ALGORITHM);
     }
@@ -61,7 +61,7 @@ public class AESUtil {
      * @return 加密后的字符串（Base64 编码）
      * @throws Exception 异常
      */
-    public static String encrypt(String data, SecretKey key, String iv) throws Exception {
+    private static String encrypt(String data, SecretKey key, String iv) throws Exception {
         Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
         IvParameterSpec ivSpec = new IvParameterSpec(iv.getBytes(CHARSET));
         cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
@@ -77,7 +77,7 @@ public class AESUtil {
      * @return 解密后的字符串
      * @throws Exception 异常
      */
-    public static String decrypt(String encryptedData, SecretKey key, String iv) throws Exception {
+    private static String decrypt(String encryptedData, SecretKey key, String iv) throws Exception {
         Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
         IvParameterSpec ivSpec = new IvParameterSpec(iv.getBytes(CHARSET));
         cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
@@ -86,27 +86,27 @@ public class AESUtil {
         return new String(decrypted, CHARSET);
     }
 
-//    public static void main(String[] args) {
-//        try {
-//            // 生成密钥
-//            SecretKey key = AESUtil.generateKey();
-//            String keyString = AESUtil.keyToString(key);
-//
-//            // 示例数据
-//            String originalData = "Hello, World!";
-//            String iv = DEFAULT_IV; // 使用默认的初始化向量
-//
-//            // 加密
-//            String encryptedData = AESUtil.encrypt(originalData, key, iv);
-//            System.out.println("Encrypted: " + encryptedData);
-//
-//            // 解密
-//            String decryptedData = AESUtil.decrypt(encryptedData, AESUtil.stringToKey(keyString), iv);
-//            System.out.println("Decrypted: " + decryptedData);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public static native String encryptData(String data);
+    private static String encryptData(String data, String key, String iv) {
+        String result = null;
+        try {
+            result = encrypt(data, stringToKey(key), iv);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    public static native String decryptData(String data);
+    private static String decryptData(String data, String key, String iv) {
+        String result = null;
+        try {
+            result = decrypt(data, stringToKey(key), iv);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
 
     public static String readAssetFile(Context context, String filePath) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -139,28 +139,31 @@ public class AESUtil {
         return stringBuilder.toString();
     }
 
-    public static String encryptHtmlData(String htmlData, String key, String iv) {
-        String result = null;
-        try {
-            result = encrypt(htmlData, stringToKey(key), iv);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return result;
+    public static String loadDecryptHtmlData(Context context) {
+        String htmlData = readAssetFile(context, "file:///android_asset/web/js/index.js");
+        return "<!DOCTYPE html><html lang=\"en\"><script>" + decryptData(htmlData) + "</script></html>";
     }
 
-    public static String decryptHtmlData(String htmlData, String key, String iv) {
-        String result = null;
-        try {
-            result = decrypt(htmlData, stringToKey(key), iv);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return result;
-    }
-
-    public static String loadDecryptHtmlData(String htmlData) {
-        return "<!DOCTYPE html><html lang=\"en\"><script>" + htmlData + "</script></html>";
-    }
+//    public static void main(String[] args) {
+//        try {
+//            // 生成密钥
+//            SecretKey key = AESUtil.generateKey();
+//            String keyString = AESUtil.keyToString(key);
+//
+//            // 示例数据
+//            String originalData = "Hello, World!";
+//            String iv = DEFAULT_IV; // 使用默认的初始化向量
+//
+//            // 加密
+//            String encryptedData = AESUtil.encrypt(originalData, key, iv);
+//            System.out.println("Encrypted: " + encryptedData);
+//
+//            // 解密
+//            String decryptedData = AESUtil.decrypt(encryptedData, AESUtil.stringToKey(keyString), iv);
+//            System.out.println("Decrypted: " + decryptedData);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
 

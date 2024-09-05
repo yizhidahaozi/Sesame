@@ -51,6 +51,10 @@ public class MainActivity extends BaseActivity {
 
     private UserEntity[] userEntityArray = {null};
 
+    static {
+        System.loadLibrary("sesame");
+    }
+
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
