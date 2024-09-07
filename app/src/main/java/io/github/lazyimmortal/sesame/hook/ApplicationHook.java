@@ -120,10 +120,6 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     context = (Context) param.args[0];
-                    String libSesamePath = context.getPackageManager()
-                            .getApplicationInfo("io.github.lazyimmortal.sesame", 0)
-                            .nativeLibraryDir + "/libsesame.so";
-                    System.load(libSesamePath);
                     try {
                         alipayVersion = new AlipayVersion(context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName);
                     } catch (Exception e) {
@@ -193,6 +189,15 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                                 }
                                 Log.i(TAG, "Service onCreate");
                                 context = appService.getApplicationContext();
+                                String libSesamePath = null;
+                                try {
+                                    libSesamePath = context.getPackageManager()
+                                            .getApplicationInfo("io.github.lazyimmortal.sesame", 0)
+                                            .nativeLibraryDir + "/libsesame.so";
+                                } catch (Throwable t) {
+                                    Log.printStackTrace(TAG, t);
+                                }
+                                System.load(libSesamePath);
                                 service = appService;
                                 mainHandler = new Handler();
                                 mainTask = BaseTask.newInstance("MAIN_TASK", new Runnable() {
