@@ -180,7 +180,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                 XposedHelpers.findAndHookMethod(
                         "android.app.Service", classLoader, "onCreate", new XC_MethodHook() {
 
-                            @SuppressLint("WakelockTimeout")
+                            @SuppressLint({"WakelockTimeout", "UnsafeDynamicallyLoadedCode"})
                             @Override
                             protected void afterHookedMethod(MethodHookParam param) {
                                 Service appService = (Service) param.thisObject;
@@ -193,7 +193,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                                 try {
                                     libSesamePath = context.getPackageManager()
                                             .getApplicationInfo("io.github.lazyimmortal.sesame", 0)
-                                            .nativeLibraryDir + "/libsesame.so";
+                                            .nativeLibraryDir + "/" + System.mapLibraryName("sesame");
                                 } catch (Throwable t) {
                                     Log.printStackTrace(TAG, t);
                                 }

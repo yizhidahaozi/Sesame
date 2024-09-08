@@ -132,7 +132,7 @@ public class AESUtil {
             inputStream.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         // 返回读取的字符串内容
