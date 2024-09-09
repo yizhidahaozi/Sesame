@@ -33,7 +33,6 @@ public class Status {
     private int useAccelerateToolCount = 0;
     private int useSpecialFoodCount = 0;
     private Boolean canOrnament = true;
-    private Boolean animalSleep = false;
 
     // stall
     private Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
@@ -74,18 +73,6 @@ public class Status {
 
     // 农场助力
     private Set<String> antOrchardAssistFriend = new HashSet<>();
-
-    public static boolean canAnimalSleep() {
-        return !INSTANCE.animalSleep;
-    }
-
-    public static void animalSleep() {
-        Status stat = INSTANCE;
-        if (!stat.animalSleep) {
-            stat.animalSleep = true;
-            save();
-        }
-    }
 
     public static boolean canWaterFriendToday(String id, int newCount) {
         id = UserIdMap.getCurrentUid() + "-" + id;

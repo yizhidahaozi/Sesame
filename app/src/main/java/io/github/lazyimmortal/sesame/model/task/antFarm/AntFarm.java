@@ -119,8 +119,6 @@ public class AntFarm extends ModelTask {
     private BooleanModelField familySign;
     private BooleanModelField familyFeed;
     private BooleanModelField familyEatTogether;
-    private BooleanModelField familySleep;
-    private BooleanModelField familyWakeUp;
     private BooleanModelField familyAwardList;
 
     @Override
@@ -167,8 +165,6 @@ public class AntFarm extends ModelTask {
         modelFields.addField(familySign = new BooleanModelField("familySign", "亲密家庭 | 每日签到", true));
         modelFields.addField(familyFeed = new BooleanModelField("familyFeed", "亲密家庭 | 帮喂成员", false));
         modelFields.addField(familyEatTogether = new BooleanModelField("familyEatTogether", "亲密家庭 | 美食请客", false));
-        modelFields.addField(familySleep = new BooleanModelField("familySleep", "亲密家庭 | 小鸡睡觉", false));
-        modelFields.addField(familyWakeUp = new BooleanModelField("familyWakeUp", "亲密家庭 | 睡后起床", false));
         modelFields.addField(familyAwardList = new BooleanModelField("familyAwardList", "亲密家庭 | 领取奖励", false));
         modelFields.addField(enableDdrawGameCenterAward = new BooleanModelField("enableDdrawGameCenterAward", "开宝箱", false));
         modelFields.addField(answerQuestion = new BooleanModelField("answerQuestion", "开启答题", false));
@@ -410,6 +406,7 @@ public class AntFarm extends ModelTask {
         if ("-1".equals(sleepTime)) {
             return;
         }
+        animalWakeUpNow();
         Calendar animalSleepTimeCalendar = TimeUtil.getTodayCalendarByTimeStr(sleepTime);
         if (animalSleepTimeCalendar == null) {
             return;
@@ -428,16 +425,15 @@ public class AntFarm extends ModelTask {
         boolean afterWakeUpTime = now.compareTo(animalWakeUpTimeCalendar) > 0;
         if (afterSleepTime && afterWakeUpTime) {
             //睡觉时间后
-            if (!Status.canAnimalSleep()) {
+            if (animalSleptToday()) {
                 return;
             }
-            Status.animalSleep();
             Log.record("已错过小鸡今日睡觉时间");
             return;
         }
         if (afterSleepTime) {
             //睡觉时间内
-            if (Status.canAnimalSleep()) {
+            if (!animalSleptToday()) {
                 animalSleepNow();
             }
             animalWakeUpTime(animalWakeUpTime);
@@ -530,22 +526,41 @@ public class AntFarm extends ModelTask {
         }
     }
 
+    private Boolean animalSleptToday() {
+        // Today: 0600-0559 睡了么？
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.queryLoveCabin(userId));
+            if (!checkMessage(jo)) {
+                return true;
+            }
+            jo = jo.getJSONObject("sleepNotifyInfo");
+            return !jo.optBoolean("canSleep") && jo.optInt("sleepCountDown") == 0;
+        } catch (Throwable t) {
+            Log.i(TAG, "animalSleepToday err:");
+            Log.printStackTrace(t);
+        }
+        return true;
+    }
+
     private Boolean animalSleepNow() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.queryLoveCabin(UserIdMap.getCurrentUid()));
-            if (checkMessage(jo)) {
-                JSONObject sleepNotifyInfo = jo.getJSONObject("sleepNotifyInfo");
-                if (sleepNotifyInfo.optBoolean("canSleep", false)) {
-                    jo = new JSONObject(AntFarmRpcCall.sleep());
-                    if (checkMessage(jo)) {
-                        Log.farm("小鸡睡觉🛌");
-                        Status.animalSleep();
-                        return true;
-                    }
-                } else {
-                    Log.farm("小鸡无需睡觉🛌");
-                }
+            if (!checkMessage(jo)) {
+                return false;
             }
+            JSONObject sleepNotifyInfo = jo.getJSONObject("sleepNotifyInfo");
+            if (!sleepNotifyInfo.optBoolean("canSleep", false)) {
+                Log.farm("小鸡无需睡觉🛌");
+                return false;
+            }
+            String groupId = null;
+            if (family.getValue()) {
+                groupId = jo.getString("groupId");
+            }
+            if (groupId == null) {
+                return animalSleep();
+            }
+            return familySleep(groupId);
         } catch (Throwable t) {
             Log.i(TAG, "animalSleepNow err:");
             Log.printStackTrace(t);
@@ -553,23 +568,56 @@ public class AntFarm extends ModelTask {
         return false;
     }
 
+    private Boolean animalSleep() {
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.sleep());
+            if (checkMessage(jo)) {
+                Log.farm("小鸡睡觉🛌");
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "animalSleep err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
     private Boolean animalWakeUpNow() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.queryLoveCabin(UserIdMap.getCurrentUid()));
-            if (checkMessage(jo)) {
-                JSONObject sleepNotifyInfo = jo.getJSONObject("sleepNotifyInfo");
-                if (!sleepNotifyInfo.optBoolean("canSleep", true)) {
-                    jo = new JSONObject(AntFarmRpcCall.wakeUp());
-                    if (checkMessage(jo)) {
-                        Log.farm("小鸡起床\uD83D\uDD06");
-                        return true;
-                    }
-                } else {
-                    Log.farm("小鸡无需起床\uD83D\uDD06");
+            if (!checkMessage(jo)) {
+                return false;
+            }
+            JSONObject ownAnimal = jo.getJSONObject("ownAnimal");
+            JSONObject sleepInfo = ownAnimal.getJSONObject("sleepInfo");
+            if (sleepInfo.getInt("countDown") == 0) {
+                Log.farm("小鸡无需起床🔆");
+                return false;
+            }
+            if (sleepInfo.getLong("sleepBeginTime")
+                    + TimeUnit.MINUTES.toMillis(sleepMinutes.getValue())
+                    <= System.currentTimeMillis()) {
+                if (jo.has("spaceType")) {
+                    return familyWakeUp();
                 }
+                return animalWakeUp();
             }
         } catch (Throwable t) {
             Log.i(TAG, "animalWakeUpNow err:");
+            Log.printStackTrace(t);
+        }
+        return false;
+    }
+
+    private Boolean animalWakeUp() {
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.wakeUp());
+            if (checkMessage(jo)) {
+                Log.farm("小鸡起床🔆");
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "animalWakeUp err:");
             Log.printStackTrace(t);
         }
         return false;
@@ -2232,7 +2280,7 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    private boolean checkMessage(JSONObject jo) {
+    private Boolean checkMessage(JSONObject jo) {
         try {
             if (!"SUCCESS".equals(jo.optString("memo"))) {
                 if (jo.has("memo")) {
@@ -2260,8 +2308,6 @@ public class AntFarm extends ModelTask {
             String groupId = jo.getString("groupId");
             int familyAwardNum = jo.getInt("familyAwardNum");
             boolean familySignTips = jo.getBoolean("familySignTips");
-            JSONObject sleepNotifyInfo = jo.getJSONObject("sleepNotifyInfo");
-            boolean canSleep = sleepNotifyInfo.getBoolean("canSleep");
 
             JSONArray familyInteractActions = jo.getJSONArray("familyInteractActions");
 
@@ -2301,13 +2347,6 @@ public class AntFarm extends ModelTask {
             if (canEatTogether && familyEatTogether.getValue()) {
                 familyEatTogether(groupId, friendUserIds);
             }
-            if (canSleep && familySleep.getValue()) {
-                if (familySleep(groupId) && familyWakeUp.getValue()) {
-                    long familyWakeUpTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5);
-                    String wakeUpTaskId = "AW|" + familyWakeUpTime;
-                    addChildTask(new ChildModelTask(wakeUpTaskId, "AW", this::familyWakeUp, familyWakeUpTime));
-                }
-            }
             if (familyAwardNum > 0 && familyAwardList.getValue()) {
                 familyAwardList();
             }
@@ -2330,12 +2369,11 @@ public class AntFarm extends ModelTask {
         return null;
     }
 
-    private boolean familySleep(String groupId) {
+    private Boolean familySleep(String groupId) {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.familySleep(groupId));
             if (checkMessage(jo)) {
                 Log.farm("亲密家庭🏠小鸡睡觉");
-                Status.animalSleep();
                 return true;
             }
         } catch (Throwable t) {
@@ -2345,16 +2383,18 @@ public class AntFarm extends ModelTask {
         return false;
     }
 
-    private void familyWakeUp() {
+    private Boolean familyWakeUp() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.familyWakeUp());
             if (checkMessage(jo)) {
                 Log.farm("亲密家庭🏠小鸡起床");
+                return true;
             }
         } catch (Throwable t) {
             Log.i(TAG, "familyWakeUp err:");
             Log.printStackTrace(TAG, t);
         }
+        return false;
     }
 
     private void familyFeedFriendAnimal(String groupId, String friendFarmId, String friendUserId) {
