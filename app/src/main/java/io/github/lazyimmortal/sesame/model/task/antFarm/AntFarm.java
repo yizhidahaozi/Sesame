@@ -425,7 +425,7 @@ public class AntFarm extends ModelTask {
         boolean afterWakeUpTime = now.compareTo(animalWakeUpTimeCalendar) > 0;
         if (afterSleepTime && afterWakeUpTime) {
             //睡觉时间后
-            if (animalSleptToday()) {
+            if (hasSleepToday()) {
                 return;
             }
             Log.record("已错过小鸡今日睡觉时间");
@@ -433,7 +433,7 @@ public class AntFarm extends ModelTask {
         }
         if (afterSleepTime) {
             //睡觉时间内
-            if (!animalSleptToday()) {
+            if (!hasSleepToday()) {
                 animalSleepNow();
             }
             animalWakeUpTime(animalWakeUpTime);
@@ -526,20 +526,19 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    private Boolean animalSleptToday() {
-        // Today: 0600-0559 睡了么？
+    private Boolean hasSleepToday() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.queryLoveCabin(userId));
             if (!checkMessage(jo)) {
-                return true;
+                return false;
             }
             jo = jo.getJSONObject("sleepNotifyInfo");
-            return !jo.optBoolean("canSleep") && jo.optInt("sleepCountDown") == 0;
+            return jo.optBoolean("hasSleepToday", false);
         } catch (Throwable t) {
-            Log.i(TAG, "animalSleepToday err:");
+            Log.i(TAG, "hasSleepToday err:");
             Log.printStackTrace(t);
         }
-        return true;
+        return false;
     }
 
     private Boolean animalSleepNow() {
@@ -568,6 +567,34 @@ public class AntFarm extends ModelTask {
         return false;
     }
 
+    private Boolean animalWakeUpNow() {
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.queryLoveCabin(UserIdMap.getCurrentUid()));
+            if (!checkMessage(jo)) {
+                return false;
+            }
+            JSONObject ownAnimal = jo.getJSONObject("ownAnimal");
+            JSONObject sleepInfo = ownAnimal.getJSONObject("sleepInfo");
+            if (sleepInfo.getInt("countDown") == 0) {
+                return false;
+            }
+            if (sleepInfo.getLong("sleepBeginTime")
+                    + TimeUnit.MINUTES.toMillis(sleepMinutes.getValue())
+                    <= System.currentTimeMillis()) {
+                if (jo.has("spaceType")) {
+                    return familyWakeUp();
+                }
+                return animalWakeUp();
+            } else {
+                Log.farm("小鸡无需起床🔆");
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "animalWakeUpNow err:");
+            Log.printStackTrace(t);
+        }
+        return false;
+    }
+
     private Boolean animalSleep() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.sleep());
@@ -578,33 +605,6 @@ public class AntFarm extends ModelTask {
         } catch (Throwable t) {
             Log.i(TAG, "animalSleep err:");
             Log.printStackTrace(TAG, t);
-        }
-        return false;
-    }
-
-    private Boolean animalWakeUpNow() {
-        try {
-            JSONObject jo = new JSONObject(AntFarmRpcCall.queryLoveCabin(UserIdMap.getCurrentUid()));
-            if (!checkMessage(jo)) {
-                return false;
-            }
-            JSONObject ownAnimal = jo.getJSONObject("ownAnimal");
-            JSONObject sleepInfo = ownAnimal.getJSONObject("sleepInfo");
-            if (sleepInfo.getInt("countDown") == 0) {
-                Log.farm("小鸡无需起床🔆");
-                return false;
-            }
-            if (sleepInfo.getLong("sleepBeginTime")
-                    + TimeUnit.MINUTES.toMillis(sleepMinutes.getValue())
-                    <= System.currentTimeMillis()) {
-                if (jo.has("spaceType")) {
-                    return familyWakeUp();
-                }
-                return animalWakeUp();
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "animalWakeUpNow err:");
-            Log.printStackTrace(t);
         }
         return false;
     }
@@ -2603,9 +2603,9 @@ public class AntFarm extends ModelTask {
     }
 
     public enum ToolType {
-        STEALTOOL, ACCELERATETOOL, SHARETOOL, FENCETOOL, NEWEGGTOOL;
+        STEALTOOL, ACCELERATETOOL, SHARETOOL, FENCETOOL, NEWEGGTOOL, DOLLTOOL;
 
-        public static final CharSequence[] nickNames = {"蹭饭卡", "加速卡", "救济卡", "篱笆卡", "新蛋卡"};
+        public static final CharSequence[] nickNames = {"蹭饭卡", "加速卡", "救济卡", "篱笆卡", "新蛋卡", "公仔补签卡"};
 
         public CharSequence nickName() {
             return nickNames[ordinal()];
