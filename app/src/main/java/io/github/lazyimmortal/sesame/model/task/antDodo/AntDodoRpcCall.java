@@ -61,6 +61,22 @@ public class AntDodoRpcCall {
                 "[{\"propId\":\"" + propId + "\",\"propType\":\"" + propType + "\"}]");
     }
 
+    public static String consumeProp(String propId, String propType, String animalId) {
+        String args = "[{\"extendInfo\":{\"animalId\":\"" + animalId + "\"},"
+                + "\"propId\":\"" + propId + "\",\"propType\":\"" + propType + "\"}]";
+        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.consumeProp", args);
+    }
+
+    public static String queryBookList() {
+        String args = "[{\"pageSize\":18,\"v2\":\"true\"}]";
+        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.queryBookList", args);
+    }
+
+    public static String queryBookList(int pageSize, int pageStart) {
+        String args = "[{\"pageSize\":" + pageSize + ",\"pageStart\":\"" + pageStart + "\",\"v2\":\"true\"}]";
+        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.queryBookList", args);
+    }
+
     public static String queryBookInfo(String bookId) {
         return ApplicationHook.requestString("alipay.antdodo.rpc.h5.queryBookInfo",
                 "[{\"bookId\":\"" + bookId + "\"}]");
