@@ -1360,7 +1360,7 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    private boolean notifyFriend(JSONObject joAnimalStatusVO, String friendFarmId, String animalId,
+    private Boolean notifyFriend(JSONObject joAnimalStatusVO, String friendFarmId, String animalId,
                                  String user) {
         try {
             if (AnimalInteractStatus.STEALING.name().equals(joAnimalStatusVO.getString("animalInteractStatus"))
@@ -2258,6 +2258,7 @@ public class AntFarm extends ModelTask {
                 return;
             }
             String groupId = jo.getString("groupId");
+            int familyAwardNum = jo.getInt("familyAwardNum");
             boolean familySignTips = jo.getBoolean("familySignTips");
             JSONObject sleepNotifyInfo = jo.getJSONObject("sleepNotifyInfo");
             boolean canSleep = sleepNotifyInfo.getBoolean("canSleep");
@@ -2307,7 +2308,7 @@ public class AntFarm extends ModelTask {
                     addChildTask(new ChildModelTask(wakeUpTaskId, "AW", this::familyWakeUp, familyWakeUpTime));
                 }
             }
-            if (familyAwardList.getValue()) {
+            if (familyAwardNum > 0 && familyAwardList.getValue()) {
                 familyAwardList();
             }
         } catch (Throwable t) {
@@ -2392,9 +2393,11 @@ public class AntFarm extends ModelTask {
             JSONArray ja = jo.getJSONArray("familyAwardRecordList");
             for (int i = 0; i < ja.length(); i++) {
                 jo = ja.getJSONObject(i);
-                boolean received = jo.getBoolean("received");
-                if (received) {
-                    break;
+                if (jo.optBoolean("received", true)) {
+                    continue;
+                }
+                if (!"NORMAL".equals(jo.optString("rightScene"))) {
+                    continue;
                 }
                 String rightId = jo.getString("rightId");
                 String awardName = jo.getString("awardName");
