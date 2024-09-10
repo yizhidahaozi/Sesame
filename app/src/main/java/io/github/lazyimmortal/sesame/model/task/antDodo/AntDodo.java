@@ -42,6 +42,7 @@ public class AntDodo extends ModelTask {
     private BooleanModelField usePropUniversalCard7Days;
     private ChoiceModelField bookStatusType;
     private ChoiceModelField fantasticLevelType;
+    private BooleanModelField generateBookMedal;
 
     @Override
     public ModelFields getFields() {
@@ -57,6 +58,7 @@ public class AntDodo extends ModelTask {
         modelFields.addField(usePropUniversalCard7Days = new BooleanModelField("usePropUniversalCard7Days", "使用道具 | 万能卡道具", false));
         modelFields.addField(bookStatusType = new ChoiceModelField("bookStatusType", "万能卡 | 使用图鉴类型", BookStatusType.END, BookStatusType.nickNames));
         modelFields.addField(fantasticLevelType = new ChoiceModelField("fantasticLevelType", "万能卡 | 使用最低等级", FantasticLevelType.MAGIC, FantasticLevelType.nickNames));
+        modelFields.addField(generateBookMedal = new BooleanModelField("generateBookMedal", "合成图鉴", false));
         return modelFields;
     }
 
@@ -73,6 +75,9 @@ public class AntDodo extends ModelTask {
             collect();
             if (collectToFriend.getValue()) {
                 collectToFriend();
+            }
+            if (generateBookMedal.getValue()) {
+                generateBookMedal();
             }
         } catch (Throwable t) {
             Log.i(TAG, "start.run err:");
@@ -523,6 +528,48 @@ public class AntDodo extends ModelTask {
             }
         } catch (Throwable t) {
             Log.i(TAG, "AntDodo CollectHelpFriend err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private void generateBookMedal() {
+        // 图鉴合成状态 合成 可以合成 不能合成
+        // medalGenerationStatus: GENERATED CAN_GENERATE CAN_NOT_GENERATE
+
+        // 卡片收集情况 完成 未完成
+        // bookCollectedStatus: COMPLETED NOT_COMPLETED
+
+        // 卡片收集进度
+        // collectProgress 10/10 2/10
+        try {
+            boolean hasMore;
+            int pageStart = 0;
+            do {
+                JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookList(9, pageStart));
+                if (!checkMessage(jo)) {
+                    break;
+                }
+                jo = jo.getJSONObject("data");
+                hasMore = jo.getBoolean("hasMore");
+                pageStart += 9;
+                JSONArray bookForUserList = jo.getJSONArray("bookForUserList");
+                for (int i = 0; i < bookForUserList.length(); i++) {
+                    jo = bookForUserList.getJSONObject(i);
+                    if (!"CAN_GENERATE".equals(jo.getString("medalGenerationStatus"))) {
+                        continue;
+                    }
+                    JSONObject animalBookResult = jo.getJSONObject("animalBookResult");
+                    String bookId = animalBookResult.getString("bookId");
+                    String ecosystem = animalBookResult.getString("ecosystem");
+                    jo = new JSONObject(AntDodoRpcCall.generateBookMedal(bookId));
+                    if (!checkMessage(jo)) {
+                        break;
+                    }
+                    Log.forest("神奇物种🦕合成图鉴[" + ecosystem + "]");
+                }
+            } while (hasMore);
+        } catch (Throwable t) {
+            Log.i(TAG, "AntDodo GenerateBookMedal err:");
             Log.printStackTrace(TAG, t);
         }
     }

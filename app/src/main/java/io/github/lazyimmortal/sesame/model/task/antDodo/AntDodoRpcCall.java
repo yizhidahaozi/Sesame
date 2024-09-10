@@ -82,6 +82,11 @@ public class AntDodoRpcCall {
                 "[{\"bookId\":\"" + bookId + "\"}]");
     }
 
+    public static String generateBookMedal(String bookId) {
+        String args = "[{\"bookId\":\"" + bookId + "\"}]";
+        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.generateBookMedal", args);
+    }
+
     // 送卡片给好友
     public static String social(String targetAnimalId, String targetUserId) {
         return ApplicationHook.requestString("alipay.antdodo.rpc.h5.social",
