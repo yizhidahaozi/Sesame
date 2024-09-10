@@ -385,4 +385,26 @@ public class AntForestRpcCall {
                         + "\"}],\"scene\":\"FEEDS\"},\"version\":\"2.0\"}]");
     }
 
+    // 森林皮肤
+    public static String listUserDressForBackpack(String positionType) {
+        String args = "[{\"positionType\":\"" + positionType + "\"," +
+                "\"source\":\"chInfo_ch_appcenter__chsub_9patch\"," +
+                "\"version\":\"" + VERSION + "\"}]";
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.listUserDressForBackpack", args);
+    }
+
+    public static String wearDress(String dressType) {
+        String args = "[{\"dressType\":\"" + dressType + "\"," +
+                "\"outBizNo\":\"" + dressType + RandomUtil.nextDouble() + "\"," +
+                "\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]";
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.wearDress", args);
+    }
+
+    public static String takeOffDress(String dressType, String position) {
+        String args = "[{\"dressType\":\"" + dressType + "\"," +
+                "\"outBizNo\":\"" + dressType + RandomUtil.nextDouble() + "\"," +
+                "\"position\":\"" + position + "\"," +
+                "\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]";
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.takeOffDress", args);
+    }
 }

@@ -129,6 +129,8 @@ public class AntForestV2 extends ModelTask {
     private BooleanModelField photoGuangPan;
     private TextModelField photoGuangPanBefore;
     private TextModelField photoGuangPanAfter;
+    private BooleanModelField dress;
+    private TextModelField dressDetailList;
 
     private int totalCollected = 0;
     private int totalHelpCollected = 0;
@@ -200,6 +202,8 @@ public class AntForestV2 extends ModelTask {
             photoGuangPanBefore.reset();
             photoGuangPanAfter.reset();
         }));
+        modelFields.addField(dress = new BooleanModelField("dress", "皮肤保护 | 开启", false));
+        modelFields.addField(dressDetailList = new TextModelField("dressDetailList", "皮肤保护 | 装扮信息", ""));
         return modelFields;
     }
 
@@ -467,6 +471,9 @@ public class AntForestV2 extends ModelTask {
 
                 if (medicalHealthFeeds.getValue()) {
                     medicalHealthFeeds();
+                }
+                if (dress.getValue()) {
+                    dress();
                 }
             }
         } catch (Throwable t) {
@@ -2438,6 +2445,152 @@ public class AntForestV2 extends ModelTask {
             }
         } catch (Throwable th) {
             Log.i(TAG, "exchangeBenefit err:");
+            Log.printStackTrace(TAG, th);
+        }
+        return false;
+    }
+
+    private void dress() {
+        String dressDetail = dressDetailList.getConfigValue();
+        if (dressDetail.isEmpty()) {
+            saveDressDetail();
+        } else {
+            loadDressDetail(dressDetail);
+        }
+    }
+
+    private void saveDressDetail() {
+        try {
+            JSONObject jo = new JSONObject(AntForestRpcCall.queryHomePage());
+            JSONArray ja = jo.getJSONObject("indexDressVO")
+                    .getJSONArray("dressDetailList");
+            JSONObject dressDetail = new JSONObject();
+            for (int i = 0; i < ja.length(); i++) {
+                jo = ja.getJSONObject(i);
+                String position = jo.getString("position");
+                String batchType = jo.getString("batchType");
+                dressDetail.put(position, batchType);
+            }
+            dressDetailList.setConfigValue(dressDetail.toString());
+            ConfigV2.save(UserIdMap.getCurrentUid(), false);
+            Log.forest("皮肤保护:装扮信息已保存,芝麻粒持续保护你的皮肤!");
+        } catch (Throwable th) {
+            Log.i(TAG, "saveDressDetail err:");
+            Log.printStackTrace(TAG, th);
+        }
+    }
+
+    private void loadDressDetail(String dressDetail) {
+        boolean isDressExchanged = false;
+        try {
+            JSONObject jo = new JSONObject(dressDetail);
+            String[] positions = {
+                    "tree__main",
+                    "bg__sky_0",
+                    "bg__sky_cloud",
+                    "bg__ground_a",
+                    "bg__ground_b",
+                    "bg__ground_c"
+            };
+            String[] positionTypes = {
+                    "treeMain",
+                    "bgSky0",
+                    "bgSkyCloud",
+                    "bgGroundA",
+                    "bgGroundB",
+                    "bgGroundC"
+            };
+            for (int i = 0; i < positions.length; i++) {
+                String batchType = "";
+                if (jo.has(positions[i])) {
+                    batchType = jo.getString(positions[i]);
+                }
+                if (queryUserDressForBackpack(positionTypes[i], batchType)) {
+                    isDressExchanged = true;
+                }
+            }
+        } catch (Throwable th) {
+            Log.i(TAG, "loadDressDetail err:");
+            Log.printStackTrace(TAG, th);
+        } finally {
+            if (isDressExchanged) {
+                Log.forest("皮肤保护:装扮信息已修改,芝麻粒自动恢复你的皮肤!");
+            }
+        }
+    }
+
+    private Boolean queryUserDressForBackpack(String positionType, String batchType) {
+        try {
+            JSONObject jo = new JSONObject(AntForestRpcCall.listUserDressForBackpack(positionType));
+            if (!"SUCCESS".equals(jo.optString("resultCode"))) {
+                if (jo.has("resultCode")) {
+                    Log.record(jo.getString("resultDesc"));
+                    Log.i(jo.getString("resultDesc"), jo.toString());
+                } else {
+                    Log.i(jo.toString());
+                }
+                return false;
+            }
+            JSONArray userHoldDressVOList = jo.getJSONArray("userHoldDressVOList");
+            for (int i = 0; i < userHoldDressVOList.length(); i++) {
+                jo = userHoldDressVOList.getJSONObject(i);
+                if (batchType.isEmpty()) {
+                    if (jo.optInt("remainNum", 1) == 0) {
+                        String position = jo.getJSONArray("posList").getString(0);
+                        if (takeOffDress(jo.getString("dressType"), position)) {
+                            return true;
+                        }
+                    }
+                } else if (batchType.equals(jo.getString("batchType"))) {
+                    if (jo.optInt("remainNum", 0) == 1) {
+                        if (wearDress(jo.getString("dressType"))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable th) {
+            Log.i(TAG, "queryAndExchangeDress err:");
+            Log.printStackTrace(TAG, th);
+        }
+        return false;
+    }
+
+    private Boolean wearDress(String dressType) {
+        try {
+            JSONObject jo = new JSONObject(AntForestRpcCall.wearDress(dressType));
+            if (!"SUCCESS".equals(jo.optString("resultCode"))) {
+                if (jo.has("resultCode")) {
+                    Log.record(jo.getString("resultDesc"));
+                    Log.i(jo.getString("resultDesc"), jo.toString());
+                } else {
+                    Log.i(jo.toString());
+                }
+                return false;
+            }
+            return true;
+        } catch (Throwable th) {
+            Log.i(TAG, "wearDress err:");
+            Log.printStackTrace(TAG, th);
+        }
+        return false;
+    }
+    
+    private Boolean takeOffDress(String dressType, String position) {
+        try {
+            JSONObject jo = new JSONObject(AntForestRpcCall.takeOffDress(dressType, position));
+            if (!"SUCCESS".equals(jo.optString("resultCode"))) {
+                if (jo.has("resultCode")) {
+                    Log.record(jo.getString("resultDesc"));
+                    Log.i(jo.getString("resultDesc"), jo.toString());
+                } else {
+                    Log.i(jo.toString());
+                }
+                return false;
+            }
+            return true;
+        } catch (Throwable th) {
+            Log.i(TAG, "takeOffDress err:");
             Log.printStackTrace(TAG, th);
         }
         return false;
