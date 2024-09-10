@@ -35,7 +35,9 @@ public class AntDodo extends ModelTask {
     private BooleanModelField collectToFriend;
     private ChoiceModelField collectToFriendType;
     private SelectModelField collectToFriendList;
-    private SelectModelField sendFriendCard;
+    private BooleanModelField giftToFriend;
+    private ChoiceModelField giftToFriendType;
+    private SelectModelField giftToFriendList;
     private BooleanModelField useProp;
     private SelectModelField usePropList;
     private ChoiceModelField bookStatusType;
@@ -48,12 +50,14 @@ public class AntDodo extends ModelTask {
         modelFields.addField(collectToFriend = new BooleanModelField("collectToFriend", "帮抽卡 | 开启", false));
         modelFields.addField(collectToFriendType = new ChoiceModelField("collectToFriendType", "帮抽卡 | 动作", CollectToFriendType.COLLECT, CollectToFriendType.nickNames));
         modelFields.addField(collectToFriendList = new SelectModelField("collectToFriendList", "帮抽卡 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(sendFriendCard = new SelectModelField("sendFriendCard", "送卡片 | 好友列表(当前图鉴所有卡片)", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(useProp = new BooleanModelField("useProp", "使用道具 | 开启", false));
         modelFields.addField(usePropList = new SelectModelField("usePropList", "使用道具 | 道具列表", new LinkedHashSet<>(), AntDodoProp::getList));
         modelFields.addField(bookStatusType = new ChoiceModelField("bookStatusType", "万能卡片 | 使用图鉴类型", BookStatusType.END, BookStatusType.nickNames));
         modelFields.addField(fantasticLevelType = new ChoiceModelField("fantasticLevelType", "万能卡片 | 使用最低等级", FantasticLevelType.MAGIC, FantasticLevelType.nickNames));
         modelFields.addField(generateBookMedal = new BooleanModelField("generateBookMedal", "合成图鉴", false));
+        modelFields.addField(giftToFriend = new BooleanModelField("giftToFriend", "赠送卡片 | 开启", false));
+        modelFields.addField(giftToFriendType = new ChoiceModelField("giftToFriendType", "赠送卡片 | 最低等级", FantasticLevelType.COMMON, FantasticLevelType.nickNames));
+        modelFields.addField(giftToFriendList = new SelectModelField("giftToFriendList", "赠送卡片 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         return modelFields;
     }
 
@@ -75,6 +79,9 @@ public class AntDodo extends ModelTask {
             }
             if (generateBookMedal.getValue()) {
                 generateBookMedal();
+            }
+            if (giftToFriend.getValue()) {
+                giftToFriend();
             }
         } catch (Throwable t) {
             Log.i(TAG, "start.run err:");
@@ -120,7 +127,6 @@ public class AntDodo extends ModelTask {
             if (checkMessage(jo)) {
                 JSONObject data = jo.getJSONObject("data");
                 JSONObject animalBook = data.getJSONObject("animalBook");
-                String bookId = animalBook.getString("bookId");
                 String endDate = animalBook.getString("endDate") + " 23:59:59";
                 receiveTaskAward();
                 if (!in8Days(endDate) || lastDay(endDate))
@@ -134,7 +140,6 @@ public class AntDodo extends ModelTask {
                         break;
                     }
                 }
-                Set<String> set = sendFriendCard.getValue();
                 if (index >= 0) {
                     int leftFreeQuota = jo.getInt("leftFreeQuota");
                     for (int j = 0; j < leftFreeQuota; j++) {
@@ -145,25 +150,6 @@ public class AntDodo extends ModelTask {
                             String ecosystem = animal.getString("ecosystem");
                             String name = animal.getString("name");
                             Log.forest("神奇物种🦕[" + ecosystem + "]#" + name);
-                            if (!set.isEmpty()) {
-                                for (String userId : set) {
-                                    if (!UserIdMap.getCurrentUid().equals(userId)) {
-                                        int fantasticStarQuantity = animal.optInt("fantasticStarQuantity", 0);
-                                        if (fantasticStarQuantity == 3) {
-                                            sendCard(animal, userId);
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (!set.isEmpty()) {
-                    for (String userId : set) {
-                        if (!UserIdMap.getCurrentUid().equals(userId)) {
-                            sendCard(bookId, userId);
-                            break;
                         }
                     }
                 }
@@ -304,11 +290,16 @@ public class AntDodo extends ModelTask {
     }
 
     private static Boolean isQueryBookInfo(String bookStatus, int type) {
-        return ("END".equals(bookStatus)
-                && (type == BookStatusType.ALL || type == BookStatusType.END))
-                ||
-                ("DOING".equals(bookStatus)
-                && (type == BookStatusType.ALL || type == BookStatusType.DOING));
+        boolean isQueryBookInfo = false;
+        if (type == BookStatusType.ALL
+                && ("END".equals(bookStatus) || "DOING".equals(bookStatus))) {
+            isQueryBookInfo = true;
+        } else if ("END".equals(bookStatus) && type == BookStatusType.END) {
+            isQueryBookInfo = true;
+        } else if ("DOING".equals(bookStatus) && type == BookStatusType.DOING) {
+            isQueryBookInfo = true;
+        }
+        return isQueryBookInfo;
     }
 
     private JSONObject queryUniversalAnimal(String bookId, JSONObject animal) {
@@ -370,9 +361,6 @@ public class AntDodo extends ModelTask {
                 }
                 Log.forest("使用道具🎭[" + propName + "]#" + ecosystem + "-" + name
                         + "[" + fantasticLevel +  "]");
-                if (fantasticStarQuantity == 3) {
-                    sendCard(animal);
-                }
                 return true;
             } else {
                 // COLLECT_TO_FRIEND_TIMES_7_DAYS
@@ -407,71 +395,12 @@ public class AntDodo extends ModelTask {
             }
             Log.forest("使用道具🎭[" + propName + "]#" + ecosystem + "-" + name
                     + "[" + fantasticLevel +  "]");
-            if (fantasticStarQuantity == 3) {
-                sendCard(animal);
-            }
             return true;
         } catch (Throwable th) {
             Log.i(TAG, "AntDodo consumeProp err:");
             Log.printStackTrace(TAG, th);
         }
         return false;
-    }
-
-    private void sendCard(JSONObject animal) {
-        try {
-            Set<String> map = sendFriendCard.getValue();
-            for (String userId : map) {
-                if (!UserIdMap.getCurrentUid().equals(userId)) {
-                    sendCard(animal, userId);
-                    break;
-                }
-            }
-        } catch (Throwable th) {
-            Log.i(TAG, "AntDodo SendCard err:");
-            Log.printStackTrace(TAG, th);
-        }
-    }
-
-    private void sendCard(JSONObject animal, String targetUser) {
-        try {
-            String animalId = animal.getString("animalId");
-            String ecosystem = animal.getString("ecosystem");
-            String name = animal.getString("name");
-            JSONObject jo = new JSONObject(AntDodoRpcCall.social(animalId, targetUser));
-            if (checkMessage(jo)) {
-                Log.forest("赠送卡片🦕[" + UserIdMap.getMaskName(targetUser) + "]#" + ecosystem + "-" + name);
-            }
-        } catch (Throwable th) {
-            Log.i(TAG, "AntDodo SendCard err:");
-            Log.printStackTrace(TAG, th);
-        }
-    }
-
-    private void sendCard(String bookId, String targetUser) {
-        try {
-            JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookInfo(bookId));
-            if (checkMessage(jo)) {
-                JSONArray animalForUserList = jo.getJSONObject("data").optJSONArray("animalForUserList");
-                if (animalForUserList == null) {
-                    return;
-                }
-                for (int i = 0; i < animalForUserList.length(); i++) {
-                    JSONObject animalForUser = animalForUserList.getJSONObject(i);
-                    int count = animalForUser.getJSONObject("collectDetail").optInt("count");
-                    if (count <= 0)
-                        continue;
-                    JSONObject animal = animalForUser.getJSONObject("animal");
-                    for (int j = 0; j < count; j++) {
-                        sendCard(animal, targetUser);
-                        TimeUtil.sleep(500L);
-                    }
-                }
-            }
-        } catch (Throwable th) {
-            Log.i(TAG, "AntDodo SendCard err:");
-            Log.printStackTrace(TAG, th);
-        }
     }
 
     private void collectToFriend() {
@@ -561,6 +490,96 @@ public class AntDodo extends ModelTask {
         } catch (Throwable t) {
             Log.i(TAG, "AntDodo GenerateBookMedal err:");
             Log.printStackTrace(TAG, t);
+        }
+    }
+
+
+    private void giftToFriend() {
+        Set<String> set = giftToFriendList.getValue();
+        if (set.isEmpty()) {
+            return;
+        }
+        for (String userId : set) {
+            if (!UserIdMap.getCurrentUid().equals(userId)) {
+                giftToFriend(userId);
+                break;
+            }
+        }
+    }
+
+    private void giftToFriend(String targetUserId) {
+        try {
+            boolean hasMore;
+            int pageStart = 0;
+            do {
+                JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookList(9, pageStart));
+                if (!checkMessage(jo)) {
+                    break;
+                }
+                jo = jo.getJSONObject("data");
+                hasMore = jo.getBoolean("hasMore");
+                pageStart += 9;
+                JSONArray bookForUserList = jo.getJSONArray("bookForUserList");
+                for (int i = 0; i < bookForUserList.length(); i++) {
+                    jo = bookForUserList.getJSONObject(i);
+                    String collectProgress = jo.getString("collectProgress");
+                    if ("0/10".equals(collectProgress)) {
+                        continue;
+                    }
+                    String bookId = jo.getJSONObject("animalBookResult").getString("bookId");
+                    giftToFriend(bookId, targetUserId);
+                }
+            } while (hasMore);
+        } catch (Throwable t) {
+            Log.i(TAG, "AntDodo GiftToFriend err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private void giftToFriend(String bookId, String targetUserId) {
+        try {
+            JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookInfo(bookId));
+            if (!checkMessage(jo)) {
+                return;
+            }
+            JSONArray animalForUserList = jo.getJSONObject("data").optJSONArray("animalForUserList");
+            if (animalForUserList == null) {
+                return;
+            }
+            int star = FantasticLevelType.stars[giftToFriendType.getValue()];
+            for (int i = 0; i < animalForUserList.length(); i++) {
+                JSONObject animalForUser = animalForUserList.getJSONObject(i);
+                if (animalForUser.optInt("star") < star) {
+                    continue;
+                }
+                int count = animalForUser.getJSONObject("collectDetail").optInt("count");
+                if (count <= 0) {
+                    continue;
+                }
+                JSONObject animal = animalForUser.getJSONObject("animal");
+                for (int j = 0; j < count; j++) {
+                    giftToFriend(animal, targetUserId);
+                    TimeUtil.sleep(500L);
+                }
+            }
+        } catch (Throwable th) {
+            Log.i(TAG, "AntDodo GiftToFriend err:");
+            Log.printStackTrace(TAG, th);
+        }
+    }
+
+    private void giftToFriend(JSONObject animal, String targetUserId) {
+        try {
+            String animalId = animal.getString("animalId");
+            String ecosystem = animal.getString("ecosystem");
+            String name = animal.getString("name");
+            JSONObject jo = new JSONObject(AntDodoRpcCall.social(animalId, targetUserId));
+            if (checkMessage(jo)) {
+                Log.forest("赠送卡片🦕[" + UserIdMap.getMaskName(targetUserId) + "]#" + ecosystem + "-" + name);
+            }
+        } catch (Throwable th) {
+            Log.i(TAG, "AntDodo GiftToFriend err:");
+            Log.printStackTrace(TAG, th);
         }
     }
 
