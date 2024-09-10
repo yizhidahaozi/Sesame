@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.Data;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
+import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm;
 import io.github.lazyimmortal.sesame.model.task.antForest.AntForestV2;
 
 import java.io.File;
@@ -258,7 +259,12 @@ public class Status {
         save();
     }
 
-    public static boolean canUseSpecialFood(int countLimit) {
+    public static boolean canUseSpecialFood() {
+        AntFarm task = ModelTask.getModel(AntFarm.class);
+        if (task == null) {
+            return false;
+        }
+        int countLimit = task.getUseSpecialFoodCountLimit().getValue();
         if (countLimit == 0) {
             return true;
         }

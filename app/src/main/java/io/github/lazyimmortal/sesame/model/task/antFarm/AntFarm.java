@@ -13,6 +13,7 @@ import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.normal.answerAI.AnswerAI;
 import io.github.lazyimmortal.sesame.rpc.intervallimit.RpcIntervalLimit;
 import io.github.lazyimmortal.sesame.util.*;
+import lombok.Getter;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -88,6 +89,7 @@ public class AntFarm extends ModelTask {
     private ListModelField.ListJoinCommaToStringModelField farmGameTime;
     private BooleanModelField kitchen;
     private BooleanModelField useSpecialFood;
+    @Getter
     private IntegerModelField useSpecialFoodCountLimit;
     private BooleanModelField useNewEggTool;
     private BooleanModelField harvestProduce;
@@ -465,7 +467,8 @@ public class AntFarm extends ModelTask {
             if (useSpecialFood.getValue()) {
                 JSONArray cuisineList = jo.getJSONArray("cuisineList");
                 if (AnimalInteractStatus.HOME.name().equals(ownerAnimal.animalInteractStatus)
-                        && !AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus)) {
+                        && !AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus)
+                        && Status.canUseSpecialFood()) {
                     useFarmFood(cuisineList);
                 }
             }
@@ -1616,47 +1619,63 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    private void useFarmFood(JSONArray cuisineList) {
-        int countLimit = useSpecialFoodCountLimit.getValue();
-        if (!Status.canUseSpecialFood(countLimit)) {
-            return;
+    private List<JSONObject> getSortedCuisineList(JSONArray cuisineList) {
+        List<JSONObject> list = new ArrayList<>();
+        for (int i = 0; i < cuisineList.length(); i++) {
+            list.add(cuisineList.optJSONObject(i));
         }
-        try {
-            ArrayList<JSONObject> list = new ArrayList<>();
-            for (int i = 0; i < cuisineList.length(); i++) {
-                list.add(cuisineList.getJSONObject(i));
+        Collections.sort(list, new Comparator<JSONObject>() {
+            @Override
+            public int compare(JSONObject jsonObject1, JSONObject jsonObject2) {
+                int count1 = jsonObject1.optInt("count");
+                int count2 = jsonObject2.optInt("count");
+                return count2 - count1;
             }
-            Collections.sort(list, new Comparator<JSONObject>() {
-                @Override
-                public int compare(JSONObject jsonObject1, JSONObject jsonObject2) {
-                    int count1 = jsonObject1.optInt("count");
-                    int count2 = jsonObject2.optInt("count");
-                    return count2 - count1;
-                }
-            });
+        });
+        return list;
+    }
+
+    private void useFarmFood(JSONArray cuisineList) {
+        try {
+            List<JSONObject> list = getSortedCuisineList(cuisineList);
             for (int i = 0; i < list.size(); i++) {
-                JSONObject jo = list.get(i);
-                String cookbookId = jo.getString("cookbookId");
-                String cuisineId = jo.getString("cuisineId");
-                String name = jo.getString("name");
-                int count = jo.getInt("count");
-                for (int j = 0; j < count; j++) {
-                    jo = new JSONObject(AntFarmRpcCall.useFarmFood(cookbookId, cuisineId));
-                    if (!checkMessage(jo)) {
-                        return;
-                    }
-                    double deltaProduce = jo.getJSONObject("foodEffect").getDouble("deltaProduce");
-                    Log.farm("使用美食🍱[" + name + "]#加速" + deltaProduce + "颗爱心鸡蛋");
-                    Status.useSpecialFood();
-                    if (!Status.canUseSpecialFood(countLimit)) {
-                        return;
-                    }
+                if (!useFarmFood(list.get(i))) {
+                    return;
                 }
             }
         } catch (Throwable t) {
             Log.i(TAG, "useFarmFood err:");
             Log.printStackTrace(TAG, t);
         }
+    }
+
+    private Boolean useFarmFood(JSONObject cuisine) {
+        if (!Status.canUseSpecialFood()) {
+            return false;
+        }
+        try {
+            String cookbookId = cuisine.getString("cookbookId");
+            String cuisineId = cuisine.getString("cuisineId");
+            String name = cuisine.getString("name");
+            int count = cuisine.getInt("count");
+            for (int j = 0; j < count; j++) {
+                JSONObject jo = new JSONObject(AntFarmRpcCall.useFarmFood(cookbookId, cuisineId));
+                if (!checkMessage(jo)) {
+                    return false;
+                }
+                double deltaProduce = jo.getJSONObject("foodEffect").getDouble("deltaProduce");
+                Log.farm("使用美食🍱[" + name + "]#加速" + deltaProduce + "颗爱心鸡蛋");
+                Status.useSpecialFood();
+                if (!Status.canUseSpecialFood()) {
+                    break;
+                }
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.i(TAG, "useFarmFood err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
     }
 
     private void drawLotteryPlus(JSONObject lotteryPlusInfo) {
@@ -2484,18 +2503,7 @@ public class AntFarm extends ModelTask {
             if (cuisineList.length() == 0) {
                 return null;
             }
-            ArrayList<JSONObject> list = new ArrayList<>();
-            for (int i = 0; i < cuisineList.length(); i++) {
-                list.add(cuisineList.getJSONObject(i));
-            }
-            Collections.sort(list, new Comparator<JSONObject>() {
-                @Override
-                public int compare(JSONObject jsonObject1, JSONObject jsonObject2) {
-                    int count1 = jsonObject1.optInt("count");
-                    int count2 = jsonObject2.optInt("count");
-                    return count2 - count1;
-                }
-            });
+            List<JSONObject> list = getSortedCuisineList(cuisineList);
             JSONArray result = new JSONArray();
             int count = 0;
             for (int i = 0; i < list.size() && count < needCount; i++) {
