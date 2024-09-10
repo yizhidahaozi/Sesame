@@ -202,8 +202,8 @@ public class AntForestV2 extends ModelTask {
             photoGuangPanBefore.reset();
             photoGuangPanAfter.reset();
         }));
-        modelFields.addField(dress = new BooleanModelField("dress", "皮肤保护 | 开启", false));
-        modelFields.addField(dressDetailList = new TextModelField("dressDetailList", "皮肤保护 | 装扮信息", ""));
+        modelFields.addField(dress = new BooleanModelField("dress", "装扮保护 | 开启", false));
+        modelFields.addField(dressDetailList = new TextModelField("dressDetailList", "装扮保护 | 装扮信息", ""));
         return modelFields;
     }
 
@@ -2472,8 +2472,9 @@ public class AntForestV2 extends ModelTask {
                 dressDetail.put(position, batchType);
             }
             dressDetailList.setConfigValue(dressDetail.toString());
-            ConfigV2.save(UserIdMap.getCurrentUid(), false);
-            Log.forest("皮肤保护:装扮信息已保存,芝麻粒持续保护你的皮肤!");
+            if (ConfigV2.save(UserIdMap.getCurrentUid(), false)) {
+                Log.forest("装扮保护🔐信息已保存,芝麻粒将为你持续保护!");
+            }
         } catch (Throwable th) {
             Log.i(TAG, "saveDressDetail err:");
             Log.printStackTrace(TAG, th);
@@ -2509,13 +2510,12 @@ public class AntForestV2 extends ModelTask {
                     isDressExchanged = true;
                 }
             }
+            if (isDressExchanged) {
+                Log.forest("装扮保护🔐信息已修改,芝麻粒已为你自动恢复!");
+            }
         } catch (Throwable th) {
             Log.i(TAG, "loadDressDetail err:");
             Log.printStackTrace(TAG, th);
-        } finally {
-            if (isDressExchanged) {
-                Log.forest("皮肤保护:装扮信息已修改,芝麻粒自动恢复你的皮肤!");
-            }
         }
     }
 

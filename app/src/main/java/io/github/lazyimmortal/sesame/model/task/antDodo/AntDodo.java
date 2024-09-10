@@ -518,7 +518,7 @@ public class AntDodo extends ModelTask {
                     if (!checkMessage(jo)) {
                         break;
                     }
-                    Log.forest("神奇物种🦕合成图鉴[" + ecosystem + "]");
+                    Log.forest("神奇物种🦕合成勋章[" + ecosystem + "]");
                 }
             } while (hasMore);
         } catch (Throwable t) {
