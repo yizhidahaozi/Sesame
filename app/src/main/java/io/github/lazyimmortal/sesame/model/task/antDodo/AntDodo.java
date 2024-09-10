@@ -9,6 +9,7 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.ChoiceModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
+import io.github.lazyimmortal.sesame.entity.AntDodoProp;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm.TaskStatus;
 import io.github.lazyimmortal.sesame.util.Log;
@@ -36,10 +37,7 @@ public class AntDodo extends ModelTask {
     private SelectModelField collectToFriendList;
     private SelectModelField sendFriendCard;
     private BooleanModelField useProp;
-    private BooleanModelField usePropCollectTimes7Days;
-    private BooleanModelField usePropCollectHistoryAnimal7Days;
-    private BooleanModelField usePropCollectToFriendTimes7Days;
-    private BooleanModelField usePropUniversalCard7Days;
+    private SelectModelField usePropList;
     private ChoiceModelField bookStatusType;
     private ChoiceModelField fantasticLevelType;
     private BooleanModelField generateBookMedal;
@@ -52,10 +50,7 @@ public class AntDodo extends ModelTask {
         modelFields.addField(collectToFriendList = new SelectModelField("collectToFriendList", "帮抽卡 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(sendFriendCard = new SelectModelField("sendFriendCard", "送卡片 | 好友列表(当前图鉴所有卡片)", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(useProp = new BooleanModelField("useProp", "使用道具 | 开启", false));
-        modelFields.addField(usePropCollectTimes7Days = new BooleanModelField("usePropCollectTimes7Days", "使用道具 | 抽卡道具", false));
-        modelFields.addField(usePropCollectHistoryAnimal7Days = new BooleanModelField("usePropCollectHistoryAnimal7Days", "使用道具 | 抽历史卡道具", false));
-        modelFields.addField(usePropCollectToFriendTimes7Days = new BooleanModelField("usePropCollectToFriendTimes7Days", "使用道具 | 抽好友卡道具", false));
-        modelFields.addField(usePropUniversalCard7Days = new BooleanModelField("usePropUniversalCard7Days", "使用道具 | 万能卡道具", false));
+        modelFields.addField(usePropList = new SelectModelField("usePropList", "使用道具 | 道具列表", new LinkedHashSet<>(), AntDodoProp::getList));
         modelFields.addField(bookStatusType = new ChoiceModelField("bookStatusType", "万能卡片 | 使用图鉴类型", BookStatusType.END, BookStatusType.nickNames));
         modelFields.addField(fantasticLevelType = new ChoiceModelField("fantasticLevelType", "万能卡片 | 使用最低等级", FantasticLevelType.MAGIC, FantasticLevelType.nickNames));
         modelFields.addField(generateBookMedal = new BooleanModelField("generateBookMedal", "合成图鉴", false));
@@ -246,23 +241,21 @@ public class AntDodo extends ModelTask {
                     String propType = prop.getString("propType");
                     JSONArray propIdList = prop.getJSONArray("propIdList");
                     String propId = propIdList.getString(0);
-                    if ("UNIVERSAL_CARD_7_DAYS".equals(propType)) {
-                        if (!usePropUniversalCard7Days.getValue()
-                                || !usePropUniversalCard(propId, propType)) {
-                            continue;
-                        }
-                    } else if ("COLLECT_TIMES_7_DAYS".equals(propType)
-                            && !usePropCollectTimes7Days.getValue()){
-                        continue;
-                    } else if ("COLLECT_HISTORY_ANIMAL_7_DAYS".equals(propType)
-                            && !usePropCollectHistoryAnimal7Days.getValue()) {
-                        continue;
-                    } else if ("COLLECT_TO_FRIEND_TIMES_7_DAYS".equals(propType)
-                            && !usePropCollectToFriendTimes7Days.getValue()) {
+                    boolean isUseProp = usePropList.getValue().contains(propType);
+                    if (!isUseProp) {
                         continue;
                     }
-                    if (!consumeProp(propId, propType)) {
-                        continue;
+                    if ("UNIVERSAL_CARD_7_DAYS".equals(propType)) {
+                        if (!usePropUniversalCard(propId, propType)) {
+                            continue;
+                        }
+                    } else {
+                        // COLLECT_TIMES_7_DAYS
+                        // COLLECT_HISTORY_ANIMAL_7_DAYS
+                        // COLLECT_TO_FRIEND_TIMES_7_DAYS
+                        if (!consumeProp(propId, propType)) {
+                            continue;
+                        }
                     }
                     if (prop.optInt("holdsNum", 1) > 1) {
                         continue th;
@@ -382,8 +375,7 @@ public class AntDodo extends ModelTask {
                 }
                 return true;
             } else {
-                // "COLLECT_TO_FRIEND_TIMES_7_DAYS"
-                // 抽好友卡道具例外
+                // COLLECT_TO_FRIEND_TIMES_7_DAYS
                 Log.forest("使用道具🎭[" + propName + "]");
             }
         } catch (Throwable t) {
