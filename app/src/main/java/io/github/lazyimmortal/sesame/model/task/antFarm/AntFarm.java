@@ -404,12 +404,12 @@ public class AntFarm extends ModelTask {
     }
 
     private void animalSleepAndWake() {
-        String sleepTime = this.sleepTime.getValue();
-        if ("-1".equals(sleepTime)) {
+        String sleepTimeStr = sleepTime.getValue();
+        if ("-1".equals(sleepTimeStr)) {
             return;
         }
         animalWakeUpNow();
-        Calendar animalSleepTimeCalendar = TimeUtil.getTodayCalendarByTimeStr(sleepTime);
+        Calendar animalSleepTimeCalendar = TimeUtil.getTodayCalendarByTimeStr(sleepTimeStr);
         if (animalSleepTimeCalendar == null) {
             return;
         }
