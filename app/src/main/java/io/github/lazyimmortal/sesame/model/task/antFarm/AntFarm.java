@@ -2436,7 +2436,7 @@ public class AntFarm extends ModelTask {
                 if (jo.optBoolean("received", true)) {
                     continue;
                 }
-                if (!"NORMAL".equals(jo.optString("rightScene"))) {
+                if (!"CUISINE".equals(jo.optString("type"))) {
                     continue;
                 }
                 String rightId = jo.getString("rightId");
