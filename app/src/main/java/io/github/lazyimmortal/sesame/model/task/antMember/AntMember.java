@@ -33,8 +33,8 @@ public class AntMember extends ModelTask {
     private BooleanModelField collectSesame;
     private BooleanModelField memberPointExchangeBenefit;
     private SelectModelField memberPointExchangeBenefitList;
-    private BooleanModelField LifeRecords;
-    private SelectModelField lifeRecordsList;
+    private BooleanModelField promise;
+    private SelectModelField promiseList;
     private BooleanModelField KuaiDiFuLiJia;
     private BooleanModelField signinCalendar;
     private BooleanModelField enableGoldTicket;
@@ -52,8 +52,8 @@ public class AntMember extends ModelTask {
         modelFields.addField(memberPointExchangeBenefit = new BooleanModelField("memberPointExchangeBenefit", "会员积分 | 兑换权益", false));
         modelFields.addField(memberPointExchangeBenefitList = new SelectModelField("memberPointExchangeBenefitList", "会员积分 | 权益列表", new LinkedHashSet<>(), MemberBenefit::getList));
         modelFields.addField(collectSesame = new BooleanModelField("collectSesame", "芝麻粒 | 领取", false));
-        modelFields.addField(LifeRecords = new BooleanModelField("LifeRecords", "生活记录 | 坚持做", false));
-        modelFields.addField(lifeRecordsList = new SelectModelField("lifeRecordsList", "生活记录 | 坚持做列表", new LinkedHashSet<>(), PromiseSimpleTemplate::getList));
+        modelFields.addField(promise = new BooleanModelField("promise", "生活记录 | 坚持做", false));
+        modelFields.addField(promiseList = new SelectModelField("promiseList", "生活记录 | 坚持做列表", new LinkedHashSet<>(), PromiseSimpleTemplate::getList));
         modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 福利加", false));
         modelFields.addField(beanSignIn = new BooleanModelField("beanSignIn", "安心豆 | 签到", false));
         modelFields.addField(beanExchangeGoldenTicket = new BooleanModelField("beanExchangeGoldenTicket", "安心豆 | 兑换黄金票", false));
@@ -81,8 +81,8 @@ public class AntMember extends ModelTask {
                 collectSesame();
             }
             // 生活记录
-            if (LifeRecords.getValue()) {
-                LifeRecords();
+            if (promise.getValue()) {
+                promise();
             }
             // 我的快递任务
             if (KuaiDiFuLiJia.getValue()) {
@@ -453,8 +453,92 @@ public class AntMember extends ModelTask {
         }
     }
 
+    // 新版生活记录
+    private void promise() {
+        try {
+            JSONObject jo = new JSONObject(AntMemberRpcCall.promiseQueryHome());
+            if (!checkMessage(jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            JSONArray promiseSimpleTemplates = jo.getJSONArray("promiseSimpleTemplates");
+            for (int i = 0; i < promiseSimpleTemplates.length(); i++) {
+                jo = promiseSimpleTemplates.getJSONObject(i);
+                String templateId = jo.getString("templateId");
+                String promiseName = jo.getString("promiseName");
+                String status = jo.getString("status");
+                if ("un_join".equals(status) && promiseList.getConfigValue().contains(templateId)) {
+                    promiseJoin(querySingleTemplate(templateId));
+                }
+                PromiseSimpleTemplateIdMap.add(templateId, promiseName);
+            }
+            PromiseSimpleTemplateIdMap.save(UserIdMap.getCurrentUid());
+        } catch (Throwable t) {
+            Log.i(TAG, "promise err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private JSONObject querySingleTemplate(String templateId) {
+        try {
+            JSONObject jo = new JSONObject(AntMemberRpcCall.querySingleTemplate(templateId));
+            if (!checkMessage(jo)) {
+                return null;
+            }
+            jo = jo.getJSONObject("data");
+            JSONObject result = new JSONObject();
+
+            result.put("joinFromOuter", false);
+            result.put("templateId", jo.getString("templateId"));
+            result.put("autoRenewStatus", Boolean.valueOf(jo.getString("autoRenewStatus")));
+
+            JSONObject joinGuarantyRule = jo.getJSONObject("joinGuarantyRule");
+            joinGuarantyRule.put("selectValue", joinGuarantyRule.getJSONArray("canSelectValues").getString(0));
+            joinGuarantyRule.remove("canSelectValues");
+            result.put("joinGuarantyRule", joinGuarantyRule);
+
+            JSONObject joinRule = jo.getJSONObject("joinRule");
+            joinRule.put("selectValue", joinRule.getJSONArray("canSelectValues").getString(0));
+            joinRule.remove("joinRule");
+            result.put("joinRule", joinRule);
+
+            JSONObject periodTargetRule = jo.getJSONObject("periodTargetRule");
+            periodTargetRule.put("selectValue", periodTargetRule.getJSONArray("canSelectValues").getString(0));
+            periodTargetRule.remove("canSelectValues");
+            result.put("periodTargetRule", periodTargetRule);
+
+            JSONObject dataSourceRule = jo.getJSONObject("dataSourceRule");
+            dataSourceRule.put("selectValue", dataSourceRule.getJSONArray("canSelectValues").getJSONObject(0).getString("merchantId"));
+            dataSourceRule.remove("canSelectValues");
+            result.put("dataSourceRule", dataSourceRule);
+            return result;
+        } catch (Throwable t) {
+            Log.i(TAG, "querySingleTemplate err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return null;
+    }
+
+    private void promiseJoin(JSONObject data) {
+        if (data == null) {
+            return;
+        }
+        try {
+            JSONObject jo = new JSONObject(AntMemberRpcCall.promiseJoin(data));
+            if (!checkMessage(jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            String promiseName = jo.getString("promiseName");
+            Log.record("生活记录📝[加入" + promiseName + "]");
+        } catch (Throwable t) {
+            Log.i(TAG, "promiseJoin err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
     // 生活记录
-    private void LifeRecords() {
+    private void lifeRecords() {
         try {
             String str = AntMemberRpcCall.promiseQueryHome();
             JSONObject jsonObject = new JSONObject(str);
@@ -470,7 +554,7 @@ public class AntMember extends ModelTask {
                 String promiseName = jsonObject.getString("promiseName");
                 if ("坚持攒保障金".equals(promiseName)) {
                     String templateId = jsonObject.getString("templateId");
-                    if (!lifeRecordsList.getValue().contains(templateId)) {
+                    if (!promiseList.getValue().contains(templateId)) {
                         break;
                     }
                     promiseQueryDetail(recordId);
@@ -489,7 +573,7 @@ public class AntMember extends ModelTask {
                 }
                 String promiseName = jo.getString("promiseName");
                 String templateId = jo.getString("templateId");
-                Boolean isSelect = lifeRecordsList.getValue().contains(templateId);
+                Boolean isSelect = promiseList.getValue().contains(templateId);
                 if (!isSelect) {
                     continue;
                 }
@@ -1213,4 +1297,22 @@ public class AntMember extends ModelTask {
         }
     }
 
+    private Boolean checkMessage(JSONObject jo) {
+        try {
+            if (!"SUCCESS".equals(jo.optString("resultCode"))) {
+                if (jo.has("resultView")) {
+                    Log.record(jo.getString("resultView"));
+                    Log.i(jo.getString("resultView"), jo.toString());
+                } else {
+                    Log.i(jo.toString());
+                }
+                return false;
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.i(TAG, "checkMessage err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
 }

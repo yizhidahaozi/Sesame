@@ -181,6 +181,14 @@ public class FileUtil {
         return file;
     }
 
+    public static File getPromiseSimpleTemplateIdMapFile(String userId) {
+        File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "promiseSimpleTemplate.json");
+        if (file.exists() && file.isDirectory()) {
+            file.delete();
+        }
+        return file;
+    }
+
     public static File getStatusFile(String userId) {
         File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "status.json");
         if (file.exists() && file.isDirectory()) {

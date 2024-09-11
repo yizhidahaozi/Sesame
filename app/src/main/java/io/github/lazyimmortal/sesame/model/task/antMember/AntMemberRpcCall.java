@@ -212,6 +212,21 @@ public class AntMemberRpcCall {
         return ApplicationHook.requestString("com.antgroup.zmxy.zmmemberop.biz.rpc.promise.PromiseRpcManager.queryHome", null);
     }
 
+    public static String querySingleTemplate(String templateId) {
+        String args = "[{\"templateId\":\"" + templateId + "\"}]";
+        return ApplicationHook.requestString("com.antgroup.zmxy.zmmemberop.biz.rpc.promise.PromiseRpcManager.querySingleTemplate", args);
+    }
+
+    public static String promiseJoin(JSONObject data) {
+        return ApplicationHook.requestString("com.antgroup.zmxy.zmmemberop.biz.rpc.promise.PromiseRpcManager.join",
+                "[" + data + "]");
+    }
+
+    public static String promiseJoin(String data) {
+        return ApplicationHook.requestString("com.antgroup.zmxy.zmmemberop.biz.rpc.promise.PromiseRpcManager.join",
+                "[" + data + "]");
+    }
+
     /**
      * 查询生活记录明细
      *
@@ -221,17 +236,6 @@ public class AntMemberRpcCall {
     public static String promiseQueryDetail(String recordId) {
         return ApplicationHook.requestString("com.antgroup.zmxy.zmmemberop.biz.rpc.promise.PromiseRpcManager.queryDetail",
                 "[{\"recordId\":\"" + recordId + "\"}]");
-    }
-
-    /**
-     * 生活记录加入新纪录
-     *
-     * @param data data
-     * @return 结果
-     */
-    public static String promiseJoin(String data) {
-        return ApplicationHook.requestString("com.antgroup.zmxy.zmmemberop.biz.rpc.promise.PromiseRpcManager.join",
-                "[" + data + "]");
     }
 
     /**
