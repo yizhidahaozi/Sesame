@@ -2451,70 +2451,72 @@ public class AntForestV2 extends ModelTask {
     }
 
     private void dress() {
-        String dressDetail = dressDetailList.getConfigValue();
+        String dressDetail = dressDetailList.getValue();
         if (dressDetail.isEmpty()) {
-            saveDressDetail();
+            setDressDetail(getDressDetail().toString());
         } else {
-            loadDressDetail(dressDetail);
+            checkDressDetail(dressDetail);
         }
     }
 
-    private void saveDressDetail() {
+    private JSONObject getDressDetail() {
+        JSONObject dressDetail = new JSONObject();
         try {
             JSONObject jo = new JSONObject(AntForestRpcCall.queryHomePage());
             JSONArray ja = jo.getJSONObject("indexDressVO")
                     .getJSONArray("dressDetailList");
-            JSONObject dressDetail = new JSONObject();
             for (int i = 0; i < ja.length(); i++) {
                 jo = ja.getJSONObject(i);
                 String position = jo.getString("position");
                 String batchType = jo.getString("batchType");
                 dressDetail.put(position, batchType);
             }
-            dressDetailList.setConfigValue(dressDetail.toString());
-            if (ConfigV2.save(UserIdMap.getCurrentUid(), false)) {
-                Log.forest("装扮保护🔐信息已保存,芝麻粒将为你持续保护!");
-            }
         } catch (Throwable th) {
-            Log.i(TAG, "saveDressDetail err:");
+            Log.i(TAG, "getDressDetail err:");
             Log.printStackTrace(TAG, th);
+        }
+        return dressDetail;
+    }
+
+    private void setDressDetail(String dressDetail) {
+        dressDetailList.setValue(dressDetail);
+        if (ConfigV2.save(UserIdMap.getCurrentUid(), false)) {
+            Log.forest("装扮保护🔐皮肤保存,芝麻粒将为你持续保护!");
         }
     }
 
-    private void loadDressDetail(String dressDetail) {
-        boolean isDressExchanged = false;
+    private void removeDressDetail(String position) {
+        JSONObject jo = getDressDetail();
+        jo.remove(position);
+        setDressDetail(jo.toString());
+    }
+
+    private void checkDressDetail(String dressDetail) {
+        String[] positions = {
+                "tree__main",
+                "bg__sky_0",
+                "bg__sky_cloud",
+                "bg__ground_a",
+                "bg__ground_b",
+                "bg__ground_c"
+        };
         try {
+            boolean isDressExchanged = false;
             JSONObject jo = new JSONObject(dressDetail);
-            String[] positions = {
-                    "tree__main",
-                    "bg__sky_0",
-                    "bg__sky_cloud",
-                    "bg__ground_a",
-                    "bg__ground_b",
-                    "bg__ground_c"
-            };
-            String[] positionTypes = {
-                    "treeMain",
-                    "bgSky0",
-                    "bgSkyCloud",
-                    "bgGroundA",
-                    "bgGroundB",
-                    "bgGroundC"
-            };
-            for (int i = 0; i < positions.length; i++) {
+            for (String position : positions) {
                 String batchType = "";
-                if (jo.has(positions[i])) {
-                    batchType = jo.getString(positions[i]);
+                if (jo.has(position)) {
+                    batchType = jo.getString(position);
                 }
-                if (queryUserDressForBackpack(positionTypes[i], batchType)) {
+                if (queryUserDressForBackpack(positionToPositionType(position), batchType)) {
                     isDressExchanged = true;
                 }
             }
             if (isDressExchanged) {
-                Log.forest("装扮保护🔐信息已修改,芝麻粒已为你自动恢复!");
+                Log.forest("装扮保护🔐皮肤修改,芝麻粒已为你自动恢复!");
             }
         } catch (Throwable th) {
-            Log.i(TAG, "loadDressDetail err:");
+            Log.i(TAG, "checkDressDetail err:");
             Log.printStackTrace(TAG, th);
         }
     }
@@ -2532,25 +2534,27 @@ public class AntForestV2 extends ModelTask {
                 return false;
             }
             JSONArray userHoldDressVOList = jo.getJSONArray("userHoldDressVOList");
+            boolean isTakeOff = false;
             for (int i = 0; i < userHoldDressVOList.length(); i++) {
                 jo = userHoldDressVOList.getJSONObject(i);
-                if (batchType.isEmpty()) {
-                    if (jo.optInt("remainNum", 1) == 0) {
-                        String position = jo.getJSONArray("posList").getString(0);
-                        if (takeOffDress(jo.getString("dressType"), position)) {
-                            return true;
-                        }
+                if (jo.optInt("remainNum", 1) == 0) {
+                    if (batchType.equals(jo.getString("batchType"))) {
+                        return false;
                     }
+                    String position = jo.getJSONArray("posList").getString(0);
+                    isTakeOff = takeOffDress(jo.getString("dressType"), position);
                 } else if (batchType.equals(jo.getString("batchType"))) {
-                    if (jo.optInt("remainNum", 0) == 1) {
-                        if (wearDress(jo.getString("dressType"))) {
-                            return true;
-                        }
-                    }
+                    return wearDress(jo.getString("dressType"));
                 }
             }
+
+            if (!batchType.isEmpty()) {
+                removeDressDetail(positionTypeToPosition(positionType));
+                Log.forest("装扮保护🔐皮肤过期,芝麻粒已为你恢复默认!");
+            }
+            return isTakeOff;
         } catch (Throwable th) {
-            Log.i(TAG, "queryAndExchangeDress err:");
+            Log.i(TAG, "queryUserDressForBackpack err:");
             Log.printStackTrace(TAG, th);
         }
         return false;
@@ -2575,7 +2579,7 @@ public class AntForestV2 extends ModelTask {
         }
         return false;
     }
-    
+
     private Boolean takeOffDress(String dressType, String position) {
         try {
             JSONObject jo = new JSONObject(AntForestRpcCall.takeOffDress(dressType, position));
@@ -2594,6 +2598,56 @@ public class AntForestV2 extends ModelTask {
             Log.printStackTrace(TAG, th);
         }
         return false;
+    }
+
+    private String positionToPositionType(String position) {
+        String[] positions = {
+                "tree__main",
+                "bg__sky_0",
+                "bg__sky_cloud",
+                "bg__ground_a",
+                "bg__ground_b",
+                "bg__ground_c"
+        };
+        String[] positionTypes = {
+                "treeMain",
+                "bgSky0",
+                "bgSkyCloud",
+                "bgGroundA",
+                "bgGroundB",
+                "bgGroundC"
+        };
+        for (int i = 0; i < positionTypes.length; i++) {
+            if (positions[i].equals(position)) {
+                return positionTypes[i];
+            }
+        }
+        return null;
+    }
+
+    private String positionTypeToPosition(String positionType) {
+        String[] positions = {
+                "tree__main",
+                "bg__sky_0",
+                "bg__sky_cloud",
+                "bg__ground_a",
+                "bg__ground_b",
+                "bg__ground_c"
+        };
+        String[] positionTypes = {
+                "treeMain",
+                "bgSky0",
+                "bgSkyCloud",
+                "bgGroundA",
+                "bgGroundB",
+                "bgGroundC"
+        };
+        for (int i = 0; i < positionTypes.length; i++) {
+            if (positionTypes[i].equals(positionType)) {
+                return positions[i];
+            }
+        }
+        return null;
     }
 
     /**
