@@ -621,7 +621,7 @@ public class AntDodo extends ModelTask {
     private Boolean checkMessage(JSONObject jo) {
         try {
             if (!"SUCCESS".equals(jo.optString("resultCode"))) {
-                if (jo.has("resultCode")) {
+                if (jo.has("resultDesc")) {
                     Log.record(jo.getString("resultDesc"));
                     Log.i(jo.getString("resultDesc"), jo.toString());
                 } else {
