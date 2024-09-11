@@ -44,6 +44,7 @@ public class AntMember extends ModelTask {
     private BooleanModelField beanSignIn;
     private BooleanModelField beanExchangeBubbleBoost;
     private BooleanModelField beanExchangeGoldenTicket;
+    private BooleanModelField gainSumInsured;
 
     @Override
     public ModelFields getFields() {
@@ -58,6 +59,7 @@ public class AntMember extends ModelTask {
         modelFields.addField(beanSignIn = new BooleanModelField("beanSignIn", "安心豆 | 签到", false));
         modelFields.addField(beanExchangeGoldenTicket = new BooleanModelField("beanExchangeGoldenTicket", "安心豆 | 兑换黄金票", false));
         modelFields.addField(beanExchangeBubbleBoost = new BooleanModelField("beanExchangeBubbleBoost", "安心豆 | 兑换时光加速器", false));
+        modelFields.addField(gainSumInsured = new BooleanModelField("gainSumInsured", "保障金 | 领取", false));
         modelFields.addField(signinCalendar = new BooleanModelField("signinCalendar", "消费金 | 签到", false));
         modelFields.addField(enableGoldTicket = new BooleanModelField("enableGoldTicket", "黄金票 | 签到", false));
         modelFields.addField(zcjSignIn = new BooleanModelField("zcjSignIn", "招财金 | 签到", false));
@@ -111,6 +113,9 @@ public class AntMember extends ModelTask {
             // 消费金签到
             if (signinCalendar.getValue()) {
                 signinCalendar();
+            }
+            if (gainSumInsured.getValue()) {
+                gainSumInsured();
             }
 
             if (zcjSignIn.getValue() || merchantKmdk.getValue()) {
@@ -533,6 +538,57 @@ public class AntMember extends ModelTask {
             Log.record("生活记录📝[加入" + promiseName + "]");
         } catch (Throwable t) {
             Log.i(TAG, "promiseJoin err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    // 领取保障金
+    private void gainSumInsured() {
+        try {
+            JSONObject jo = new JSONObject(AntMemberRpcCall.queryMultiSceneWaitToGainList());
+            if (!jo.optBoolean("success")) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            Iterator<String> keys = jo.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Object jsonDTO = jo.get(key);
+                if (jsonDTO instanceof JSONArray) {
+                    // 如eventToWaitDTOList、helpChildSumInsuredDTOList
+                    JSONArray jsonArray = ((JSONArray) jsonDTO);
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        gainMyAndFamilySumInsured(jsonArray.getJSONObject(i));
+                    }
+                } else if (jsonDTO instanceof JSONObject) {
+                    // 如signInDTO、priorityChannelDTO
+                    JSONObject jsonObject = ((JSONObject) jsonDTO);
+                    if (jsonObject.length() == 0) {
+                        continue;
+                    }
+                    gainMyAndFamilySumInsured(jsonObject);
+                }
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "gainSumInsured err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private void gainMyAndFamilySumInsured(JSONObject giftData) {
+        if (giftData == null) {
+            return;
+        }
+        try {
+            giftData.put("entrance", "jkj_zhima_dairy66");
+            JSONObject jo = new JSONObject(AntMemberRpcCall.gainMyAndFamilySumInsured(giftData));
+            if (!jo.optBoolean("success")) {
+                return;
+            }
+            jo = jo.getJSONObject("data").getJSONObject("gainSumInsuredDTO");
+            Log.record("攒保障金💰[领取:" + jo.optString("gainSumInsuredYuan") + "元保额]");
+        } catch (Throwable t) {
+            Log.i(TAG, "gainMyAndFamilySumInsured err:");
             Log.printStackTrace(TAG, t);
         }
     }
