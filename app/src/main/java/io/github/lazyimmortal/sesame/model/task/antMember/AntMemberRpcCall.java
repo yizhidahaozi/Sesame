@@ -222,11 +222,6 @@ public class AntMemberRpcCall {
                 "[" + data + "]");
     }
 
-    public static String promiseJoin(String data) {
-        return ApplicationHook.requestString("com.antgroup.zmxy.zmmemberop.biz.rpc.promise.PromiseRpcManager.join",
-                "[" + data + "]");
-    }
-
     /**
      * 查询生活记录明细
      *
@@ -255,15 +250,8 @@ public class AntMemberRpcCall {
     /**
      * 领取保障金
      *
-     * @param jsonObject jsonObject
      * @return 结果
      */
-//    public static String gainMyAndFamilySumInsured(JSONObject jsonObject) throws JSONException {
-//        jsonObject.put("disabled", false);
-//        jsonObject.put("entrance", "jkj_zhima_dairy66");
-//        return ApplicationHook.requestString("com.alipay.insgiftbff.insgiftMain.gainMyAndFamilySumInsured",
-//                "[" + jsonObject + "]");
-//    }
 
     public static String gainMyAndFamilySumInsured(JSONObject data) {
         return ApplicationHook.requestString("com.alipay.insgiftbff.insgiftMain.gainMyAndFamilySumInsured", "[" + data + "]");
