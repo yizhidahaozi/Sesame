@@ -9,6 +9,7 @@ import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.*;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
+import io.github.lazyimmortal.sesame.entity.AntFarmOrnaments;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.normal.answerAI.AnswerAI;
 import io.github.lazyimmortal.sesame.rpc.intervallimit.RpcIntervalLimit;
@@ -16,6 +17,7 @@ import io.github.lazyimmortal.sesame.util.*;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class AntFarm extends ModelTask {
@@ -109,7 +111,9 @@ public class AntFarm extends ModelTask {
     private SelectAndCountModelField visitFriendList;
     private BooleanModelField chickenDiary;
     private BooleanModelField enableChouchoule;
-    private BooleanModelField listOrnaments;
+    private BooleanModelField ornamentsDressUp;
+    private SelectModelField ornamentsDressUpList;
+    private IntegerModelField ornamentsDressUpDays;
     private BooleanModelField hireAnimal;
     private ChoiceModelField hireAnimalType;
     private SelectModelField hireAnimalList;
@@ -147,7 +151,9 @@ public class AntFarm extends ModelTask {
         modelFields.addField(notifyFriend = new BooleanModelField("notifyFriend", "通知赶鸡 | 开启", false));
         modelFields.addField(notifyFriendType = new ChoiceModelField("notifyFriendType", "通知赶鸡 | 动作", NotifyFriendType.NOTIFY, NotifyFriendType.nickNames));
         modelFields.addField(notifyFriendList = new SelectModelField("notifyFriendList", "通知赶鸡 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(listOrnaments = new BooleanModelField("listOrnaments", "每日换装", false));
+        modelFields.addField(ornamentsDressUp = new BooleanModelField("ornamentsDressUp", "装扮焕新 | 开启", false));
+        modelFields.addField(ornamentsDressUpList = new SelectModelField("ornamentsDressUpList", "装扮焕新 | 套装列表", new LinkedHashSet<>(), AntFarmOrnaments::getList));
+        modelFields.addField(ornamentsDressUpDays = new IntegerModelField("ornamentsDressUpDays", "装扮焕新 | 焕新频率(天)", 7));
         modelFields.addField(answerQuestion = new BooleanModelField("answerQuestion", "每日答题", false));
         modelFields.addField(donation = new BooleanModelField("donation", "每日捐蛋 | 开启", false));
         modelFields.addField(donationCount = new ChoiceModelField("donationCount", "每日捐蛋 | 次数", DonationCount.ONE, DonationCount.nickNames));
@@ -343,16 +349,16 @@ public class AntFarm extends ModelTask {
                 //     }
                 // }
 
-                // 小鸡换装
-                if (listOrnaments.getValue() && Status.canOrnamentToday()) {
-                    listOrnaments();
-                }
-
                 if (unreceiveTaskAward > 0) {
                     Log.record("还有待领取的饲料");
                     receiveFarmTaskAward();
                 }
 
+            }
+
+            // 小鸡换装
+            if (ornamentsDressUp.getValue()) {
+                ornamentsDressUp();
             }
 
             // 到访小鸡送礼
@@ -2143,83 +2149,83 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    // 小鸡换装
-    private void listOrnaments() {
+    // 装扮焕新
+    private void ornamentsDressUp() {
         try {
-            String s = AntFarmRpcCall.queryLoveCabin(UserIdMap.getCurrentUid());
-            JSONObject jsonObject = new JSONObject(s);
-            if ("SUCCESS".equals(jsonObject.getString("memo"))) {
-                JSONObject ownAnimal = jsonObject.getJSONObject("ownAnimal");
-                String animalId = ownAnimal.getString("animalId");
-                String farmId = ownAnimal.getString("farmId");
-                String listResult = AntFarmRpcCall.listOrnaments();
-                JSONObject jolistOrnaments = new JSONObject(listResult);
-                // 检查是否有 achievementOrnaments 数组
-                if (!jolistOrnaments.has("achievementOrnaments")) {
-                    return; // 数组为空，直接返回
+            JSONObject jo = new JSONObject(AntFarmRpcCall.listOrnaments());
+            if (!checkMessage(jo)) {
+                return;
+            }
+            List<String> list = new ArrayList<>();
+            Map<String, String> ornamentsNameMap = new ConcurrentHashMap<>();
+            Map<String, String> ornamentsSetsMap = new ConcurrentHashMap<>();
+            JSONArray achievementOrnaments = jo.getJSONArray("achievementOrnaments");
+            long takeOffTime = System.currentTimeMillis();
+            for (int i = 0; i < achievementOrnaments.length(); i++) {
+                jo = achievementOrnaments.getJSONObject(i);
+                if (!jo.optBoolean("acquired")) {
+                    continue;
                 }
-                JSONArray achievementOrnaments = jolistOrnaments.getJSONArray("achievementOrnaments");
-                Random random = new Random();
-                List<String> possibleOrnaments = new ArrayList<>(); // 收集所有可保存的套装组合
-                for (int i = 0; i < achievementOrnaments.length(); i++) {
-                    JSONObject ornament = achievementOrnaments.getJSONObject(i);
-                    if (ornament.getBoolean("acquired")) {
-                        JSONArray sets = ornament.getJSONArray("sets");
-                        List<JSONObject> availableSets = new ArrayList<>();
-                        // 收集所有带有 cap 和 coat 的套装组合
-                        for (int j = 0; j < sets.length(); j++) {
-                            JSONObject set = sets.getJSONObject(j);
-                            if ("cap".equals(set.getString("subType")) || "coat".equals(set.getString("subType"))) {
-                                availableSets.add(set);
-                            }
-                        }
-                        // 如果有可用的帽子和外套套装组合
-                        if (availableSets.size() >= 2) {
-                            // 将所有可保存的套装组合添加到 possibleOrnaments 列表中
-                            for (int j = 0; j < availableSets.size() - 1; j++) {
-                                JSONObject selectedCoat = availableSets.get(j);
-                                JSONObject selectedCap = availableSets.get(j + 1);
-                                String id1 = selectedCoat.getString("id"); // 外套 ID
-                                String id2 = selectedCap.getString("id"); // 帽子 ID
-                                String ornaments = id1 + "," + id2;
-                                possibleOrnaments.add(ornaments);
-                            }
-                        }
-                    }
+                if (jo.has("takeOffTime")) {
+                    takeOffTime = jo.getLong("takeOffTime");
                 }
-                // 如果有可保存的套装组合，则随机选择一个进行保存
-                if (!possibleOrnaments.isEmpty()) {
-                    String ornamentsToSave = possibleOrnaments.get(random.nextInt(possibleOrnaments.size()));
-                    String saveResult = AntFarmRpcCall.saveOrnaments(animalId, farmId, ornamentsToSave);
-                    JSONObject saveResultJson = new JSONObject(saveResult);
-                    // 判断保存是否成功并输出日志
-                    if (saveResultJson.optBoolean("success")) {
-                        // 获取保存的整套服装名称
-                        String[] ornamentIds = ornamentsToSave.split(",");
-                        String wholeSetName = ""; // 整套服装名称
-                        // 遍历 achievementOrnaments 查找对应的套装名称
-                        for (int i = 0; i < achievementOrnaments.length(); i++) {
-                            JSONObject ornament = achievementOrnaments.getJSONObject(i);
-                            JSONArray sets = ornament.getJSONArray("sets");
-                            // 找到对应的整套服装名称
-                            if (sets.length() == 2 && sets.getJSONObject(0).getString("id").equals(ornamentIds[0])
-                                    && sets.getJSONObject(1).getString("id").equals(ornamentIds[1])) {
-                                wholeSetName = ornament.getString("name");
-                                break;
-                            }
-                        }
-                        // 输出日志
-                        Log.farm("庄园小鸡💞[换装:" + wholeSetName + "]");
-                        Status.setOrnamentToday();
-                    } else {
-                        Log.i(TAG, "保存时装失败，错误码： " + saveResultJson.toString());
-                    }
+                String resourceKey = jo.getString("resourceKey");
+                String name = jo.getString("name");
+                if (ornamentsDressUpList.getValue().contains(resourceKey)) {
+                    JSONArray sets = jo.getJSONArray("sets");
+                    list.add(resourceKey);
+                    ornamentsNameMap.put(resourceKey, name);
+                    ornamentsSetsMap.put(resourceKey, getOrnamentsSets(sets));
                 }
+                AntFarmOrnamentsIdMap.add(resourceKey, name);
+            }
+            AntFarmOrnamentsIdMap.save(UserIdMap.getCurrentUid());
+            if (list.isEmpty() || takeOffTime
+                    + TimeUnit.DAYS.toMillis(ornamentsDressUpDays.getValue() - 15)
+                    > System.currentTimeMillis()) {
+                return;
+            }
+
+            int pos = RandomUtil.nextInt(0, list.size() - 1);
+            String resourceKey = list.get(pos);
+            if (saveOrnaments(ornamentsSetsMap.get(resourceKey))) {
+                String ornamentsName = ornamentsNameMap.get(resourceKey);
+                Log.farm("装扮焕新💞[" + ornamentsName + "]");
             }
         } catch (Throwable t) {
-            Log.i(TAG, "listOrnaments err: " + t.getMessage());
+            Log.i(TAG, "ornamentsDressUp err:");
             Log.printStackTrace(TAG, t);
         }
+    }
+
+    private Boolean saveOrnaments(String ornaments) {
+        try {
+            String animalId = ownerAnimal.animalId;
+            String farmId = ownerFarmId;
+            JSONObject jo = new JSONObject(AntFarmRpcCall.saveOrnaments(animalId, farmId, ornaments));
+            return checkMessage(jo);
+        } catch (Throwable t) {
+            Log.i(TAG, "saveOrnaments err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private String getOrnamentsSets(JSONArray sets) {
+        StringBuilder ornamentsSets = new StringBuilder();
+        try {
+            for (int i = 0; i < sets.length(); i++) {
+                JSONObject set = sets.getJSONObject(i);
+                if (i > 0) {
+                    ornamentsSets.append(",");
+                }
+                ornamentsSets.append(set.getString("id"));
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "getOrnamentsSets err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return ornamentsSets.toString();
     }
 
     // 一起拿小鸡饲料

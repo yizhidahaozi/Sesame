@@ -33,7 +33,6 @@ public class Status {
     private Set<String> donationEggList = new HashSet<>();
     private int useAccelerateToolCount = 0;
     private int useSpecialFoodCount = 0;
-    private Boolean canOrnament = true;
 
     // stall
     private Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
@@ -556,17 +555,6 @@ public class Status {
             return true;
         } else {
             return false;
-        }
-    }
-
-    public static boolean canOrnamentToday() {
-        return INSTANCE.canOrnament;
-    }
-
-    public static void setOrnamentToday() {
-        if (INSTANCE.canOrnament) {
-            INSTANCE.canOrnament = false;
-            save();
         }
     }
 

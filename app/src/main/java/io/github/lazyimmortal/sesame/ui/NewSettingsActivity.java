@@ -71,6 +71,7 @@ public class NewSettingsActivity extends BaseActivity {
         UserIdMap.load(userId);
         CooperationIdMap.load(userId);
         VitalityBenefitIdMap.load(userId);
+        AntFarmOrnamentsIdMap.load(userId);
         MemberBenefitIdMap.load(userId);
         PromiseSimpleTemplateIdMap.load(userId);
         ReserveIdMap.load();
