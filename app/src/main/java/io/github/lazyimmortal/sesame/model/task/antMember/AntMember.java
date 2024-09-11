@@ -472,7 +472,7 @@ public class AntMember extends ModelTask {
                 String templateId = jo.getString("templateId");
                 String promiseName = jo.getString("promiseName");
                 String status = jo.getString("status");
-                if ("un_join".equals(status) && promiseList.getConfigValue().contains(templateId)) {
+                if ("un_join".equals(status) && promiseList.getValue().contains(templateId)) {
                     promiseJoin(querySingleTemplate(templateId));
                 }
                 PromiseSimpleTemplateIdMap.add(templateId, promiseName);
