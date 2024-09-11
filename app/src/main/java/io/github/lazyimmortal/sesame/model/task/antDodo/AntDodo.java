@@ -379,8 +379,11 @@ public class AntDodo extends ModelTask {
             jo = jo.getJSONObject("data");
             String propName = jo.getJSONObject("propConfig").getString("propName");
 
-            if ("COLLECT_TIMES_7_DAYS".equals(propType)
-                    || "COLLECT_HISTORY_ANIMAL_7_DAYS".equals(propType)) {
+            String animalInfo = "";
+            // COLLECT_TO_FRIEND_TIMES_7_DAYS
+            if (jo.getJSONObject("useResult").has("animal")) {
+                // COLLECT_TIMES_7_DAYS
+                // COLLECT_HISTORY_ANIMAL_7_DAYS
                 JSONObject animal = jo.getJSONObject("useResult").getJSONObject("animal");
                 String ecosystem = animal.getString("ecosystem");
                 String name = animal.getString("name");
@@ -393,13 +396,10 @@ public class AntDodo extends ModelTask {
                 } else if (fantasticStarQuantity == 3) {
                     fantasticLevel = "神奇";
                 }
-                Log.forest("使用道具🎭[" + propName + "]#" + ecosystem + "-" + name
-                        + "[" + fantasticLevel +  "]");
-                return true;
-            } else {
-                // COLLECT_TO_FRIEND_TIMES_7_DAYS
-                Log.forest("使用道具🎭[" + propName + "]");
+                animalInfo = "#" + ecosystem + "-" + name + "[" + fantasticLevel +  "]";
             }
+            Log.forest("使用道具🎭[" + propName + "]" + animalInfo);
+            return true;
         } catch (Throwable t) {
             Log.i(TAG, "AntDodo consumeProp err:");
             Log.printStackTrace(TAG, t);
