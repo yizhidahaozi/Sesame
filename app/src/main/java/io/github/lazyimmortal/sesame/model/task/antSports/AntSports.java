@@ -114,7 +114,7 @@ public class AntSports extends ModelTask {
     @Override
     public void run() {
         try {
-            if (Status.canSyncStepToday(UserIdMap.getCurrentUid()) && TimeUtil.isNowAfterOrCompareTimeStr("0600")) {
+            if (Status.canSyncStepToday() && TimeUtil.isNowAfterOrCompareTimeStr("0600")) {
                 addChildTask(new ChildModelTask("syncStep", () -> {
                     int step = tmpStepCount();
                     try {
@@ -124,7 +124,7 @@ public class AntSports extends ModelTask {
                         } else {
                             Log.record("同步运动步数失败:" + step);
                         }
-                        Status.SyncStepToday(UserIdMap.getCurrentUid());
+                        Status.SyncStepToday();
                     } catch (Throwable t) {
                         Log.printStackTrace(TAG, t);
                     }
@@ -144,7 +144,7 @@ public class AntSports extends ModelTask {
                 coinExchangeItem("AMS2024032927086104");
             }
 
-            if (minExchangeCount.getValue() > 0 && Status.canExchangeToday(UserIdMap.getCurrentUid()))
+            if (minExchangeCount.getValue() > 0 && Status.canExchangeToday())
                 queryWalkStep(loader);
 
             if (tiyubiz.getValue()) {
@@ -545,7 +545,7 @@ public class AntSports extends ModelTask {
                     JSONObject walkDonateHomeModel = jo.getJSONObject("walkDonateHomeModel");
                     JSONObject walkUserInfoModel = walkDonateHomeModel.getJSONObject("walkUserInfoModel");
                     if (!walkUserInfoModel.has("exchangeFlag")) {
-                        Status.exchangeToday(UserIdMap.getCurrentUid());
+                        Status.exchangeToday();
                         return;
                     }
 
@@ -560,10 +560,10 @@ public class AntSports extends ModelTask {
                         int userCount = donateExchangeResultModel.getInt("userCount");
                         double amount = donateExchangeResultModel.getJSONObject("userAmount").getDouble("amount");
                         Log.other("捐出活动❤️[" + userCount + "步]#兑换" + amount + "元公益金");
-                        Status.exchangeToday(UserIdMap.getCurrentUid());
+                        Status.exchangeToday();
 
                     } else if (s.contains("已捐步")) {
-                        Status.exchangeToday(UserIdMap.getCurrentUid());
+                        Status.exchangeToday();
                     } else {
                         Log.i(TAG, jo.getString("resultDesc"));
                     }

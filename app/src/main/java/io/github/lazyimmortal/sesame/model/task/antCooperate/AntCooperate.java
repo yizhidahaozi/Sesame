@@ -66,7 +66,7 @@ public class AntCooperate extends ModelTask {
                         String name = jo.getString("name");
                         int waterDayLimit = jo.getInt("waterDayLimit");
                         CooperationIdMap.add(cooperationId, name);
-                        if (!Status.canCooperateWaterToday(UserIdMap.getCurrentUid(), cooperationId)) {
+                        if (!Status.canCooperateWaterToday(cooperationId)) {
                             continue;
                         }
                         Integer num = cooperateWaterList.getValue().get(cooperationId);
@@ -103,7 +103,7 @@ public class AntCooperate extends ModelTask {
             JSONObject jo = new JSONObject(s);
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
                 Log.forest("合种浇水🚿[" + name + "]" + jo.getString("barrageText"));
-                Status.cooperateWaterToday(UserIdMap.getCurrentUid(), coopId);
+                Status.cooperateWaterToday(coopId);
             } else {
                 Log.i(TAG, jo.getString("resultDesc"));
             }

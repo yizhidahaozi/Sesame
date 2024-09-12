@@ -23,7 +23,7 @@ public class Status {
     private Set<String> cooperateWaterList = new HashSet<>();
     private Map<String, Integer> reserveLogList = new HashMap<>();
     private Set<String> ancientTreeCityCodeList = new HashSet<>();
-    private Set<String> protectBubbleList = new HashSet<>();
+    private boolean protectBubble = false;
     private int doubleTimes = 0;
 
     // farm
@@ -34,19 +34,22 @@ public class Status {
     private int useAccelerateToolCount = 0;
     private int useSpecialFoodCount = 0;
 
+    // orchard
+    private boolean antOrchardAssistFriend = false;
+
     // stall
     private Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
-    private Set<String> spreadManureList = new HashSet<>();
+    private boolean spreadManure = false;
     private Set<String> stallP2PHelpedList = new HashSet<>();
     private Boolean canStallDonate = true;
 
     // sport
-    private Set<String> syncStepList = new HashSet<>();
-    private Set<String> exchangeList = new HashSet<>();
+    private boolean syncStep = false;
+    private boolean exchange = false;
     private boolean donateCharityCoin = false;
 
     // other
-    private Set<String> memberSignInList = new HashSet<>();
+    private boolean memberSignIn = false;
     private Set<String> memberPointExchangeBenefitList = new HashSet<>();
 
     // 保存时间
@@ -55,27 +58,23 @@ public class Status {
     /**
      * 新村助力好友，已上限的用户
      */
-    private Set<String> antStallAssistFriend = new HashSet<>();
+    private boolean antStallAssistFriend = false;
     /**
      * 新村-罚单已贴完的用户
      */
-    private Set<String> canPasteTicketTime = new HashSet<>();
+    private boolean pasteTicketTime = false;
 
     /**
      * 绿色经营，收取好友金币已完成用户
      */
-    private Set<String> greenFinancePointFriend = new HashSet<>();
+    private boolean greenFinancePointFriend = false;
 
     /**
      * 绿色经营，评级领奖已完成用户
      */
-    private Map<String, Integer> greenFinancePrizesMap = new HashMap<>();
-
-    // 农场助力
-    private Set<String> antOrchardAssistFriend = new HashSet<>();
+    private Set<Integer> greenFinancePrizesSet = new HashSet<>();
 
     public static boolean canWaterFriendToday(String id, int newCount) {
-        id = UserIdMap.getCurrentUid() + "-" + id;
         Integer count = INSTANCE.waterFriendLogList.get(id);
         if (count == null) {
             return true;
@@ -84,7 +83,6 @@ public class Status {
     }
 
     public static void waterFriendToday(String id, int count) {
-        id = UserIdMap.getCurrentUid() + "-" + id;
         INSTANCE.waterFriendLogList.put(id, count);
         save();
     }
@@ -134,15 +132,14 @@ public class Status {
         save();
     }
 
-    public static boolean canCooperateWaterToday(String uid, String coopId) {
-        return !INSTANCE.cooperateWaterList.contains(uid + "_" + coopId);
+    public static boolean canCooperateWaterToday(String coopId) {
+        return !INSTANCE.cooperateWaterList.contains(coopId);
     }
 
-    public static void cooperateWaterToday(String uid, String coopId) {
+    public static void cooperateWaterToday(String coopId) {
         Status stat = INSTANCE;
-        String v = uid + "_" + coopId;
-        if (!stat.cooperateWaterList.contains(v)) {
-            stat.cooperateWaterList.add(v);
+        if (!stat.cooperateWaterList.contains(coopId)) {
+            stat.cooperateWaterList.add(coopId);
             save();
         }
     }
@@ -154,7 +151,7 @@ public class Status {
     public static void memberPointExchangeBenefit(String benefitId) {
         Status stat = INSTANCE;
         if (!stat.memberPointExchangeBenefitList.contains(benefitId)) {
-            stat.cooperateWaterList.add(benefitId);
+            stat.memberPointExchangeBenefitList.add(benefitId);
             save();
         }
     }
@@ -201,7 +198,6 @@ public class Status {
     }
 
     public static boolean canVisitFriendToday(String id, int newCount) {
-        id = UserIdMap.getCurrentUid() + "-" + id;
         Integer count = INSTANCE.visitFriendLogList.get(id);
         if (count == null) {
             return true;
@@ -210,7 +206,6 @@ public class Status {
     }
 
     public static void visitFriendToday(String id, int newCount) {
-        id = UserIdMap.getCurrentUid() + "-" + id;
         INSTANCE.visitFriendLogList.put(id, newCount);
         save();
     }
@@ -237,14 +232,14 @@ public class Status {
         save();
     }
 
-    public static boolean canMemberSignInToday(String uid) {
-        return !INSTANCE.memberSignInList.contains(uid);
+    public static boolean canMemberSignInToday() {
+        return !INSTANCE.memberSignIn;
     }
 
-    public static void memberSignInToday(String uid) {
+    public static void memberSignInToday() {
         Status stat = INSTANCE;
-        if (!stat.memberSignInList.contains(uid)) {
-            stat.memberSignInList.add(uid);
+        if (!stat.memberSignIn) {
+            stat.memberSignIn = true;
             save();
         }
     }
@@ -287,25 +282,23 @@ public class Status {
         }
     }
 
-    public static boolean canSpreadManureToday(String uid) {
-        return !INSTANCE.spreadManureList.contains(uid);
+    public static boolean canSpreadManureToday() {
+        return !INSTANCE.spreadManure;
     }
 
-    public static void spreadManureToday(String uid) {
+    public static void spreadManureToday() {
         Status stat = INSTANCE;
-        if (!stat.spreadManureList.contains(uid)) {
-            stat.spreadManureList.add(uid);
+        if (!stat.spreadManure) {
+            stat.spreadManure = true;
             save();
         }
     }
 
     public static boolean canStallP2PHelpToday(String uid) {
-        uid = UserIdMap.getCurrentUid() + "-" + uid;
         return !INSTANCE.stallP2PHelpedList.contains(uid);
     }
 
     public static void stallP2PHelpeToday(String uid) {
-        uid = UserIdMap.getCurrentUid() + "-" + uid;
         Status stat = INSTANCE;
         if (!stat.stallP2PHelpedList.contains(uid)) {
             stat.stallP2PHelpedList.add(uid);
@@ -319,7 +312,7 @@ public class Status {
      * @return true是，false否
      */
     public static boolean canAntStallAssistFriendToday() {
-        return !INSTANCE.antStallAssistFriend.contains(UserIdMap.getCurrentUid());
+        return !INSTANCE.antStallAssistFriend;
     }
 
     /**
@@ -327,35 +320,33 @@ public class Status {
      */
     public static void antStallAssistFriendToday() {
         Status stat = INSTANCE;
-        String uid = UserIdMap.getCurrentUid();
-        if (!stat.antStallAssistFriend.contains(uid)) {
-            stat.antStallAssistFriend.add(uid);
+        if (!stat.antStallAssistFriend) {
+            stat.antStallAssistFriend = true;
             save();
         }
     }
 
     // 农场助力
     public static boolean canAntOrchardAssistFriendToday() {
-        return !INSTANCE.antOrchardAssistFriend.contains(UserIdMap.getCurrentUid());
+        return !INSTANCE.antOrchardAssistFriend;
     }
 
     public static void antOrchardAssistFriendToday() {
         Status stat = INSTANCE;
-        String uid = UserIdMap.getCurrentUid();
-        if (!stat.antOrchardAssistFriend.contains(uid)) {
-            stat.antOrchardAssistFriend.add(uid);
+        if (!stat.antOrchardAssistFriend) {
+            stat.antOrchardAssistFriend = true;
             save();
         }
     }
 
-    public static boolean canProtectBubbleToday(String uid) {
-        return !INSTANCE.protectBubbleList.contains(uid);
+    public static boolean canProtectBubbleToday() {
+        return !INSTANCE.protectBubble;
     }
 
-    public static void protectBubbleToday(String uid) {
+    public static void protectBubbleToday() {
         Status stat = INSTANCE;
-        if (!stat.protectBubbleList.contains(uid)) {
-            stat.protectBubbleList.add(uid);
+        if (!stat.protectBubble) {
+            stat.protectBubble = true;
             save();
         }
     }
@@ -366,18 +357,18 @@ public class Status {
      * @return true是，false否
      */
     public static boolean canPasteTicketTime() {
-        return !INSTANCE.canPasteTicketTime.contains(UserIdMap.getCurrentUid());
+        return !INSTANCE.pasteTicketTime;
     }
 
     /**
      * 罚单贴完了
      */
     public static void pasteTicketTime() {
-        if (INSTANCE.canPasteTicketTime.contains(UserIdMap.getCurrentUid())) {
-            return;
+        Status stat = INSTANCE;
+        if (!stat.pasteTicketTime) {
+            stat.pasteTicketTime = true;
+            save();
         }
-        INSTANCE.canPasteTicketTime.add(UserIdMap.getCurrentUid());
-        save();
     }
 
     public static boolean canDoubleToday() {
@@ -405,27 +396,26 @@ public class Status {
         }
     }
 
-    public static boolean canSyncStepToday(String uid) {
-        Status stat = INSTANCE;
-        return !stat.syncStepList.contains(uid);
+    public static boolean canSyncStepToday() {
+        return !INSTANCE.syncStep;
     }
 
-    public static void SyncStepToday(String uid) {
+    public static void SyncStepToday() {
         Status stat = INSTANCE;
-        if (!stat.syncStepList.contains(uid)) {
-            stat.syncStepList.add(uid);
+        if (!stat.syncStep) {
+            stat.syncStep = true;
             save();
         }
     }
 
-    public static boolean canExchangeToday(String uid) {
-        return !INSTANCE.exchangeList.contains(uid);
+    public static boolean canExchangeToday() {
+        return !INSTANCE.exchange;
     }
 
-    public static void exchangeToday(String uid) {
+    public static void exchangeToday() {
         Status stat = INSTANCE;
-        if (!stat.exchangeList.contains(uid)) {
-            stat.exchangeList.add(uid);
+        if (!stat.exchange) {
+            stat.exchange = true;
             save();
         }
     }
@@ -436,18 +426,18 @@ public class Status {
      * @return true是，false否
      */
     public static boolean canGreenFinancePointFriend() {
-        return !INSTANCE.greenFinancePointFriend.contains(UserIdMap.getCurrentUid());
+        return !INSTANCE.greenFinancePointFriend;
     }
 
     /**
      * 绿色经营-收好友金币完了
      */
     public static void greenFinancePointFriend() {
-        if (!canGreenFinancePointFriend()) {
-            return;
+        Status stat = INSTANCE;
+        if (!stat.greenFinancePointFriend) {
+            stat.greenFinancePointFriend = true;
+            save();
         }
-        INSTANCE.greenFinancePointFriend.add(UserIdMap.getCurrentUid());
-        save();
     }
 
     /**
@@ -457,23 +447,19 @@ public class Status {
      */
     public static boolean canGreenFinancePrizesMap() {
         int week = TimeUtil.getWeekNumber(new Date());
-        String currentUid = UserIdMap.getCurrentUid();
-        if (INSTANCE.greenFinancePrizesMap.containsKey(currentUid)) {
-            Integer storedWeek = INSTANCE.greenFinancePrizesMap.get(currentUid);
-            return storedWeek == null || storedWeek != week;
-        }
-        return true;
+        return !INSTANCE.greenFinancePrizesSet.contains(week);
     }
 
     /**
      * 绿色经营-评级任务完了
      */
     public static void greenFinancePrizesMap() {
-        if (!canGreenFinancePrizesMap()) {
-            return;
+        int week = TimeUtil.getWeekNumber(new Date());
+        Status stat = INSTANCE;
+        if (!stat.greenFinancePrizesSet.contains(week)) {
+            stat.greenFinancePrizesSet.add(week);
+            save();
         }
-        INSTANCE.greenFinancePrizesMap.put(UserIdMap.getCurrentUid(), TimeUtil.getWeekNumber(new Date()));
-        save();
     }
 
     public static synchronized Status load() {

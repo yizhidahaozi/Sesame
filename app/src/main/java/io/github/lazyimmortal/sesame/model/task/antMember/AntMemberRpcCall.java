@@ -1,6 +1,5 @@
 package io.github.lazyimmortal.sesame.model.task.antMember;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.UUID;
@@ -8,7 +7,6 @@ import java.util.UUID;
 import io.github.lazyimmortal.sesame.entity.AlipayVersion;
 import io.github.lazyimmortal.sesame.entity.RpcEntity;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
-import io.github.lazyimmortal.sesame.util.Log;
 import io.github.lazyimmortal.sesame.util.RandomUtil;
 
 public class AntMemberRpcCall {

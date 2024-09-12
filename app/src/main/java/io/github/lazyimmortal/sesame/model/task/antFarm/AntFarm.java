@@ -17,7 +17,6 @@ import io.github.lazyimmortal.sesame.util.*;
 import lombok.Getter;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class AntFarm extends ModelTask {
@@ -2186,8 +2185,8 @@ public class AntFarm extends ModelTask {
                 return;
             }
             List<String> list = new ArrayList<>();
-            Map<String, String> ornamentsNameMap = new ConcurrentHashMap<>();
-            Map<String, String> ornamentsSetsMap = new ConcurrentHashMap<>();
+            Map<String, String> ornamentsNameMap = new HashMap<>();
+            Map<String, String> ornamentsSetsMap = new HashMap<>();
             JSONArray achievementOrnaments = jo.getJSONArray("achievementOrnaments");
             long takeOffTime = System.currentTimeMillis();
             for (int i = 0; i < achievementOrnaments.length(); i++) {

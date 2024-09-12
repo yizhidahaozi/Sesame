@@ -717,7 +717,7 @@ public class AntForestV2 extends ModelTask {
                             Log.i("不收取[" + UserIdMap.getNameById(userId) + "], userId=" + userId);
                         }*/
                     }
-                    if (helpFriendCollect.getValue() && friendObject.optBoolean("canProtectBubble") && Status.canProtectBubbleToday(selfId)) {
+                    if (helpFriendCollect.getValue() && friendObject.optBoolean("canProtectBubble") && Status.canProtectBubbleToday()) {
                         boolean isHelpCollect = helpFriendCollectList.getValue().contains(userId);
                         if (helpFriendCollectType.getValue() == HelpFriendCollectType.DONT_HELP) {
                             isHelpCollect = !isHelpCollect;
@@ -798,7 +798,7 @@ public class AntForestV2 extends ModelTask {
                             continue;
                         }
                         if (wateringBubble.getJSONObject("extInfo").optInt("restTimes", 0) == 0) {
-                            Status.protectBubbleToday(selfId);
+                            Status.protectBubbleToday();
                         }
                         if (!wateringBubble.getBoolean("canProtect")) {
                             continue;

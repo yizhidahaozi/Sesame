@@ -146,14 +146,14 @@ public class AntMember extends ModelTask {
 
     private void memberSign() {
         try {
-            if (Status.canMemberSignInToday(UserIdMap.getCurrentUid())) {
+            if (Status.canMemberSignInToday()) {
                 String s = AntMemberRpcCall.queryMemberSigninCalendar();
                 TimeUtil.sleep(500);
                 JSONObject jo = new JSONObject(s);
                 if ("SUCCESS".equals(jo.getString("resultCode"))) {
                     Log.other("每日签到📅[" + jo.getString("signinPoint") + "积分]#已签到" + jo.getString("signinSumDay")
                             + "天");
-                    Status.memberSignInToday(UserIdMap.getCurrentUid());
+                    Status.memberSignInToday();
                 } else {
                     Log.record(jo.getString("resultDesc"));
                     Log.i(s);
