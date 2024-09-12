@@ -18,6 +18,7 @@ import io.github.lazyimmortal.sesame.util.UserIdMap;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class AntDodo extends ModelTask {
     private static final String TAG = AntDodo.class.getSimpleName();
@@ -34,6 +35,7 @@ public class AntDodo extends ModelTask {
 
     private BooleanModelField useProp;
     private SelectModelField usePropList;
+    private ChoiceModelField useCollectTimingType;
     private ChoiceModelField useUniversalCardBookStatusType;
     private ChoiceModelField useUniversalCardBookCollectedStatus;
     private ChoiceModelField useUniversalCardMedalGenerationStatus;
@@ -54,6 +56,7 @@ public class AntDodo extends ModelTask {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(useProp = new BooleanModelField("useProp", "使用道具 | 开启", false));
         modelFields.addField(usePropList = new SelectModelField("usePropList", "使用道具 | 道具列表", new LinkedHashSet<>(), AntDodoProp::getList));
+        modelFields.addField(useCollectTimingType = new ChoiceModelField("useCollectTimingType", "抽卡道具 | 使用时机", TimingType.EVERY_DAY, TimingType.nickNames));
         modelFields.addField(useUniversalCardBookStatusType = new ChoiceModelField("useUniversalCardBookStatusType", "万能卡片 | 图鉴状态类型", BookStatusType.END, BookStatusType.nickNames));
         modelFields.addField(useUniversalCardBookCollectedStatus = new ChoiceModelField("useUniversalCardBookCollectedStatus", "万能卡片 | 图鉴收集状态", BookCollectedStatus.ALL, BookCollectedStatus.nickNames));
         modelFields.addField(useUniversalCardMedalGenerationStatus = new ChoiceModelField("useUniversalCardMedalGenerationStatus", "万能卡片 | 勋章合成状态", MedalGenerationStatus.ALL, MedalGenerationStatus.nickNames));
@@ -102,16 +105,25 @@ public class AntDodo extends ModelTask {
     /*
      * 神奇物种
      */
-    private boolean lastDay(String endDate) {
-        long timeStemp = System.currentTimeMillis();
-        long endTimeStemp = Log.timeToStamp(endDate);
-        return timeStemp < endTimeStemp && (endTimeStemp - timeStemp) < 86400000L;
+    private long getEndDateTime() {
+        try {
+            JSONObject jo = new JSONObject(AntDodoRpcCall.homePage());
+            if (!checkMessage(jo)) {
+                return 0;
+            }
+            jo = jo.getJSONObject("data");
+            jo = jo.getJSONObject("animalBook");
+            String endDate = jo.getString("endDate") + " 23:59:59";
+            return Log.timeToStamp(endDate);
+        } catch (Throwable t) {
+            Log.i(TAG, "AntDodo GetEndDateTime err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return 0;
     }
 
-    public boolean in8Days(String endDate) {
-        long timeStemp = System.currentTimeMillis();
-        long endTimeStemp = Log.timeToStamp(endDate);
-        return timeStemp < endTimeStemp && (endTimeStemp - timeStemp) < 691200000L;
+    private boolean isLastDay() {
+        return getEndDateTime() - TimeUnit.DAYS.toMillis(1) < System.currentTimeMillis();
     }
 
     private void collect() {
@@ -136,11 +148,6 @@ public class AntDodo extends ModelTask {
             JSONObject jo = new JSONObject(AntDodoRpcCall.homePage());
             if (checkMessage(jo)) {
                 JSONObject data = jo.getJSONObject("data");
-                JSONObject animalBook = data.getJSONObject("animalBook");
-                String endDate = animalBook.getString("endDate") + " 23:59:59";
-                receiveTaskAward();
-                if (!in8Days(endDate) || lastDay(endDate))
-                    propList();
                 JSONArray ja = data.getJSONArray("limit");
                 int index = -1;
                 for (int i = 0; i < ja.length(); i++) {
@@ -235,8 +242,10 @@ public class AntDodo extends ModelTask {
                     String propType = prop.getString("propType");
                     JSONArray propIdList = prop.getJSONArray("propIdList");
                     String propId = propIdList.getString(0);
+                    long recentExpireTime = prop.getLong("recentExpireTime");
+                    boolean willExpireSoon = recentExpireTime - TimeUnit.DAYS.toMillis(1) < System.currentTimeMillis();
                     boolean isUseProp = usePropList.getValue().contains(propType);
-                    if (!isUseProp) {
+                    if (!isUseProp && !willExpireSoon) {
                         continue;
                     }
                     if ("UNIVERSAL_CARD_7_DAYS".equals(propType)) {
@@ -247,6 +256,12 @@ public class AntDodo extends ModelTask {
                         // COLLECT_TIMES_7_DAYS
                         // COLLECT_HISTORY_ANIMAL_7_DAYS
                         // COLLECT_TO_FRIEND_TIMES_7_DAYS
+                        if ("COLLECT_TIMES_7_DAYS".equals(propType)
+                                && !willExpireSoon
+                                && useCollectTimingType.getValue() == TimingType.LAST_DAY
+                                && !isLastDay()) {
+                            continue;
+                        }
                         if (!consumeProp(propId, propType)) {
                             continue;
                         }
@@ -621,6 +636,13 @@ public class AntDodo extends ModelTask {
             Log.printStackTrace(TAG, t);
         }
         return false;
+    }
+
+    public interface TimingType {
+        int EVERY_DAY = 0;
+        int LAST_DAY = 1;
+
+        String[] nickNames = {"每天使用", "专辑最后一天"};
     }
 
     public interface CollectToFriendType {
