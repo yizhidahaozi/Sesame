@@ -134,7 +134,8 @@ public class NewRpcBridge implements RpcBridge {
                                         try {
                                             Object obj = args[0];
                                             rpcEntity.setResponseObject(obj, (String) XposedHelpers.callMethod(obj, "toJSONString"));
-                                            if (!(Boolean) XposedHelpers.callMethod(obj, "containsKey", "success")) {
+                                            if (!(Boolean) XposedHelpers.callMethod(obj, "containsKey", "success")
+                                                    && !(Boolean) XposedHelpers.callMethod(obj, "containsKey", "isSuccess")) {
                                                 rpcEntity.setError();
                                                 Log.error("new rpc response | id: " + rpcEntity.hashCode() + " | method: " + rpcEntity.getRequestMethod() + " args: " + rpcEntity.getRequestData() + " | data: " + rpcEntity.getResponseString());
                                             }
@@ -232,7 +233,8 @@ public class NewRpcBridge implements RpcBridge {
                                                     Object obj = innerArgs[0];
                                                     String result = (String) XposedHelpers.callMethod(obj, "toJSONString");
                                                     rpcEntity.setResponseObject(obj, result);
-                                                    if (!(Boolean) XposedHelpers.callMethod(obj, "containsKey", "success")) {
+                                                    if (!(Boolean) XposedHelpers.callMethod(obj, "containsKey", "success")
+                                                            && !(Boolean) XposedHelpers.callMethod(obj, "containsKey", "isSuccess")) {
                                                         rpcEntity.setError();
                                                         Log.error("new rpc response | id: " + rpcEntity.hashCode() + " | method: " + rpcEntity.getRequestMethod() + " args: " + rpcEntity.getRequestData() + " | data: " + rpcEntity.getResponseString());
                                                     }
