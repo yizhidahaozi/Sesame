@@ -157,9 +157,7 @@ public class AntDodo extends ModelTask {
                         if (checkMessage(jo)) {
                             data = jo.getJSONObject("data");
                             JSONObject animal = data.getJSONObject("animal");
-                            String ecosystem = animal.getString("ecosystem");
-                            String name = animal.getString("name");
-                            Log.forest("神奇物种🦕[" + ecosystem + "]#" + name);
+                            Log.forest("神奇物种🦕每日抽卡" + getAnimalInfo(animal));
                         }
                     }
                 }
@@ -379,26 +377,11 @@ public class AntDodo extends ModelTask {
             jo = jo.getJSONObject("data");
             String propName = jo.getJSONObject("propConfig").getString("propName");
 
-            String animalInfo = "";
+            // COLLECT_TIMES_7_DAYS
+            // COLLECT_HISTORY_ANIMAL_7_DAYS
             // COLLECT_TO_FRIEND_TIMES_7_DAYS
-            if (jo.getJSONObject("useResult").has("animal")) {
-                // COLLECT_TIMES_7_DAYS
-                // COLLECT_HISTORY_ANIMAL_7_DAYS
-                JSONObject animal = jo.getJSONObject("useResult").getJSONObject("animal");
-                String ecosystem = animal.getString("ecosystem");
-                String name = animal.getString("name");
-                int fantasticStarQuantity = animal.optInt("fantasticStarQuantity", 0);
-                String fantasticLevel = "未知";
-                if (fantasticStarQuantity == 1) {
-                    fantasticLevel = "普通";
-                } else if (fantasticStarQuantity == 2) {
-                    fantasticLevel = "稀有";
-                } else if (fantasticStarQuantity == 3) {
-                    fantasticLevel = "神奇";
-                }
-                animalInfo = "#" + ecosystem + "-" + name + "[" + fantasticLevel +  "]";
-            }
-            Log.forest("使用道具🎭[" + propName + "]" + animalInfo);
+            JSONObject animal = jo.getJSONObject("useResult").optJSONObject("animal");
+            Log.forest("使用道具🎭[" + propName + "]" + getAnimalInfo(animal));
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "AntDodo consumeProp err:");
@@ -415,20 +398,8 @@ public class AntDodo extends ModelTask {
             }
             jo = jo.getJSONObject("data");
             String propName = jo.getJSONObject("propConfig").getString("propName");
-            JSONObject animal = jo.getJSONObject("useResult").getJSONObject("animal");
-            String ecosystem = animal.getString("ecosystem");
-            String name = animal.getString("name");
-            int fantasticStarQuantity = animal.optInt("fantasticStarQuantity", 0);
-            String fantasticLevel = "未知";
-            if (fantasticStarQuantity == 1) {
-                fantasticLevel = "普通";
-            } else if (fantasticStarQuantity == 2) {
-                fantasticLevel = "稀有";
-            } else if (fantasticStarQuantity == 3) {
-                fantasticLevel = "神奇";
-            }
-            Log.forest("使用道具🎭[" + propName + "]#" + ecosystem + "-" + name
-                    + "[" + fantasticLevel +  "]");
+            JSONObject animal = jo.getJSONObject("useResult").optJSONObject("animal");
+            Log.forest("使用道具🎭[" + propName + "]" + getAnimalInfo(animal));
             return true;
         } catch (Throwable th) {
             Log.i(TAG, "AntDodo consumeProp err:");
@@ -470,10 +441,9 @@ public class AntDodo extends ModelTask {
                     }
                     jo = new JSONObject(AntDodoRpcCall.collect(useId));
                     if (checkMessage(jo)) {
-                        String ecosystem = jo.getJSONObject("data").getJSONObject("animal").getString("ecosystem");
-                        String name = jo.getJSONObject("data").getJSONObject("animal").getString("name");
                         String userName = UserIdMap.getMaskName(useId);
-                        Log.forest("神奇物种🦕帮好友[" + userName + "]抽卡[" + ecosystem + "]#" + name);
+                        JSONObject animal = jo.getJSONObject("data").optJSONObject("animal");
+                        Log.forest("帮抽卡片🦕[" + userName + "]" + getAnimalInfo(animal));
                         count--;
                     }
                 }
@@ -527,6 +497,24 @@ public class AntDodo extends ModelTask {
         }
     }
 
+    private String getAnimalInfo(JSONObject animal) {
+        if (animal == null) {
+            return "";
+        }
+        String ecosystem = animal.optString("ecosystem", "未知专辑");
+        String name = animal.optString("name", "未知动物");
+        int fantasticStarQuantity = animal.optInt("fantasticStarQuantity", 0);
+        String fantasticLevel = "未知";
+        if (fantasticStarQuantity == 1) {
+            fantasticLevel = "普通";
+        } else if (fantasticStarQuantity == 2) {
+            fantasticLevel = "稀有";
+        } else if (fantasticStarQuantity == 3) {
+            fantasticLevel = "神奇";
+        }
+
+        return "#[" + ecosystem + "]" + name + "[" + fantasticLevel +  "]";
+    }
 
     private void giftToFriend() {
         Set<String> set = giftToFriendList.getValue();
@@ -606,11 +594,9 @@ public class AntDodo extends ModelTask {
     private void giftToFriend(JSONObject animal, String targetUserId) {
         try {
             String animalId = animal.getString("animalId");
-            String ecosystem = animal.getString("ecosystem");
-            String name = animal.getString("name");
             JSONObject jo = new JSONObject(AntDodoRpcCall.social(animalId, targetUserId));
             if (checkMessage(jo)) {
-                Log.forest("赠送卡片🦕[" + UserIdMap.getMaskName(targetUserId) + "]#" + ecosystem + "-" + name);
+                Log.forest("赠送卡片🦕[" + UserIdMap.getMaskName(targetUserId) + "]" + getAnimalInfo(animal));
             }
         } catch (Throwable th) {
             Log.i(TAG, "AntDodo GiftToFriend err:");
