@@ -30,7 +30,7 @@ public class Status {
     private Boolean answerQuestion = false;
     private Map<String, Integer> feedFriendLogList = new HashMap<>();
     private Map<String, Integer> visitFriendLogList = new HashMap<>();
-    private Set<String> donationEggList = new HashSet<>();
+    private boolean farmDonation = false;
     private int useAccelerateToolCount = 0;
     private int useSpecialFoodCount = 0;
 
@@ -275,14 +275,14 @@ public class Status {
         save();
     }
 
-    public static boolean canDonationEgg(String uid) {
-        return !INSTANCE.donationEggList.contains(uid);
+    public static boolean canFarmDonationToday() {
+        return !INSTANCE.farmDonation;
     }
 
-    public static void donationEgg(String uid) {
+    public static void farmDonationToday() {
         Status stat = INSTANCE;
-        if (!stat.donationEggList.contains(uid)) {
-            stat.donationEggList.add(uid);
+        if (!stat.farmDonation) {
+            stat.farmDonation = true;
             save();
         }
     }

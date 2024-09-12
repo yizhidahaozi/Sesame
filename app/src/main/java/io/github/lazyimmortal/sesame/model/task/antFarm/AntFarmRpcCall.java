@@ -100,6 +100,11 @@ public class AntFarmRpcCall {
         return ApplicationHook.requestString("com.alipay.antfarm.listActivityInfo", args1);
     }
 
+    public static String getProjectInfo(String projectId) {
+        String args = "[{\"activityId\":\"\",\"projectId\":\"" + projectId + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"ANTFARM\",\"version\":\"" + VERSION + "\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.getProjectInfo", args);
+    }
+
     public static String donation(String activityId, int donationAmount) {
         String args1 = "[{\"activityId\":\"" + activityId + "\",\"donationAmount\":" + donationAmount +
                 ",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"version\":\""

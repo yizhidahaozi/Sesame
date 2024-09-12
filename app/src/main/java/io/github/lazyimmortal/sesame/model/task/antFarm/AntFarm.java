@@ -96,7 +96,8 @@ public class AntFarm extends ModelTask {
     private BooleanModelField useNewEggTool;
     private BooleanModelField harvestProduce;
     private BooleanModelField donation;
-    private ChoiceModelField donationCount;
+    private ChoiceModelField donationType;
+    private IntegerModelField donationAmount;
     private BooleanModelField answerQuestion;
     private BooleanModelField receiveFarmTaskAward;
     private BooleanModelField useAccelerateTool;
@@ -156,7 +157,8 @@ public class AntFarm extends ModelTask {
         modelFields.addField(ornamentsDressUpDays = new IntegerModelField("ornamentsDressUpDays", "装扮焕新 | 焕新频率(天)", 7));
         modelFields.addField(answerQuestion = new BooleanModelField("answerQuestion", "每日答题", false));
         modelFields.addField(donation = new BooleanModelField("donation", "每日捐蛋 | 开启", false));
-        modelFields.addField(donationCount = new ChoiceModelField("donationCount", "每日捐蛋 | 次数", DonationCount.ONE, DonationCount.nickNames));
+        modelFields.addField(donationType = new ChoiceModelField("donationType", "每日捐蛋 | 方式", DonationType.ONE, DonationType.nickNames));
+        modelFields.addField(donationAmount = new IntegerModelField("donationAmount", "每日捐蛋 | 数量(每次)", 1));
         modelFields.addField(family = new BooleanModelField("family", "亲密家庭 | 开启", false));
         modelFields.addField(familySign = new BooleanModelField("familySign", "亲密家庭 | 每日签到", true));
         modelFields.addField(familyFeed = new BooleanModelField("familyFeed", "亲密家庭 | 帮喂成员", false));
@@ -311,8 +313,8 @@ public class AntFarm extends ModelTask {
                 harvestProduce(ownerFarmId);
             }
 
-            if (donation.getValue() && Status.canDonationEgg(userId) && harvestBenevolenceScore >= 1) {
-                handleDonation(donationCount.getValue());
+            if (donation.getValue() && Status.canFarmDonationToday()) {
+                donation();
             }
 
             if (answerQuestion.getValue() && Status.canAnswerQuestionToday()) {
@@ -842,37 +844,36 @@ public class AntFarm extends ModelTask {
     }
 
     /* 捐赠爱心鸡蛋 */
-    private void handleDonation(int donationType) {
+    private void donation(){
         try {
-            String s = AntFarmRpcCall.listActivityInfo();
-            JSONObject jo = new JSONObject(s);
-            String memo = jo.getString("memo");
-            if ("SUCCESS".equals(memo)) {
-                JSONArray jaActivityInfos = jo.getJSONArray("activityInfos");
-                String activityId = null, activityName = null;
-                boolean isDonation = false;
-                for (int i = 0; i < jaActivityInfos.length(); i++) {
-                    jo = jaActivityInfos.getJSONObject(i);
-                    if (!jo.get("donationTotal").equals(jo.get("donationLimit"))) {
-                        activityId = jo.getString("activityId");
-                        activityName = jo.optString("projectName", activityId);
-                        if (performDonation(activityId, activityName)) {
-                            isDonation = true;
-                            if (donationType == DonationCount.ONE) {
-                                break;
-                            }
-                        }
-                    }
+            JSONObject jo = new JSONObject(AntFarmRpcCall.listActivityInfo());
+            if (!checkMessage(jo)) {
+                return;
+            }
+            JSONArray activityInfos = jo.getJSONArray("activityInfos");
+            for (int i = 0; i < activityInfos.length(); i++) {
+                jo = activityInfos.getJSONObject(i);
+                int donationTotal = jo.getInt("donationTotal");
+                int donationLimit = jo.getInt("donationLimit");
+
+                int donationNum = Math.min(donationAmount.getValue(), donationLimit - donationTotal);
+                if (donationNum == 0) {
+                    continue;
                 }
-                if (isDonation) {
-                    Status.donationEgg(userId);
+                String activityId = jo.getString("activityId");
+                String projectName = jo.getString("projectName");
+                String projectId = jo.getString("projectId");
+                int projectDonationNum = getProjectDonationNum(projectId);
+                donationNum = Math.min(donationNum, donationAmount.getValue() - projectDonationNum % donationAmount.getValue());
+                boolean isDonation;
+                if (donationNum == donationAmount.getValue()) {
+                    isDonation = donation(activityId, projectName, donationNum, 1);
+                } else {
+                    isDonation = donation(activityId, projectName, 1, donationNum);
                 }
-                if (activityId == null) {
-                    Log.record("今日已无可捐赠的活动");
+                if (isDonation && donationType.getValue() == DonationType.ONE) {
+                    return;
                 }
-            } else {
-                Log.record(memo);
-                Log.i(s);
             }
         } catch (Throwable t) {
             Log.i(TAG, "donation err:");
@@ -880,24 +881,52 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    private Boolean performDonation(String activityId, String activityName) throws JSONException {
-        try {
-            String s = AntFarmRpcCall.donation(activityId, 1);
-            JSONObject donationResponse = new JSONObject(s);
-            String memo = donationResponse.getString("memo");
-            if ("SUCCESS".equals(memo)) {
-                JSONObject donationDetails = donationResponse.getJSONObject("donation");
-                harvestBenevolenceScore = donationDetails.getDouble("harvestBenevolenceScore");
-                Log.farm("捐赠活动❤️[" + activityName + "]#累计捐赠" + donationDetails.getInt("donationTimesStat") + "次");
-                return true;
-            } else {
-                Log.record(memo);
-                Log.i(s);
+    private Boolean donation(String activityId, String activityName, int donationAmount, int count) {
+        boolean isDonation = false;
+        for (int i = 0; i < count; i++) {
+            if (!donation(activityId, activityName, donationAmount)) {
+                break;
             }
+            isDonation = true;
+            TimeUtil.sleep(1000L);
+        }
+        return isDonation;
+    }
+
+    private Boolean donation(String activityId, String activityName, int donationAmount) {
+        if (harvestBenevolenceScore < donationAmount) {
+            return false;
+        }
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.donation(activityId, donationAmount));
+            if (!checkMessage(jo)) {
+                return false;
+            }
+            jo = jo.getJSONObject("donation");
+            harvestBenevolenceScore = jo.getDouble("harvestBenevolenceScore");
+            int donationTimesStat = jo.getInt("donationTimesStat");
+            Log.farm("捐赠活动❤️[" + activityName + "]" + donationAmount + "颗爱心鸡蛋#累计捐赠" + donationTimesStat + "次");
+            Status.farmDonationToday();
+            return true;
         } catch (Throwable t) {
-            Log.printStackTrace(t);
+            Log.i(TAG, "donation err:");
+            Log.printStackTrace(TAG, t);
         }
         return false;
+    }
+
+    private int getProjectDonationNum(String projectId) {
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.getProjectInfo(projectId));
+            if (!checkMessage(jo)) {
+                return 0;
+            }
+            return jo.optInt("userProjectDonationNum");
+        } catch (Throwable t) {
+            Log.i(TAG, "getProjectDonationNum err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return 0;
     }
 
     private void answerQuestion() {
@@ -2563,12 +2592,12 @@ public class AntFarm extends ModelTask {
         familyReceiveFarmTaskAward("FAMILY_SIGN_TASK", "每日签到");
     }
 
-    public interface DonationCount {
+    public interface DonationType {
 
         int ONE = 0;
         int ALL = 1;
 
-        String[] nickNames = {"随机一次", "随机多次"};
+        String[] nickNames = {"捐赠一个项目", "捐赠所有项目"};
 
     }
 
