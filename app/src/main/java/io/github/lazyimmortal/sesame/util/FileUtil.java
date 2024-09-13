@@ -169,8 +169,8 @@ public class FileUtil {
         return file;
     }
 
-    public static File getAntFarmOrnamentIdMapFile(String userId) {
-        File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "farmOrnament.json");
+    public static File getFarmOrnamentsIdMapFile(String userId) {
+        File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "farmOrnaments.json");
         if (file.exists() && file.isDirectory()) {
             file.delete();
         }

@@ -26,7 +26,7 @@ public class FarmOrnamentsIdMap {
     public static synchronized void load(String userId) {
         idMap.clear();
         try {
-            String body = FileUtil.readFromFile(FileUtil.getAntFarmOrnamentIdMapFile(userId));
+            String body = FileUtil.readFromFile(FileUtil.getFarmOrnamentsIdMapFile(userId));
             if (!body.isEmpty()) {
                 Map<String, String> newMap = JsonUtil.parseObject(body, new TypeReference<Map<String, String>>() {
                 });
@@ -38,6 +38,6 @@ public class FarmOrnamentsIdMap {
     }
 
     public static synchronized boolean save(String userId) {
-        return FileUtil.write2File(JsonUtil.toJsonString(idMap), FileUtil.getAntFarmOrnamentIdMapFile(userId));
+        return FileUtil.write2File(JsonUtil.toJsonString(idMap), FileUtil.getFarmOrnamentsIdMapFile(userId));
     }
 }
