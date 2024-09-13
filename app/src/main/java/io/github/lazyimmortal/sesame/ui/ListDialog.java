@@ -17,11 +17,14 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectAndCountOneModelFi
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectOneModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
+import io.github.lazyimmortal.sesame.entity.AlipayBeach;
+import io.github.lazyimmortal.sesame.entity.AlipayReserve;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
-import io.github.lazyimmortal.sesame.entity.AreaCode;
 import io.github.lazyimmortal.sesame.entity.CooperateUser;
+import io.github.lazyimmortal.sesame.entity.FriendWatch;
 import io.github.lazyimmortal.sesame.entity.IdAndName;
-import io.github.lazyimmortal.sesame.util.CooperationIdMap;
+import io.github.lazyimmortal.sesame.util.BeachIdMap;
+import io.github.lazyimmortal.sesame.util.ReserveIdMap;
 import io.github.lazyimmortal.sesame.util.UserIdMap;
 
 import java.util.List;
@@ -232,16 +235,20 @@ public class ListDialog {
         lv_list.setOnItemLongClickListener(
                 (p1, p2, p3, p4) -> {
                     IdAndName curIdAndName = (IdAndName) p1.getAdapter().getItem(p3);
-                    if (curIdAndName instanceof CooperateUser) {
+                    if ((curIdAndName instanceof AlipayReserve) || (curIdAndName instanceof AlipayBeach)) {
                         try {
                             new AlertDialog.Builder(c)
                                     .setTitle("删除 " + curIdAndName.name)
                                     .setPositiveButton(c.getString(R.string.ok), (dialog, which) -> {
                                         if (which == DialogInterface.BUTTON_POSITIVE) {
-                                            if (curIdAndName instanceof AlipayUser) {
-                                                UserIdMap.remove(curIdAndName.id);
-                                            } else if (curIdAndName instanceof CooperateUser) {
-                                                CooperationIdMap.remove(curIdAndName.id);
+                                            if (curIdAndName instanceof AlipayReserve) {
+                                                AlipayReserve.remove(curIdAndName.id);
+                                                ReserveIdMap.remove(curIdAndName.id);
+                                                ReserveIdMap.save();
+                                            } else if (curIdAndName instanceof AlipayBeach) {
+                                                AlipayBeach.remove(curIdAndName.id);
+                                                BeachIdMap.remove(curIdAndName.id);
+                                                BeachIdMap.save();
                                             }
                                             selectModelFieldFunc.remove(curIdAndName.id);
                                             ListAdapter.get(c).exitFind();
@@ -252,7 +259,7 @@ public class ListDialog {
                                     .create().show();
                         } catch (Throwable ignored) {
                         }
-                    } else if (!(curIdAndName instanceof AreaCode)) {
+                    } else if ((curIdAndName instanceof AlipayUser) || (curIdAndName instanceof  FriendWatch)) {
                         new AlertDialog.Builder(c)
                                 .setTitle("选项")
                                 .setAdapter(
@@ -286,6 +293,11 @@ public class ListDialog {
                                                                     .setTitle("删除 " + curIdAndName.name)
                                                                     .setPositiveButton(c.getString(R.string.ok), (dialog, which) -> {
                                                                         if (which == DialogInterface.BUTTON_POSITIVE) {
+                                                                            if (curIdAndName instanceof AlipayUser) {
+                                                                                UserIdMap.remove(curIdAndName.id);
+                                                                            } else if (curIdAndName instanceof FriendWatch) {
+                                                                                // nothing to do
+                                                                            }
                                                                             selectModelFieldFunc.remove(curIdAndName.id);
                                                                             ListAdapter.get(c).exitFind();
                                                                         }
