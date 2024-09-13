@@ -5,10 +5,17 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import io.github.lazyimmortal.sesame.util.FileUtil;
 import io.github.lazyimmortal.sesame.util.JsonUtil;
 import io.github.lazyimmortal.sesame.util.Log;
+import io.github.lazyimmortal.sesame.util.RandomUtil;
+import io.github.lazyimmortal.sesame.util.StringUtil;
 import lombok.Data;
 
 @Data
@@ -21,8 +28,39 @@ public class TokenConfig {
     @JsonIgnore
     private boolean init;
 
-    private ArrayList<String> beforeImageList = new ArrayList<>();
-    private ArrayList<String> afterImageList = new ArrayList<>();
+    private Set<Map<String, String> > dishImageList = new HashSet<>();
+
+    public static Map<String, String> getRandomDishImage() {
+        List<Map<String, String> > list = new ArrayList<>(INSTANCE.dishImageList);
+        if (list.isEmpty()) {
+            return null;
+        }
+        int pos = RandomUtil.nextInt(0, list.size() - 1);
+        Map<String, String> dishImage = list.get(pos);
+        return checkDishImage(dishImage) ? dishImage : null;
+    }
+
+    public static void saveDishImage(Map<String, String> dishImage) {
+        if (!checkDishImage(dishImage)) {
+            return;
+        }
+        TokenConfig tokenConfig = INSTANCE;
+        if (!tokenConfig.dishImageList.contains(dishImage)) {
+            tokenConfig.dishImageList.add(dishImage);
+            save();
+        }
+    }
+
+    public static Boolean checkDishImage(Map<String, String> dishImage) {
+        if (dishImage == null) {
+            return false;
+        }
+        String beforeMealsImageId = dishImage.get("BEFORE_MEALS");
+        String afterMealsImageId = dishImage.get("AFTER_MEALS");
+        return !StringUtil.isEmpty(beforeMealsImageId)
+                && !StringUtil.isEmpty(afterMealsImageId)
+                && !Objects.equals(beforeMealsImageId, afterMealsImageId);
+    }
 
     public static Boolean save() {
         Log.record("保存Token配置");

@@ -127,8 +127,6 @@ public class AntForestV2 extends ModelTask {
     private BooleanModelField ecoLifeTick;
     private BooleanModelField ecoLifeOpen;
     private BooleanModelField photoGuangPan;
-    private TextModelField photoGuangPanBefore;
-    private TextModelField photoGuangPanAfter;
     private BooleanModelField dress;
     private TextModelField dressDetailList;
 
@@ -196,12 +194,6 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(ecoLifeTick = new BooleanModelField("ecoLifeTick", "绿色 | 行动打卡", false));
         modelFields.addField(ecoLifeOpen = new BooleanModelField("ecoLifeOpen", "绿色 | 自动开通", false));
         modelFields.addField(photoGuangPan = new BooleanModelField("photoGuangPan", "绿色 | 光盘行动", false));
-        modelFields.addField(photoGuangPanBefore = new TextModelField("photoGuangPanBefore", "绿色 | 光盘前图片ID", ""));
-        modelFields.addField(photoGuangPanAfter = new TextModelField("photoGuangPanAfter", "绿色 | 光盘后图片ID", ""));
-        modelFields.addField(new EmptyModelField("photoGuangPanClear", "绿色 | 清空图片ID", () -> {
-            photoGuangPanBefore.reset();
-            photoGuangPanAfter.reset();
-        }));
         modelFields.addField(dress = new BooleanModelField("dress", "装扮保护 | 开启", false));
         modelFields.addField(dressDetailList = new TextModelField("dressDetailList", "装扮保护 | 装扮信息", ""));
         return modelFields;
@@ -1726,10 +1718,11 @@ public class AntForestV2 extends ModelTask {
                 return;
             }
             JSONObject data = jsonObject.getJSONObject("data");
-            if (!data.getBoolean("openStatus") && !ecoLifeOpen.getValue()) {
-                Log.forest("绿色任务☘未开通");
-                return;
-            } else if (!data.getBoolean("openStatus")) {
+            if (!data.getBoolean("openStatus")) {
+                if (!ecoLifeOpen.getValue()) {
+                    Log.forest("绿色任务☘未开通");
+                    return;
+                }
                 jsonObject = new JSONObject(EcoLifeRpcCall.openEcolife());
                 if (!jsonObject.optBoolean("success")) {
                     Log.i(TAG + ".ecoLife.openEcolife", jsonObject.optString("resultDesc"));
@@ -1796,46 +1789,6 @@ public class AntForestV2 extends ModelTask {
     /**
      * 光盘行动
      */
-    private void getDishImage() {
-        try {
-            TokenConfig.load();
-            ArrayList<String> beforeImageList = TokenConfig.INSTANCE.getBeforeImageList();
-            ArrayList<String> afterImageList = TokenConfig.INSTANCE.getAfterImageList();
-            if (beforeImageList.size() != afterImageList.size()) {
-                Log.record("光盘行动照片存储有误！");
-                return;
-            }
-            if (!beforeImageList.isEmpty()) {
-                int pos = RandomUtil.nextInt(0, beforeImageList.size() - 1);
-                photoGuangPanBefore.setValue(beforeImageList.get(pos));
-                photoGuangPanAfter.setValue(afterImageList.get(pos));
-            }
-        } catch (Throwable th) {
-            Log.i(TAG, "getDishImage err:");
-            Log.printStackTrace(TAG, th);
-        }
-    }
-
-    private void setDishImage() {
-        try {
-            TokenConfig.load();
-            ArrayList<String> beforeImageList = TokenConfig.INSTANCE.getBeforeImageList();
-            ArrayList<String> afterImageList = TokenConfig.INSTANCE.getAfterImageList();
-            String beforeImage = photoGuangPanBefore.getValue();
-            String afterImage = photoGuangPanAfter.getValue();
-            if (!beforeImageList.contains(beforeImage) && !afterImageList.contains(afterImage)) {
-                beforeImageList.add(beforeImage);
-                afterImageList.add(afterImage);
-                TokenConfig.INSTANCE.setBeforeImageList(beforeImageList);
-                TokenConfig.INSTANCE.setAfterImageList(afterImageList);
-                TokenConfig.save();
-            }
-        } catch (Throwable th) {
-            Log.i(TAG, "setDishImage err:");
-            Log.printStackTrace(TAG, th);
-        }
-    }
-
     private void photoGuangPan(String dayPoint) {
         try {
             String source = "renwuGD";
@@ -1846,45 +1799,39 @@ public class AntForestV2 extends ModelTask {
                 Log.i(TAG + ".photoGuangPan.ecolifeQueryDish", jsonObject.optString("resultDesc"));
                 return;
             }
-            boolean isDone = false;
-            getDishImage();
-            String photoGuangPanBeforeStr = photoGuangPanBefore.getValue();
-            String photoGuangPanAfterStr = photoGuangPanAfter.getValue();
-            if (StringUtil.isEmpty(photoGuangPanBeforeStr) || StringUtil.isEmpty(photoGuangPanAfterStr) || Objects.equals(photoGuangPanBeforeStr, photoGuangPanAfterStr)) {
-                JSONObject data = jsonObject.optJSONObject("data");
-                if (data != null) {
-                    String beforeMealsImageUrl = data.optString("beforeMealsImageUrl");
-                    String afterMealsImageUrl = data.optString("afterMealsImageUrl");
-                    if (!StringUtil.isEmpty(beforeMealsImageUrl) && !StringUtil.isEmpty(afterMealsImageUrl)) {
-                        Pattern pattern = Pattern.compile("img/(.*)/original");
-                        Matcher beforeMatcher = pattern.matcher(beforeMealsImageUrl);
-                        if (beforeMatcher.find()) {
-                            photoGuangPanBeforeStr = beforeMatcher.group(1);
-                            photoGuangPanBefore.setValue(photoGuangPanBeforeStr);
-                        }
-                        Matcher afterMatcher = pattern.matcher(afterMealsImageUrl);
-                        if (afterMatcher.find()) {
-                            photoGuangPanAfterStr = afterMatcher.group(1);
-                            photoGuangPanAfter.setValue(photoGuangPanAfterStr);
-                        }
-                        ConfigV2.save(UserIdMap.getCurrentUid(), false);
-                        isDone = true;
+
+            // 更新光盘照片
+            Map<String, String> dishImage = new HashMap<>();
+            JSONObject data = jsonObject.optJSONObject("data");
+            if (data != null) {
+                String beforeMealsImageUrl = data.optString("beforeMealsImageUrl");
+                String afterMealsImageUrl = data.optString("afterMealsImageUrl");
+                if (!StringUtil.isEmpty(beforeMealsImageUrl) && !StringUtil.isEmpty(afterMealsImageUrl)) {
+                    Pattern pattern = Pattern.compile("img/(.*)/original");
+                    Matcher beforeMatcher = pattern.matcher(beforeMealsImageUrl);
+                    if (beforeMatcher.find()) {
+                        dishImage.put("BEFORE_MEALS", beforeMatcher.group(1));
                     }
+                    Matcher afterMatcher = pattern.matcher(afterMealsImageUrl);
+                    if (afterMatcher.find()) {
+                        dishImage.put("AFTER_MEALS", afterMatcher.group(1));
+                    }
+                    TokenConfig.saveDishImage(dishImage);
                 }
-            } else {
-                isDone = true;
             }
             if ("SUCCESS".equals(JsonUtil.getValueByPath(jsonObject, "data.status"))) {
                 //Log.forest("光盘行动💿今日已完成");
                 return;
             }
-            if (!isDone) {
+
+            dishImage = TokenConfig.getRandomDishImage();
+            if (dishImage == null) {
                 Log.forest("光盘行动💿请先完成一次光盘打卡");
                 return;
             }
             //上传餐前照片
             str = EcoLifeRpcCall.uploadDishImage("BEFORE_MEALS",
-                    photoGuangPanBeforeStr, 0.16571736, 0.07448776, 0.7597949, dayPoint);
+                    dishImage.get("BEFORE_MEALS"), 0.16571736, 0.07448776, 0.7597949, dayPoint);
             jsonObject = new JSONObject(str);
             if (!jsonObject.optBoolean("success")) {
                 Log.i(TAG + ".photoGuangPan.uploadDishImage", jsonObject.optString("resultDesc"));
@@ -1892,7 +1839,7 @@ public class AntForestV2 extends ModelTask {
             }
             //上传餐后照片
             str = EcoLifeRpcCall.uploadDishImage("AFTER_MEALS",
-                    photoGuangPanAfterStr, 0.00040030346, 0.99891376, 0.0006858421, dayPoint);
+                    dishImage.get("AFTER_MEALS"), 0.00040030346, 0.99891376, 0.0006858421, dayPoint);
             jsonObject = new JSONObject(str);
             if (!jsonObject.optBoolean("success")) {
                 Log.i(TAG + ".photoGuangPan.uploadDishImage", jsonObject.optString("resultDesc"));
@@ -1906,7 +1853,6 @@ public class AntForestV2 extends ModelTask {
                 return;
             }
             Log.forest("光盘行动💿任务完成");
-            setDishImage();
         } catch (Throwable t) {
             Log.i(TAG, "photoGuangPan err:");
             Log.printStackTrace(TAG, t);

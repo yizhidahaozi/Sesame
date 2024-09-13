@@ -19,6 +19,7 @@ import io.github.lazyimmortal.sesame.BuildConfig;
 import io.github.lazyimmortal.sesame.data.ConfigV2;
 import io.github.lazyimmortal.sesame.data.Model;
 import io.github.lazyimmortal.sesame.data.RunType;
+import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.data.ViewAppInfo;
 import io.github.lazyimmortal.sesame.data.task.BaseTask;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
@@ -555,6 +556,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                 NotificationUtil.start(service);
                 Model.bootAllModel(classLoader);
                 Status.load();
+                TokenConfig.load();
                 updateDay();
                 BaseModel.initData();
                 Log.record("加载完成");
