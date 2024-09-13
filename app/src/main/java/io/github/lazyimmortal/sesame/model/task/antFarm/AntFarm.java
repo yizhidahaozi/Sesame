@@ -2180,9 +2180,7 @@ public class AntFarm extends ModelTask {
             if (!checkMessage(jo)) {
                 return;
             }
-            List<String> list = new ArrayList<>();
-            Map<String, String> ornamentsNameMap = new HashMap<>();
-            Map<String, String> ornamentsSetsMap = new HashMap<>();
+            List<JSONObject> list = new ArrayList<>();
             JSONArray achievementOrnaments = jo.getJSONArray("achievementOrnaments");
             long takeOffTime = System.currentTimeMillis();
             for (int i = 0; i < achievementOrnaments.length(); i++) {
@@ -2196,10 +2194,7 @@ public class AntFarm extends ModelTask {
                 String resourceKey = jo.getString("resourceKey");
                 String name = jo.getString("name");
                 if (ornamentsDressUpList.getValue().contains(resourceKey)) {
-                    JSONArray sets = jo.getJSONArray("sets");
-                    list.add(resourceKey);
-                    ornamentsNameMap.put(resourceKey, name);
-                    ornamentsSetsMap.put(resourceKey, getOrnamentsSets(sets));
+                    list.add(jo);
                 }
                 FarmOrnamentsIdMap.add(resourceKey, name);
             }
@@ -2210,11 +2205,9 @@ public class AntFarm extends ModelTask {
                 return;
             }
 
-            int pos = RandomUtil.nextInt(0, list.size() - 1);
-            String resourceKey = list.get(pos);
-            if (saveOrnaments(ornamentsSetsMap.get(resourceKey))) {
-                String ornamentsName = ornamentsNameMap.get(resourceKey);
-                Log.farm("装扮焕新💞[" + ornamentsName + "]");
+            jo = list.get(RandomUtil.nextInt(0, list.size() - 1));
+            if (saveOrnaments(jo)) {
+                Log.farm("装扮焕新💞[" + jo.getString("name") + "]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "ornamentsDressUp err:");
@@ -2222,11 +2215,12 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    private Boolean saveOrnaments(String ornaments) {
+    private Boolean saveOrnaments(JSONObject ornaments) {
         try {
             String animalId = ownerAnimal.animalId;
             String farmId = ownerFarmId;
-            JSONObject jo = new JSONObject(AntFarmRpcCall.saveOrnaments(animalId, farmId, ornaments));
+            String ornamentsSets = getOrnamentsSets(ornaments.getJSONArray("sets"));
+            JSONObject jo = new JSONObject(AntFarmRpcCall.saveOrnaments(animalId, farmId, ornamentsSets));
             return checkMessage(jo);
         } catch (Throwable t) {
             Log.i(TAG, "saveOrnaments err:");
