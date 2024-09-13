@@ -50,10 +50,10 @@ public class AntFarmRpcCall {
     }
 
     public static String queryLoveCabin(String userId) {
-//        String args = "[{\"requestType\":\"RPC\",\"sceneCode\":\"ANTFARM\",\"source\":\"LOVECABIN\",\"userId\":\"" + userId + "\"}]";
-        String args1 = "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"ENTERFARM\",\"userId\":\"" +
-                userId + "\",\"version\":\"" + VERSION + "\"}]";
-        return ApplicationHook.requestString("com.alipay.antfarm.queryLoveCabin", args1);
+        String args = "[{\"requestType\":\"RPC\",\"sceneCode\":\"ANTFARM\",\"source\":\"LOVECABIN\",\"userId\":\"" + userId + "\"}]";
+//        String args1 = "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"ENTERFARM\",\"userId\":\"" +
+//                userId + "\",\"version\":\"" + VERSION + "\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.queryLoveCabin", args);
     }
 
     public static String rewardFriend(String consistencyKey, String friendId, String productNum, String time) {

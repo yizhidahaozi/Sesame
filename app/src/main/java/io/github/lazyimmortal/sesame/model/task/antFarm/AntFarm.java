@@ -9,7 +9,7 @@ import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.*;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
-import io.github.lazyimmortal.sesame.entity.AntFarmOrnaments;
+import io.github.lazyimmortal.sesame.entity.FarmOrnaments;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.normal.answerAI.AnswerAI;
 import io.github.lazyimmortal.sesame.rpc.intervallimit.RpcIntervalLimit;
@@ -152,7 +152,7 @@ public class AntFarm extends ModelTask {
         modelFields.addField(notifyFriendType = new ChoiceModelField("notifyFriendType", "通知赶鸡 | 动作", NotifyFriendType.NOTIFY, NotifyFriendType.nickNames));
         modelFields.addField(notifyFriendList = new SelectModelField("notifyFriendList", "通知赶鸡 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(ornamentsDressUp = new BooleanModelField("ornamentsDressUp", "装扮焕新 | 开启", false));
-        modelFields.addField(ornamentsDressUpList = new SelectModelField("ornamentsDressUpList", "装扮焕新 | 套装列表", new LinkedHashSet<>(), AntFarmOrnaments::getList));
+        modelFields.addField(ornamentsDressUpList = new SelectModelField("ornamentsDressUpList", "装扮焕新 | 套装列表", new LinkedHashSet<>(), FarmOrnaments::getList));
         modelFields.addField(ornamentsDressUpDays = new IntegerModelField("ornamentsDressUpDays", "装扮焕新 | 焕新频率(天)", 7));
         modelFields.addField(answerQuestion = new BooleanModelField("answerQuestion", "每日答题", false));
         modelFields.addField(donation = new BooleanModelField("donation", "每日捐蛋 | 开启", false));
@@ -517,22 +517,18 @@ public class AntFarm extends ModelTask {
     }
 
     private void animalSleepTime(long animalSleepTime) {
-        String sleepTaskId = "AS|" + animalSleepTime;
+        String sleepTaskId = "AS|" + UserIdMap.getCurrentMaskName() + "|" +  animalSleepTime;
         if (!hasChildTask(sleepTaskId)) {
             addChildTask(new ChildModelTask(sleepTaskId, "AS", this::animalSleepNow, animalSleepTime));
             Log.record("添加定时睡觉🛌[" + UserIdMap.getCurrentMaskName() + "]在[" + TimeUtil.getCommonDate(animalSleepTime) + "]执行");
-        } else {
-            addChildTask(new ChildModelTask(sleepTaskId, "AS", this::animalSleepNow, animalSleepTime));
         }
     }
 
     private void animalWakeUpTime(long animalWakeUpTime) {
-        String wakeUpTaskId = "AW|" + animalWakeUpTime;
+        String wakeUpTaskId = "AW|" + UserIdMap.getCurrentMaskName() + "|" + animalWakeUpTime;
         if (!hasChildTask(wakeUpTaskId)) {
             addChildTask(new ChildModelTask(wakeUpTaskId, "AW", this::animalWakeUpNow, animalWakeUpTime));
             Log.record("添加定时起床🔆[" + UserIdMap.getCurrentMaskName() + "]在[" + TimeUtil.getCommonDate(animalWakeUpTime) + "]执行");
-        } else {
-            addChildTask(new ChildModelTask(wakeUpTaskId, "AW", this::animalWakeUpNow, animalWakeUpTime));
         }
     }
 
@@ -2205,9 +2201,9 @@ public class AntFarm extends ModelTask {
                     ornamentsNameMap.put(resourceKey, name);
                     ornamentsSetsMap.put(resourceKey, getOrnamentsSets(sets));
                 }
-                AntFarmOrnamentsIdMap.add(resourceKey, name);
+                FarmOrnamentsIdMap.add(resourceKey, name);
             }
-            AntFarmOrnamentsIdMap.save(UserIdMap.getCurrentUid());
+            FarmOrnamentsIdMap.save(UserIdMap.getCurrentUid());
             if (list.isEmpty() || takeOffTime
                     + TimeUnit.DAYS.toMillis(ornamentsDressUpDays.getValue() - 15)
                     > System.currentTimeMillis()) {
