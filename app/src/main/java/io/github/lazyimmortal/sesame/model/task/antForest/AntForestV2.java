@@ -1642,9 +1642,11 @@ public class AntForestV2 extends ModelTask {
     private void useStealthCard(JSONObject bagObject) {
         try {
             // 背包查找 限时隐身卡
-            JSONObject jo = findPropBag(bagObject, "LIMIT_TIME_STEALTH_CARD");
-            // 没有限时隐身卡 且 开启了限时隐身永动机
-            if (jo == null && stealthCardConstant.getValue()) {
+            JSONObject jo = null;
+            JSONArray ja = getLimitTimeProp(bagObject, "stealthCard");
+            if (ja != null) {
+                jo = ja.getJSONObject(0);
+            } else if (stealthCardConstant.getValue()) {
                 // 商店兑换 限时隐身卡
                 if (exchangeBenefit("SK20230521000206")) {
                     bagObject = getBag();
@@ -1656,7 +1658,9 @@ public class AntForestV2 extends ModelTask {
             }
             // 使用 隐身卡
             if (jo != null && consumeProp(jo)) {
-                stealthEndTime = System.currentTimeMillis() + 1000 * 60 * 60 * 24;
+                stealthEndTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(
+                        jo.getJSONObject("propConfigVO").getLong("durationTime")
+                );
             } else {
                 updateDoubleTime();
             }
@@ -2221,7 +2225,7 @@ public class AntForestV2 extends ModelTask {
     // 获取限时道具
     private JSONArray getLimitTimeProp(JSONObject bagObject, String propGroup) {
         try {
-            ArrayList<JSONObject> list = new ArrayList<>();
+            List<JSONObject> list = new ArrayList<>();
             // 遍历背包查找道具
             JSONArray forestPropVOList = bagObject.getJSONArray("forestPropVOList");
             for (int i = 0; i < forestPropVOList.length(); i++) {
