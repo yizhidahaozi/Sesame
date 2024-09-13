@@ -913,7 +913,7 @@ public class AntMember extends ModelTask {
                 String name = benefitInfo.getString("name");
                 String benefitId = benefitInfo.getString("benefitId");
                 MemberBenefitIdMap.add(benefitId, name);
-                if (!Status.canMemberPointExchangeBenefit(benefitId)
+                if (!Status.canMemberPointExchangeBenefitToday(benefitId)
                         || !memberPointExchangeBenefitList.getValue().contains(benefitId)) {
                     continue;
                 }
@@ -938,6 +938,7 @@ public class AntMember extends ModelTask {
                 Log.i(jo.getString("resultDesc"), jo.toString());
                 return false;
             }
+            Status.memberPointExchangeBenefitToday(benefitId);
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "exchangeBenefit err:");

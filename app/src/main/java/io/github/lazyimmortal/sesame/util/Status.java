@@ -87,7 +87,7 @@ public class Status {
         save();
     }
 
-    public static int getVitalityExchangeBenefitCount(String skuId) {
+    public static int getVitalityExchangeBenefitCountToday(String skuId) {
         Integer exchangedCount = INSTANCE.vitalityExchangeBenefitList.get(skuId);
         if (exchangedCount == null) {
             exchangedCount = 0;
@@ -95,18 +95,18 @@ public class Status {
         return exchangedCount;
     }
 
-    public static void setVitalityExchangeBenefitCount(String skuId, int count) {
-        int exchangedCount = getVitalityExchangeBenefitCount(skuId);
+    public static void setVitalityExchangeBenefitCountToday(String skuId, int count) {
+        int exchangedCount = getVitalityExchangeBenefitCountToday(skuId);
         INSTANCE.vitalityExchangeBenefitList.put(skuId, Math.max(exchangedCount, count));
         save();
     }
 
-    public static Boolean canVitalityExchangeBenefit(String skuId, int count) {
-        return getVitalityExchangeBenefitCount(skuId) < count;
+    public static Boolean canVitalityExchangeBenefitToday(String skuId, int count) {
+        return getVitalityExchangeBenefitCountToday(skuId) < count;
     }
 
-    public static void vitalityExchangeBenefit(String skuId) {
-        int count = getVitalityExchangeBenefitCount(skuId) + 1;
+    public static void vitalityExchangeBenefitToday(String skuId) {
+        int count = getVitalityExchangeBenefitCountToday(skuId) + 1;
         INSTANCE.vitalityExchangeBenefitList.put(skuId, count);
         save();
     }
@@ -144,11 +144,11 @@ public class Status {
         }
     }
 
-    public static Boolean canMemberPointExchangeBenefit(String benefitId) {
+    public static Boolean canMemberPointExchangeBenefitToday(String benefitId) {
         return !INSTANCE.memberPointExchangeBenefitList.contains(benefitId);
     }
 
-    public static void memberPointExchangeBenefit(String benefitId) {
+    public static void memberPointExchangeBenefitToday(String benefitId) {
         Status stat = INSTANCE;
         if (!stat.memberPointExchangeBenefitList.contains(benefitId)) {
             stat.memberPointExchangeBenefitList.add(benefitId);
@@ -244,16 +244,16 @@ public class Status {
         }
     }
 
-    public static boolean canUseAccelerateTool() {
+    public static boolean canUseAccelerateToolToday() {
         return INSTANCE.useAccelerateToolCount < 8;
     }
 
-    public static void useAccelerateTool() {
+    public static void useAccelerateToolToday() {
         INSTANCE.useAccelerateToolCount += 1;
         save();
     }
 
-    public static boolean canUseSpecialFood() {
+    public static boolean canUseSpecialFoodToday() {
         AntFarm task = ModelTask.getModel(AntFarm.class);
         if (task == null) {
             return false;
@@ -265,7 +265,7 @@ public class Status {
         return INSTANCE.useSpecialFoodCount < countLimit;
     }
 
-    public static void useSpecialFood() {
+    public static void useSpecialFoodToday() {
         INSTANCE.useSpecialFoodCount += 1;
         save();
     }
@@ -384,11 +384,11 @@ public class Status {
         save();
     }
 
-    public static boolean canDonateCharityCoin() {
+    public static boolean canDonateCharityCoinToday() {
         return !INSTANCE.donateCharityCoin;
     }
 
-    public static void donateCharityCoin() {
+    public static void donateCharityCoinToday() {
         Status stat = INSTANCE;
         if (!stat.donateCharityCoin) {
             stat.donateCharityCoin = true;

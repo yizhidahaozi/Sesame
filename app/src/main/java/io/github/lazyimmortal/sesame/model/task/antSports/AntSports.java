@@ -137,7 +137,7 @@ public class AntSports extends ModelTask {
                 walk();
             }
 
-            if (donateCharityCoin.getValue() && Status.canDonateCharityCoin())
+            if (donateCharityCoin.getValue() && Status.canDonateCharityCoinToday())
                 queryProjectList(loader);
 
             if (coinExchangeDoubleCard.getValue()) {
@@ -497,7 +497,7 @@ public class AntSports extends ModelTask {
                         break;
                     }
                     donate(loader, donateCharityCoinAmount.getValue(), jo.getString("projectId"), jo.getString("title"));
-                    Status.donateCharityCoin();
+                    Status.donateCharityCoinToday();
                     charityCoinCount -= donateCharityCoinAmount.getValue();
                     if (donateCharityCoinType.getValue() == DonateCharityCoinType.ONE) {
                         break;

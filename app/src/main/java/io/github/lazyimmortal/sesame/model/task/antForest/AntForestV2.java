@@ -1349,7 +1349,7 @@ public class AntForestV2 extends ModelTask {
                 if (count == null || count < 0) {
                     continue;
                 }
-                while (Status.canVitalityExchangeBenefit(skuId, count) && exchangeBenefit(skuId)) {
+                while (Status.canVitalityExchangeBenefitToday(skuId, count) && exchangeBenefit(skuId)) {
                     TimeUtil.sleep(3000);
                 }
             }
@@ -2409,7 +2409,7 @@ public class AntForestV2 extends ModelTask {
                 String itemStatus = itemStatusList.getString(i);
                 if ("REACH_LIMIT".equals(itemStatus)) {
                     Log.record("活力兑换🎐[" + skuName + "]停止:已达兑换次数上限！");
-                    Status.setVitalityExchangeBenefitCount(skuId, vitalityExchangeBenefitList.getValue().get(skuId));
+                    Status.setVitalityExchangeBenefitCountToday(skuId, vitalityExchangeBenefitList.getValue().get(skuId));
                     return false;
                 } else if ("NO_ENOUGH_POINT".equals(itemStatus)) {
                     Log.record("活力兑换🎐[" + skuName + "]停止:活力值不足以兑换！");
@@ -2435,8 +2435,8 @@ public class AntForestV2 extends ModelTask {
         try {
             JSONObject jo = new JSONObject(AntForestRpcCall.exchangeBenefit(spuId, skuId));
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
-                Status.vitalityExchangeBenefit(skuId);
-                int exchangedCount = Status.getVitalityExchangeBenefitCount(skuId);
+                Status.vitalityExchangeBenefitToday(skuId);
+                int exchangedCount = Status.getVitalityExchangeBenefitCountToday(skuId);
                 Log.forest("活力兑换🎐[" + skuName + "]#第" + exchangedCount + "次");
                 return true;
             } else {

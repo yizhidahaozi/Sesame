@@ -475,7 +475,7 @@ public class AntFarm extends ModelTask {
                 JSONArray cuisineList = jo.getJSONArray("cuisineList");
                 if (AnimalInteractStatus.HOME.name().equals(ownerAnimal.animalInteractStatus)
                         && !AnimalFeedStatus.SLEEPY.name().equals(ownerAnimal.animalFeedStatus)
-                        && Status.canUseSpecialFood()) {
+                        && Status.canUseSpecialFoodToday()) {
                     useFarmFood(cuisineList);
                 }
             }
@@ -1245,7 +1245,7 @@ public class AntFarm extends ModelTask {
     }
 
     private void useAccelerateTool() {
-        if (!Status.canUseAccelerateTool()) {
+        if (!Status.canUseAccelerateToolToday()) {
             return;
         }
         syncAnimalStatus(ownerFarmId);
@@ -1267,7 +1267,7 @@ public class AntFarm extends ModelTask {
         while (foodInTrough - foodHaveEatten >= consumeSpeed * 3600
                 && useFarmTool(ownerFarmId, ToolType.ACCELERATETOOL)) {
             foodHaveEatten += consumeSpeed * 3600;
-            Status.useAccelerateTool();
+            Status.useAccelerateToolToday();
             TimeUtil.sleep(1000);
             if (!useAccelerateToolContinue.getValue()) {
                 break;
@@ -1680,7 +1680,7 @@ public class AntFarm extends ModelTask {
     }
 
     private Boolean useFarmFood(JSONObject cuisine) {
-        if (!Status.canUseSpecialFood()) {
+        if (!Status.canUseSpecialFoodToday()) {
             return false;
         }
         try {
@@ -1695,8 +1695,8 @@ public class AntFarm extends ModelTask {
                 }
                 double deltaProduce = jo.getJSONObject("foodEffect").getDouble("deltaProduce");
                 Log.farm("使用美食🍱[" + name + "]#加速" + deltaProduce + "颗爱心鸡蛋");
-                Status.useSpecialFood();
-                if (!Status.canUseSpecialFood()) {
+                Status.useSpecialFoodToday();
+                if (!Status.canUseSpecialFoodToday()) {
                     break;
                 }
             }
