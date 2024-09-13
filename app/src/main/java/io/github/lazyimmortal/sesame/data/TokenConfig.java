@@ -28,6 +28,8 @@ public class TokenConfig {
     @JsonIgnore
     private boolean init;
 
+    private Boolean newUI = true;
+
     private Set<Map<String, String> > dishImageList = new HashSet<>();
 
     public static Map<String, String> getRandomDishImage() {
@@ -83,6 +85,7 @@ public class TokenConfig {
                 unload();
                 Log.i(TAG, "初始Token配置");
                 Log.system(TAG, "初始Token配置");
+                FileUtil.write2File(toSaveStr(), tokenConfigFile);
             }
         } catch (Throwable t) {
             Log.printStackTrace(TAG, t);

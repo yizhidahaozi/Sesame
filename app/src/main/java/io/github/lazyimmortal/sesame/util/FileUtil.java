@@ -119,15 +119,11 @@ public class FileUtil {
     }
 
     public static File getTokenConfigFile() {
-        return new File(MAIN_DIRECTORY_FILE, "tokenConfig.json");
+        return new File(MAIN_DIRECTORY_FILE, "token_config.json");
     }
 
     public static boolean setTokenConfigFile(String json) {
-        return write2File(json, new File(MAIN_DIRECTORY_FILE, "tokenConfig.json"));
-    }
-
-    public static boolean setUIConfigFile(String json) {
-        return write2File(json, new File(MAIN_DIRECTORY_FILE, "ui_config.json"));
+        return write2File(json, new File(MAIN_DIRECTORY_FILE, "token_config.json"));
     }
 
     public static File getSelfIdFile(String userId) {
@@ -228,14 +224,6 @@ public class FileUtil {
 
     public static File getBeachIdMapFile() {
         File file = new File(MAIN_DIRECTORY_FILE, "beach.json");
-        if (file.exists() && file.isDirectory()) {
-            file.delete();
-        }
-        return file;
-    }
-
-    public static File getUIConfigFile() {
-        File file = new File(MAIN_DIRECTORY_FILE, "ui_config.json");
         if (file.exists() && file.isDirectory()) {
             file.delete();
         }
