@@ -174,7 +174,7 @@ public class FileUtil {
     }
 
     public static File getAntFarmOrnamentIdMapFile(String userId) {
-        File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "antFarmOrnament.json");
+        File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "farmOrnament.json");
         if (file.exists() && file.isDirectory()) {
             file.delete();
         }

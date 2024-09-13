@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class AntFarmOrnamentsIdMap {
+public class FarmOrnamentsIdMap {
     private static final Map<String, String> idMap = new ConcurrentHashMap<>();
 
     private static final Map<String, String> readOnlyIdMap = Collections.unmodifiableMap(idMap);

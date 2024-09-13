@@ -71,7 +71,7 @@ public class NewSettingsActivity extends BaseActivity {
         UserIdMap.load(userId);
         CooperationIdMap.load(userId);
         VitalityBenefitIdMap.load(userId);
-        AntFarmOrnamentsIdMap.load(userId);
+        FarmOrnamentsIdMap.load(userId);
         MemberBenefitIdMap.load(userId);
         PromiseSimpleTemplateIdMap.load(userId);
         ReserveIdMap.load();
@@ -459,9 +459,6 @@ public class NewSettingsActivity extends BaseActivity {
         }
         if (!StringUtil.isEmpty(userId)) {
             UserIdMap.save(userId);
-            CooperationIdMap.save(userId);
-            MemberBenefitIdMap.save(userId);
-            PromiseSimpleTemplateIdMap.save(userId);
         }
     }
 
