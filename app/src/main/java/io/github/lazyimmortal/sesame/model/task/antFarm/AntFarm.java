@@ -157,7 +157,7 @@ public class AntFarm extends ModelTask {
         modelFields.addField(answerQuestion = new BooleanModelField("answerQuestion", "每日答题", false));
         modelFields.addField(donation = new BooleanModelField("donation", "每日捐蛋 | 开启", false));
         modelFields.addField(donationType = new ChoiceModelField("donationType", "每日捐蛋 | 方式", DonationType.ONE, DonationType.nickNames));
-        modelFields.addField(donationAmount = new IntegerModelField("donationAmount", "每日捐蛋 | 数量(每次)", 1));
+        modelFields.addField(donationAmount = new IntegerModelField("donationAmount", "每日捐蛋 | 倍数(每项)", 1));
         modelFields.addField(family = new BooleanModelField("family", "亲密家庭 | 开启", false));
         modelFields.addField(familySign = new BooleanModelField("familySign", "亲密家庭 | 每日签到", true));
         modelFields.addField(familyFeed = new BooleanModelField("familyFeed", "亲密家庭 | 帮喂成员", false));
