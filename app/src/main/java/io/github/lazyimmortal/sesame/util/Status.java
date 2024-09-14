@@ -30,7 +30,6 @@ public class Status {
     private Boolean answerQuestion = false;
     private Map<String, Integer> feedFriendLogList = new HashMap<>();
     private Map<String, Integer> visitFriendLogList = new HashMap<>();
-    private boolean farmDonation = false;
     private int useAccelerateToolCount = 0;
     private int useSpecialFoodCount = 0;
 
@@ -268,18 +267,6 @@ public class Status {
     public static void useSpecialFoodToday() {
         INSTANCE.useSpecialFoodCount += 1;
         save();
-    }
-
-    public static boolean canFarmDonationToday() {
-        return !INSTANCE.farmDonation;
-    }
-
-    public static void farmDonationToday() {
-        Status stat = INSTANCE;
-        if (!stat.farmDonation) {
-            stat.farmDonation = true;
-            save();
-        }
     }
 
     public static boolean canSpreadManureToday() {

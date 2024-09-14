@@ -94,6 +94,11 @@ public class AntFarmRpcCall {
         return ApplicationHook.requestString("com.alipay.antfarm.harvestProduce", args1);
     }
 
+    public static String getCharityAccount(String userId) {
+        String args = "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"userId\":\"" + userId + "\",\"version\":\"unknown\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.getCharityAccount", args);
+    }
+
     public static String listActivityInfo() {
         String args1 = "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"version\":\""
                 + VERSION + "\"}]";

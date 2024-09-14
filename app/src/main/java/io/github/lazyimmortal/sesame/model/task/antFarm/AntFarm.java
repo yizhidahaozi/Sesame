@@ -312,7 +312,7 @@ public class AntFarm extends ModelTask {
                 harvestProduce(ownerFarmId);
             }
 
-            if (donation.getValue() && Status.canFarmDonationToday()) {
+            if (donation.getValue()) {
                 donation();
             }
 
@@ -840,6 +840,9 @@ public class AntFarm extends ModelTask {
 
     /* 捐赠爱心鸡蛋 */
     private void donation(){
+        if (!checkCharityRecordsToday()) {
+            return;
+        }
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.listActivityInfo());
             if (!checkMessage(jo)) {
@@ -901,7 +904,6 @@ public class AntFarm extends ModelTask {
             harvestBenevolenceScore = jo.getDouble("harvestBenevolenceScore");
             int donationTimesStat = jo.getInt("donationTimesStat");
             Log.farm("捐赠活动❤️[" + activityName + "]" + donationAmount + "颗爱心鸡蛋#累计捐赠" + donationTimesStat + "次");
-            Status.farmDonationToday();
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "donation err:");
@@ -922,6 +924,28 @@ public class AntFarm extends ModelTask {
             Log.printStackTrace(TAG, t);
         }
         return 0;
+    }
+
+    private Boolean checkCharityRecordsToday() {
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.getCharityAccount(userId));
+            if (!checkMessage(jo)) {
+                return false;
+            }
+            JSONArray charityRecords = jo.getJSONArray("charityRecords");
+            if (charityRecords.length() == 0) {
+                return true;
+            }
+            jo = charityRecords.getJSONObject(0);
+            long charityTime = jo.optLong("charityTime", System.currentTimeMillis());
+            if (TimeUtil.isLessThanNowOfDays(charityTime)) {
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "checkCharityRecordsToday err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
     }
 
     private void answerQuestion() {

@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Constanline
@@ -207,16 +208,16 @@ public class TimeUtil {
 
     /**
      * 比较第一个时间戳的天数是否小于第二个时间戳的天数
-     * @param firstdTimestamp 第一个时间戳
+     * @param firstTimestamp 第一个时间戳
      * @param secondTimestamp 第二个时间戳
      * @return boolean 如果小于，则为true，否则为false
      */
-    public static boolean isLessThanSecondOfDays(Long firstdTimestamp, Long secondTimestamp) {
-        final long gmt8 = 8 * 60 * 60 * 1000;
-        final long day = 24 * 60 * 60 * 1000;
-        firstdTimestamp = firstdTimestamp + gmt8;
+    public static boolean isLessThanSecondOfDays(Long firstTimestamp, Long secondTimestamp) {
+        final long gmt8 = TimeUnit.HOURS.toMillis(8);
+        final long day = TimeUnit.DAYS.toMillis(1);
+        firstTimestamp = firstTimestamp + gmt8;
         secondTimestamp = secondTimestamp + gmt8;
-        return firstdTimestamp / day < secondTimestamp / day;
+        return firstTimestamp / day < secondTimestamp / day;
     }
 
     /**
