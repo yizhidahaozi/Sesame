@@ -1596,27 +1596,30 @@ public class AntForestV2 extends ModelTask {
     private void useDoubleCard(JSONObject bagObject) {
         try {
             if (hasDoubleCardTime() && Status.canDoubleToday()) {
-                // 背包查找 限时能量双击卡
+                // 背包查找 能量双击卡
                 JSONObject jo = null;
-                JSONArray ja = getLimitTimeProp(bagObject, "doubleClick");
+                JSONArray ja = getPropGroup(bagObject, "doubleClick");
                 if (ja != null) {
                     jo = ja.getJSONObject(0);
-                } else if (doubleCardConstant.getValue()) {
-                    // 商店兑换 限时能量双击卡
-                    if (exchangeBenefit("SK20240805004754")) {
-                        bagObject = getBag();
-                        jo = findPropBag(bagObject, "ENERGY_DOUBLE_CLICK_31DAYS");
-                    } else if (exchangeBenefit("CR20230516000363")) {
-                        bagObject = getBag();
-                        jo = findPropBag(bagObject, "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
+                }
+                if (jo == null || !jo.has("recentExpireTime")) {
+                    if (doubleCardConstant.getValue()) {
+                        // 商店兑换 限时能量双击卡
+                        if (exchangeBenefit("SK20240805004754")) {
+                            jo = findPropBag(getBag(), "ENERGY_DOUBLE_CLICK_31DAYS");
+                        } else if (exchangeBenefit("CR20230516000363")) {
+                            jo = findPropBag(getBag(), "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
+                        }
                     }
                 }
-                if (jo == null && !doubleCardOnlyLimitTime.getValue()) {
-                    // 背包查找 能量双击卡
-                    jo = findPropBag(bagObject, "ENERGY_DOUBLE_CLICK");
+                if (jo == null) {
+                    return;
+                }
+                if (!jo.has("recentExpireTime") && doubleCardOnlyLimitTime.getValue()) {
+                    return;
                 }
                 // 使用能量双击卡
-                if (jo != null && consumeProp(jo)) {
+                if (consumeProp(jo)) {
                     doubleEndTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(
                             jo.getJSONObject("propConfigVO").getLong("durationTime")
                     );
@@ -1633,23 +1636,25 @@ public class AntForestV2 extends ModelTask {
 
     private void useStealthCard(JSONObject bagObject) {
         try {
-            // 背包查找 限时隐身卡
+            // 背包查找 隐身卡
             JSONObject jo = null;
-            JSONArray ja = getLimitTimeProp(bagObject, "stealthCard");
+            JSONArray ja = getPropGroup(bagObject, "stealthCard");
             if (ja != null) {
                 jo = ja.getJSONObject(0);
-            } else if (stealthCardConstant.getValue()) {
-                // 商店兑换 限时隐身卡
-                if (exchangeBenefit("SK20230521000206")) {
-                    bagObject = getBag();
-                    jo = findPropBag(bagObject, "LIMIT_TIME_STEALTH_CARD");
+            }
+            if (jo == null || !jo.has("recentExpireTime")) {
+                if (stealthCardConstant.getValue()) {
+                    // 商店兑换 限时隐身卡
+                    if (exchangeBenefit("SK20230521000206")) {
+                        jo = findPropBag(getBag(), "LIMIT_TIME_STEALTH_CARD");
+                    }
                 }
             }
             if (jo == null) {
-                jo = findPropBag(bagObject, "STEALTH_CARD");
+                return;
             }
             // 使用 隐身卡
-            if (jo != null && consumeProp(jo)) {
+            if (consumeProp(jo)) {
                 stealthEndTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(
                         jo.getJSONObject("propConfigVO").getLong("durationTime")
                 );
@@ -2168,16 +2173,15 @@ public class AntForestV2 extends ModelTask {
         return null;
     }
 
-    // 获取限时道具
-    private JSONArray getLimitTimeProp(JSONObject bagObject, String propGroup) {
+    // 获取道具组全部道具
+    private JSONArray getPropGroup(JSONObject bagObject, String propGroup) {
         try {
             List<JSONObject> list = new ArrayList<>();
             // 遍历背包查找道具
             JSONArray forestPropVOList = bagObject.getJSONArray("forestPropVOList");
             for (int i = 0; i < forestPropVOList.length(); i++) {
                 JSONObject forestPropVO = forestPropVOList.getJSONObject(i);
-                if (forestPropVO.getString("propGroup").equals(propGroup)
-                        && forestPropVO.has("recentExpireTime")) {
+                if (forestPropVO.getString("propGroup").equals(propGroup)) {
                     list.add(forestPropVO);
                 }
             }
@@ -2190,6 +2194,15 @@ public class AntForestV2 extends ModelTask {
                     try {
                         int durationTime1 = jsonObject1.getJSONObject("propConfigVO").getInt("durationTime");
                         int durationTime2 = jsonObject2.getJSONObject("propConfigVO").getInt("durationTime");
+                        // 永久道具
+                        boolean hasExpireTime1 = jsonObject1.has("recentExpireTime");
+                        boolean hasExpireTime2 = jsonObject2.has("recentExpireTime");
+                        if (hasExpireTime1 && hasExpireTime2) {
+                            return durationTime1 - durationTime2;
+                        } else if (hasExpireTime1 || hasExpireTime2) {
+                            return hasExpireTime1 ? 1 : -1;
+                        }
+                        // 限时道具
                         long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(durationTime1);
                         long recentExpireTime = jsonObject2.getLong("recentExpireTime");
                         if (endTime < recentExpireTime) {
@@ -2202,7 +2215,7 @@ public class AntForestV2 extends ModelTask {
             });
             return new JSONArray(list);
         } catch (Throwable th) {
-            Log.i(TAG, "getLimitTimeProp err:");
+            Log.i(TAG, "getPropGroup err:");
             Log.printStackTrace(TAG, th);
         }
         return null;
