@@ -83,7 +83,7 @@ public class AntFarm extends ModelTask {
     private BooleanModelField acceptGift;
     private SelectAndCountModelField visitFriendList;
     private BooleanModelField chickenDiary;
-    private BooleanModelField enableChouchoule;
+    private BooleanModelField drawTimes;
     private BooleanModelField ornamentsDressUp;
     private SelectModelField ornamentsDressUpList;
     private IntegerModelField ornamentsDressUpDays;
@@ -128,6 +128,7 @@ public class AntFarm extends ModelTask {
         modelFields.addField(ornamentsDressUp = new BooleanModelField("ornamentsDressUp", "装扮焕新 | 开启", false));
         modelFields.addField(ornamentsDressUpList = new SelectModelField("ornamentsDressUpList", "装扮焕新 | 套装列表", new LinkedHashSet<>(), FarmOrnaments::getList));
         modelFields.addField(ornamentsDressUpDays = new IntegerModelField("ornamentsDressUpDays", "装扮焕新 | 焕新频率(天)", 7));
+        modelFields.addField(drawTimes = new BooleanModelField("drawTimes", "装扮抽抽乐", false));
         modelFields.addField(answerQuestion = new BooleanModelField("answerQuestion", "每日答题", false));
         modelFields.addField(donation = new BooleanModelField("donation", "每日捐蛋 | 开启", false));
         modelFields.addField(donationType = new ChoiceModelField("donationType", "每日捐蛋 | 方式", DonationType.ONE, DonationType.nickNames));
@@ -146,7 +147,6 @@ public class AntFarm extends ModelTask {
         modelFields.addField(enableDdrawGameCenterAward = new BooleanModelField("enableDdrawGameCenterAward", "小鸡乐园 | 开宝箱", false));
         modelFields.addField(kitchen = new BooleanModelField("kitchen", "小鸡厨房", false));
         modelFields.addField(chickenDiary = new BooleanModelField("chickenDiary", "小鸡日记", false));
-        modelFields.addField(enableChouchoule = new BooleanModelField("enableChouchoule", "小鸡抽抽乐", false));
         modelFields.addField(harvestProduce = new BooleanModelField("harvestProduce", "收取爱心鸡蛋", false));
         modelFields.addField(receiveFarmToolReward = new BooleanModelField("receiveFarmToolReward", "收取道具奖励", false));
         modelFields.addField(receiveFarmTaskAward = new BooleanModelField("receiveFarmTaskAward", "收取饲料奖励", false));
@@ -347,8 +347,8 @@ public class AntFarm extends ModelTask {
             }
 
             // 抽抽乐
-            if (enableChouchoule.getValue()) {
-                chouchoule();
+            if (drawTimes.getValue()) {
+                drawTimes();
             }
 
             // 雇佣小鸡
@@ -1100,6 +1100,7 @@ public class AntFarm extends ModelTask {
         }
         return false;
     }
+
     private void receiveFarmTaskAward() {
         try {
             String s = AntFarmRpcCall.listFarmTask();
@@ -1931,95 +1932,91 @@ public class AntFarm extends ModelTask {
     }
 
     /* 抽抽乐 */
-    private void chouchoule() {
-        boolean doubleCheck;
-        do {
-            doubleCheck = false;
-            try {
-                String s = AntFarmRpcCall.chouchouleListFarmTask();
-                JSONObject jo = new JSONObject(s);
-                if (jo.optBoolean("success")) {
-                    JSONArray farmTaskList = jo.getJSONArray("farmTaskList");
-                    for (int i = 0; i < farmTaskList.length(); i++) {
-                        jo = farmTaskList.getJSONObject(i);
-                        String taskStatus = jo.getString("taskStatus");
-                        String title = jo.getString("title");
-                        String taskId = jo.getString("bizKey");
-                        int rightsTimes = jo.optInt("rightsTimes", 0);
-                        int rightsTimesLimit = jo.optInt("rightsTimesLimit", 0);
-                        if ("FINISHED".equals(taskStatus)) {
-                            if (rightsTimes < rightsTimesLimit) {
-                                chouchouleDoFarmTask(taskId, title, rightsTimesLimit - rightsTimes);
-                            }
-                            if (chouchouleReceiveFarmTaskAward(taskId)) {
-                                doubleCheck = true;
-                            }
-                        } else if ("TODO".equals(taskStatus) && !Objects.equals(jo.optString("innerAction"), "DONATION")) {
-                            if (chouchouleDoFarmTask(taskId, title, rightsTimesLimit - rightsTimes)) {
-                                doubleCheck = true;
-                            }
-                        }
-                    }
-                } else {
-                    Log.record(jo.getString("memo"));
-                    Log.i(s);
-                }
-            } catch (Throwable t) {
-                Log.i(TAG, "chouchoule err:");
-                Log.printStackTrace(TAG, t);
-            }
-        } while (doubleCheck);
+    private void drawTimes() {
+        doDrawTimesTask();
         try {
-            for (int i = 0; i < 3; i++) {
-                String s = AntFarmRpcCall.enterDrawMachine();
-                JSONObject jo = new JSONObject(s);
-                if (jo.optBoolean("success")) {
-                    JSONObject userInfo = jo.getJSONObject("userInfo");
-                    int leftDrawTimes = userInfo.optInt("leftDrawTimes", 0);
-                    if (leftDrawTimes > 0) {
-                        for (int ii = 0; ii < leftDrawTimes; ii++) {
-                            jo = new JSONObject(AntFarmRpcCall.DrawPrize());
-                            TimeUtil.sleep(1000);
-                            if (jo.optBoolean("success")) {
-                                String title = jo.getString("title");
-                                int prizeNum = jo.optInt("prizeNum", 0);
-                                Log.farm("庄园小鸡🎁[领取:抽抽乐" + title + "*" + prizeNum + "]");
-                            }
-                        }
-                    }
+            JSONObject jo = new JSONObject(AntFarmRpcCall.enterDrawMachine());
+            int leftDrawTimes = jo.getJSONObject("userInfo").optInt("leftDrawTimes", 0);
+            for (int i = 0; i < leftDrawTimes; i++) {
+                if (!drawPrize()) {
+                    return;
                 }
+                TimeUtil.sleep(1000);
             }
         } catch (Throwable t) {
-            Log.i(TAG, "DrawPrize err:");
+            Log.i(TAG, "drawTimes err:");
             Log.printStackTrace(TAG, t);
         }
     }
 
-    private Boolean chouchouleDoFarmTask(String bizKey, String name, int times) {
+    private void doDrawTimesTask() {
         try {
-            for (int i = 0; i < times; i++) {
-                String s = AntFarmRpcCall.chouchouleDoFarmTask(bizKey);
-                JSONObject jo = new JSONObject(s);
-                if (jo.optBoolean("success", false)) {
-                    Log.farm("庄园小鸡🧾️[完成:抽抽乐" + name + "]");
-                    return true;
+            JSONObject jo = new JSONObject(AntFarmRpcCall.listFarmDrawTimesTask());
+            if (!checkMessage(jo)) {
+                return;
+            }
+            JSONArray farmTaskList = jo.getJSONArray("farmTaskList");
+            for (int i = 0; i < farmTaskList.length(); i++) {
+                jo = farmTaskList.getJSONObject(i);
+                String taskStatus = jo.getString("taskStatus");
+                String title = jo.getString("title");
+                String bizKey = jo.getString("bizKey");
+                String taskId = jo.getString("taskId");
+                int rightsTimes = jo.optInt("rightsTimes", 0);
+                int rightsTimesLimit = jo.optInt("rightsTimesLimit", 0);
+                if ("RECEIVED".equals(taskStatus)) {
+                    continue;
                 }
+                if (checkFarmTaskStatus(jo)
+                        && !doFarmDrawTimesTask(bizKey, title, rightsTimesLimit - rightsTimes)) {
+                    continue;
+                }
+                receiveFarmDrawTimesTaskAward(taskId, title);
             }
         } catch (Throwable t) {
-            Log.i(TAG, "chouchouleDoFarmTask err:");
+            Log.i(TAG, "doFarmDrawTimesTask err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private Boolean doFarmDrawTimesTask(String bizKey, String title, int times) {
+        try {
+            for (int i = 0; i < times; i++) {
+                JSONObject jo = new JSONObject(AntFarmRpcCall.doFarmDrawTimesTask(bizKey));
+                if (!checkMessage(jo)) {
+                    return false;
+                }
+                Log.farm("庄园小鸡🧾️[完成:抽抽乐" + title + "]");
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.i(TAG, "doFarmDrawTimesTask err:");
             Log.printStackTrace(TAG, t);
         }
         return false;
     }
 
-    private Boolean chouchouleReceiveFarmTaskAward(String taskId) {
+    private void receiveFarmDrawTimesTaskAward(String taskId, String title) {
         try {
-            String s = AntFarmRpcCall.chouchouleReceiveFarmTaskAward(taskId);
-            JSONObject jo = new JSONObject(s);
-            // Log.other("庄园小鸡🧾️[完成:心愿金" + name + "]" + amount);
-            return jo.optBoolean("success", false);
+            JSONObject jo = new JSONObject(AntFarmRpcCall.receiveFarmDrawTimesTaskAward(taskId));
+            if (checkMessage(jo)) {
+                Log.farm("庄园小鸡🧾️[提交:抽抽乐" + title + "]");
+            }
         } catch (Throwable t) {
-            Log.i(TAG, "chouchouleReceiveFarmTaskAward err:");
+            Log.i(TAG, "receiveChouChouLeTaskAward err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private Boolean drawPrize() {
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.drawPrize());
+            if (checkMessage(jo)) {
+                Log.farm("庄园小鸡🎁[领取:抽抽乐" + jo.optString("title") + "]");
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "drawTimes err:");
             Log.printStackTrace(TAG, t);
         }
         return false;
