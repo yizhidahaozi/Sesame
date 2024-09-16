@@ -1168,6 +1168,7 @@ public class AntFarm extends ModelTask {
                     Log.record("庄园今日已签到");
                     return false;
                 }
+                add2FoodStock(awardCount);
                 Log.farm("庄园签到📅获得饲料" + awardCount + "g");
                 return true;
             }
