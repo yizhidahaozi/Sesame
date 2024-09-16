@@ -2195,12 +2195,12 @@ public class AntForestV2 extends ModelTask {
                         int durationTime1 = jsonObject1.getJSONObject("propConfigVO").getInt("durationTime");
                         int durationTime2 = jsonObject2.getJSONObject("propConfigVO").getInt("durationTime");
                         // 永久道具
-                        boolean hasExpireTime1 = jsonObject1.has("recentExpireTime");
-                        boolean hasExpireTime2 = jsonObject2.has("recentExpireTime");
-                        if (hasExpireTime1 && hasExpireTime2) {
+                        boolean noExpireTime1 = !jsonObject1.has("recentExpireTime");
+                        boolean noExpireTime2 = !jsonObject2.has("recentExpireTime");
+                        if (noExpireTime1 && noExpireTime2) {
                             return durationTime1 - durationTime2;
-                        } else if (hasExpireTime1 || hasExpireTime2) {
-                            return hasExpireTime1 ? 1 : -1;
+                        } else if (noExpireTime1 || noExpireTime2) {
+                            return noExpireTime1 ? 1 : -1;
                         }
                         // 限时道具
                         long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(durationTime1);
