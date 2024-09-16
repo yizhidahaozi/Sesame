@@ -1116,7 +1116,7 @@ public class AntFarm extends ModelTask {
             JSONArray jaFarmTaskList = jo.getJSONArray("farmTaskList");
             for (int i = 0; i < jaFarmTaskList.length(); i++) {
                 jo = jaFarmTaskList.getJSONObject(i);
-                if (!"FINISHED".equals(jo.optString("taskStatus"))) {
+                if (!TaskStatus.FINISHED.name().equals(jo.optString("taskStatus"))) {
                     continue;
                 }
                 String title = jo.optString("title");
@@ -1952,7 +1952,7 @@ public class AntFarm extends ModelTask {
                 String taskId = jo.getString("taskId");
                 int rightsTimes = jo.optInt("rightsTimes", 0);
                 int rightsTimesLimit = jo.optInt("rightsTimesLimit", 0);
-                if ("RECEIVED".equals(taskStatus)) {
+                if (TaskStatus.RECEIVED.name().equals(taskStatus)) {
                     continue;
                 }
                 if (checkFarmTaskStatus(jo)
@@ -2075,7 +2075,7 @@ public class AntFarm extends ModelTask {
         try {
             syncAnimalStatus(ownerFarmId);
             for (Animal animal : animals) {
-                if (!"WORK".equals(animal.subAnimalType)) {
+                if (!SubAnimalType.WORK.name().equals(animal.subAnimalType)) {
                     continue;
                 }
                 String taskId = "HIRE|" + animal.animalId;
