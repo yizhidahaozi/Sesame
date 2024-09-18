@@ -485,7 +485,7 @@ public class AntFarm extends ModelTask {
     }
 
     private void animalSleepTime(long animalSleepTime) {
-        String sleepTaskId = "AS|" + UserIdMap.getCurrentMaskName() + "|" +  animalSleepTime;
+        String sleepTaskId = "AS|" + animalSleepTime;
         if (!hasChildTask(sleepTaskId)) {
             addChildTask(new ChildModelTask(sleepTaskId, "AS", this::animalSleepNow, animalSleepTime));
             Log.record("添加定时睡觉🛌[" + UserIdMap.getCurrentMaskName() + "]在[" + TimeUtil.getCommonDate(animalSleepTime) + "]执行");
@@ -493,7 +493,7 @@ public class AntFarm extends ModelTask {
     }
 
     private void animalWakeUpTime(long animalWakeUpTime) {
-        String wakeUpTaskId = "AW|" + UserIdMap.getCurrentMaskName() + "|" + animalWakeUpTime;
+        String wakeUpTaskId = "AW|" + animalWakeUpTime;
         if (!hasChildTask(wakeUpTaskId)) {
             addChildTask(new ChildModelTask(wakeUpTaskId, "AW", this::animalWakeUpNow, animalWakeUpTime));
             Log.record("添加定时起床🔆[" + UserIdMap.getCurrentMaskName() + "]在[" + TimeUtil.getCommonDate(animalWakeUpTime) + "]执行");
@@ -1208,23 +1208,19 @@ public class AntFarm extends ModelTask {
 
     private void listFarmTool() {
         try {
-            String s = AntFarmRpcCall.listFarmTool();
-            JSONObject jo = new JSONObject(s);
-            String memo = jo.getString("memo");
-            if ("SUCCESS".equals(memo)) {
-                JSONArray jaToolList = jo.getJSONArray("toolList");
-                farmTools = new FarmTool[jaToolList.length()];
-                for (int i = 0; i < jaToolList.length(); i++) {
-                    jo = jaToolList.getJSONObject(i);
-                    farmTools[i] = new FarmTool();
-                    farmTools[i].toolId = jo.optString("toolId", "");
-                    farmTools[i].toolType = ToolType.valueOf(jo.getString("toolType"));
-                    farmTools[i].toolCount = jo.getInt("toolCount");
-                    farmTools[i].toolHoldLimit = jo.optInt("toolHoldLimit", 20);
-                }
-            } else {
-                Log.record(memo);
-                Log.i(s);
+            JSONObject jo = new JSONObject(AntFarmRpcCall.listFarmTool());
+            if (!checkMessage(jo)) {
+                return;
+            }
+            JSONArray jaToolList = jo.getJSONArray("toolList");
+            farmTools = new FarmTool[jaToolList.length()];
+            for (int i = 0; i < jaToolList.length(); i++) {
+                jo = jaToolList.getJSONObject(i);
+                farmTools[i] = new FarmTool();
+                farmTools[i].toolId = jo.optString("toolId", "");
+                farmTools[i].toolType = ToolType.valueOf(jo.getString("toolType"));
+                farmTools[i].toolCount = jo.getInt("toolCount");
+                farmTools[i].toolHoldLimit = jo.optInt("toolHoldLimit", 20);
             }
         } catch (Throwable t) {
             Log.i(TAG, "listFarmTool err:");
@@ -1349,19 +1345,15 @@ public class AntFarm extends ModelTask {
                 }
             }
             if (foodStock >= 180) {
-                String s = AntFarmRpcCall.feedFriendAnimal(friendFarmId);
-                JSONObject jo = new JSONObject(s);
-                String memo = jo.getString("memo");
-                if ("SUCCESS".equals(memo)) {
-                    int feedFood = foodStock - jo.getInt("foodStock");
-                    if (feedFood > 0) {
-                        add2FoodStock(-feedFood);
-                        Log.farm("帮喂好友🥣[" + user + "]的小鸡[" + feedFood + "g]#剩余" + foodStock + "g");
-                        Status.feedFriendToday(AntFarmRpcCall.farmId2UserId(friendFarmId));
-                    }
-                } else {
-                    Log.record(memo);
-                    Log.i(s);
+                JSONObject jo = new JSONObject(AntFarmRpcCall.feedFriendAnimal(friendFarmId));
+                if (!checkMessage(jo)) {
+                    return;
+                }
+                int feedFood = foodStock - jo.getInt("foodStock");
+                if (feedFood > 0) {
+                    add2FoodStock(-feedFood);
+                    Log.farm("帮喂好友🥣[" + user + "]的小鸡[" + feedFood + "g]#剩余" + foodStock + "g");
+                    Status.feedFriendToday(AntFarmRpcCall.farmId2UserId(friendFarmId));
                 }
             }
         } catch (Throwable t) {
