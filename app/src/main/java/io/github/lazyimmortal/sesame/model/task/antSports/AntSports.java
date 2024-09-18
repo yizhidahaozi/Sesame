@@ -32,7 +32,6 @@ public class AntSports extends ModelTask {
     private int tmpStepCount = -1;
     private BooleanModelField walk;
     private ChoiceModelField walkPathTheme;
-    private String walkPathThemeId;
     private BooleanModelField walkCustomPath;
     private StringModelField walkCustomPathId;
     private BooleanModelField receiveCoinAsset;
@@ -66,7 +65,7 @@ public class AntSports extends ModelTask {
         modelFields.addField(walk = new BooleanModelField("walk", "行走路线 | 开启", false));
         modelFields.addField(walkPathTheme = new ChoiceModelField("walkPathTheme", "行走路线 | 主题", WalkPathTheme.DA_MEI_ZHONG_GUO, WalkPathTheme.nickNames));
         modelFields.addField(walkCustomPath = new BooleanModelField("walkCustomPath", "行走路线 | 开启自定义路线", false));
-        modelFields.addField(walkCustomPathId = new StringModelField("walkCustomPathId", "行走路线 | 自定义路线代码(debug)", "p0002023122214520001"));
+        modelFields.addField(walkCustomPathId = new StringModelField("walkCustomPathId", "行走路线 | 自定义路线代码(debug)", "p000202408231708"));
         modelFields.addField(sportsTasks = new BooleanModelField("sportsTasks", "开启运动任务", false));
         modelFields.addField(receiveCoinAsset = new BooleanModelField("receiveCoinAsset", "收运动币", false));
         modelFields.addField(donateCharityCoin = new BooleanModelField("donateCharityCoin", "捐运动币 | 开启", false));
@@ -133,7 +132,6 @@ public class AntSports extends ModelTask {
 
             ClassLoader loader = ApplicationHook.getClassLoader();
             if (walk.getValue()) {
-                walkPathThemeId = WalkPathTheme.walkPathThemeIds[walkPathTheme.getValue()];
                 walk();
             }
 
@@ -289,38 +287,28 @@ public class AntSports extends ModelTask {
      */
     private void walk() {
         try {
-            JSONObject user = new JSONObject(AntSportsRpcCall.queryUser());
-            if (!user.optBoolean("success")) {
+            JSONObject jo = new JSONObject(AntSportsRpcCall.queryUser());
+            if (!jo.optBoolean("success")) {
                 return;
             }
-            if (!user.getJSONObject("data").has("joinedPathId")) {
-                String pathId = queryJoinPath(walkPathThemeId);
-                if (joinPath(pathId)) {
-                    TimeUtil.sleep(1000);
-                    walk();
-                }
-                return;
-            }
-            String joinedPathId = user.getJSONObject("data").getString("joinedPathId");
-            JSONObject path = queryPath(joinedPathId);
-            JSONObject userPathStep = path.getJSONObject("userPathStep");
-            if ("COMPLETED".equals(userPathStep.getString("pathCompleteStatus"))) {
-                Log.record("行走路线🚶🏻‍♂️路线[" + userPathStep.getString("pathName") + "]已完成");
-                String pathId = queryJoinPath(walkPathThemeId);
+            jo = jo.getJSONObject("data");
+            if (!jo.has("joinedPathId")) {
+                String pathId = queryJoinPath();
                 if (!joinPath(pathId)) {
                     return;
                 }
-                path = queryPath(pathId);
-                userPathStep = path.getJSONObject("userPathStep");
+                jo = queryPath(pathId);
+            } else {
+                jo = queryPath(jo.getString("joinedPathId"));
             }
-            int minGoStepCount = path.getJSONObject("path").getInt("minGoStepCount");
-            int pathStepCount = path.getJSONObject("path").getInt("pathStepCount");
-            int forwardStepCount = userPathStep.getInt("forwardStepCount");
-            int remainStepCount = userPathStep.getInt("remainStepCount");
-            int useStepCount = Math.min(remainStepCount,
-                    pathStepCount == forwardStepCount ? pathStepCount : pathStepCount - forwardStepCount);
-            if (useStepCount >= minGoStepCount) {
-                walkGo(userPathStep.getString("pathId"), useStepCount, userPathStep.getString("pathName"));
+            if (checkPathData(jo)) {
+                String pathId = queryJoinPath();
+                if (!joinPath(pathId)) {
+                    return;
+                }
+                jo = queryPath(pathId);
+            }
+            if (walkGo(jo)) {
                 TimeUtil.sleep(1000);
                 walk();
             }
@@ -330,20 +318,59 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private void walkGo(String pathId, int useStepCount, String pathName) {
+    private Boolean checkPathData(JSONObject pathData) {
         try {
-            Date date = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            JSONObject jo = new JSONObject(AntSportsRpcCall.walkGo("202312191135", sdf.format(date), pathId, useStepCount));
-            if (jo.optBoolean("success")) {
+            JSONObject userPathStep = pathData.getJSONObject("userPathStep");
+            if ("COMPLETED".equals(userPathStep.optString("pathCompleteStatus"))) {
+                Log.record("行走路线🚶🏻‍♂️路线[" + userPathStep.getString("pathName") + "]已完成");
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "checkPathData err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private Boolean walkGo(JSONObject pathData) {
+        try {
+            JSONObject path = pathData.getJSONObject("data");
+            JSONObject userPathStep = pathData.getJSONObject("userPathStep");
+            int minGoStepCount = path.getInt("minGoStepCount");
+            int pathStepCount = path.getInt("pathStepCount");
+            int forwardStepCount = userPathStep.getInt("forwardStepCount");
+            int remainStepCount = userPathStep.getInt("remainStepCount");
+            int useStepCount = Math.min(remainStepCount,
+                    Math.max(pathStepCount - forwardStepCount, minGoStepCount));
+            if (useStepCount < minGoStepCount) {
+                return false;
+            }
+            String pathId = path.getString("pathId");
+            String pathName = path.getString("name");
+            if (walkGo(pathId, useStepCount)) {
                 Log.record("行走路线🚶🏻‍♂️路线[" + pathName + "]#前进了" + useStepCount + "步");
-                JSONArray treasureBoxList = jo.getJSONObject("data").getJSONArray("treasureBoxList");
-                openTreasureBox(treasureBoxList);
+                queryPath(pathId);
+                return true;
             }
         } catch (Throwable t) {
             Log.i(TAG, "walkGo err:");
             Log.printStackTrace(TAG, t);
         }
+        return false;
+    }
+
+    private Boolean walkGo(String pathId, int useStepCount) {
+        try {
+            String date = Log.getFormatDate();
+            JSONObject jo = new JSONObject(AntSportsRpcCall.walkGo(date, pathId, useStepCount));
+            if (jo.optBoolean("success")) {
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "walkGo err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
     }
 
     private JSONObject queryWorldMap(String themeId) {
@@ -377,12 +404,11 @@ public class AntSports extends ModelTask {
     private JSONObject queryPath(String pathId) {
         JSONObject path = null;
         try {
-            Date date = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            JSONObject jo = new JSONObject(AntSportsRpcCall.queryPath("202312191135", sdf.format(date), pathId));
+            String date = Log.getFormatDate();
+            JSONObject jo = new JSONObject(AntSportsRpcCall.queryPath(date, pathId));
             if (jo.optBoolean("success")) {
                 path = jo.getJSONObject("data");
-                JSONArray treasureBoxList = jo.getJSONObject("data").getJSONArray("treasureBoxList");
+                JSONArray treasureBoxList = path.getJSONArray("treasureBoxList");
                 openTreasureBox(treasureBoxList);
             }
         } catch (Throwable t) {
@@ -422,14 +448,15 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private String queryJoinPath(String themeId) {
+    private String queryJoinPath() {
         if (walkCustomPath.getValue()) {
             return walkCustomPathId.getValue();
         }
 
         String pathId = null;
         try {
-            JSONObject theme = queryWorldMap(walkPathThemeId);
+            String themeId = WalkPathTheme.walkPathThemeIds[walkPathTheme.getValue()];
+            JSONObject theme = queryWorldMap(themeId);
             if (theme == null) {
                 return pathId;
             }
@@ -456,21 +483,21 @@ public class AntSports extends ModelTask {
         return pathId;
     }
 
-    private boolean joinPath(String pathId) {
+    private Boolean joinPath(String pathId) {
         if (pathId == null) {
-            // 龙年祈福线
-            pathId = "p0002023122214520001";
+            // 守护体育梦
+            pathId = "p000202408231708";
         }
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.joinPath(pathId));
-            if (jo.optBoolean("success")) {
-                JSONObject path = queryPath(pathId);
-                Log.record("行走路线🚶🏻‍♂️路线[" + path.getJSONObject("path").getString("name") + "]已加入");
-                return true;
-            } else {
+            if (!jo.optBoolean("success")) {
                 Log.record("行走路线🚶🏻‍♂️路线[" + pathId + "]有误，无法加入！");
                 return false;
             }
+            JSONObject pathData = queryPath(pathId);
+            String pathName = pathData.getJSONObject("path").getString("name");
+            Log.record("行走路线🚶🏻‍♂️路线[" + pathName + "]已加入");
+            return true;
         } catch (Throwable t) {
             Log.i(TAG, "joinPath err:");
             Log.printStackTrace(TAG, t);
