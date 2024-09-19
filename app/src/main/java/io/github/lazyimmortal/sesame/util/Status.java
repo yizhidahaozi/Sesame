@@ -20,7 +20,6 @@ public class Status {
     // forest
     private Map<String, Integer> waterFriendLogList = new HashMap<>();
     private Map<String, Integer> vitalityExchangeBenefitList = new HashMap<>();
-    private Set<String> cooperateWaterList = new HashSet<>();
     private Map<String, Integer> reserveLogList = new HashMap<>();
     private Set<String> ancientTreeCityCodeList = new HashSet<>();
     private boolean protectBubble = false;
@@ -129,18 +128,6 @@ public class Status {
         }
         INSTANCE.reserveLogList.put(id, count + newCount);
         save();
-    }
-
-    public static boolean canCooperateWaterToday(String coopId) {
-        return !INSTANCE.cooperateWaterList.contains(coopId);
-    }
-
-    public static void cooperateWaterToday(String coopId) {
-        Status stat = INSTANCE;
-        if (!stat.cooperateWaterList.contains(coopId)) {
-            stat.cooperateWaterList.add(coopId);
-            save();
-        }
     }
 
     public static Boolean canMemberPointExchangeBenefitToday(String benefitId) {
