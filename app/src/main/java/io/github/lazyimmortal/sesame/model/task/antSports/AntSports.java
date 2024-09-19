@@ -319,7 +319,7 @@ public class AntSports extends ModelTask {
             JSONObject jo = queryPath(joinedPathId);
             jo = jo.getJSONObject("userPathStep");
             if ("COMPLETED".equals(jo.optString("pathCompleteStatus"))) {
-                Log.record("行走路线🚶🏻‍♂️路线[" + jo.getString("pathName") + "]已完成");
+                Log.record("行走路线🚶🏻‍♂️完成[" + jo.getString("pathName") + "]");
                 return true;
             }
         } catch (Throwable t) {
@@ -361,7 +361,7 @@ public class AntSports extends ModelTask {
             JSONObject jo = new JSONObject(AntSportsRpcCall.walkGo(date, pathId, useStepCount));
             if (jo.optBoolean("success")) {
                 result = true;
-                Log.record("行走路线🚶🏻‍♂️路线[" + pathName + "]#前进了" + useStepCount + "步");
+                Log.record("行走路线🚶🏻‍♂️行走[" + pathName + "]#前进了" + useStepCount + "步");
                 jo = jo.getJSONObject("data");
                 parseRewardsByJSONObjectData(jo);
             }
@@ -434,7 +434,7 @@ public class AntSports extends ModelTask {
         try {
             for (int i = 0; i < rewards.length(); i++) {
                 JSONObject jo = rewards.getJSONObject(i);
-                Log.record("行走路线🎁开启宝箱[" + jo.getString("rewardName") + "]*" + jo.getInt("count"));
+                Log.record("行走路线🚶🏻‍♂️收获宝箱奖励[" + jo.getString("rewardName") + "]*" + jo.getInt("count"));
             }
         } catch (Throwable t) {
             Log.i(TAG, "parseRewardsByJSONArrayRewards err:");
@@ -511,12 +511,12 @@ public class AntSports extends ModelTask {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.joinPath(pathId));
             if (!jo.optBoolean("success")) {
-                Log.record("行走路线🚶🏻‍♂️路线[" + pathId + "]有误，无法加入！");
+                Log.record(jo.toString());
                 return false;
             }
             JSONObject pathData = queryPath(pathId);
             String pathName = pathData.getJSONObject("path").getString("name");
-            Log.record("行走路线🚶🏻‍♂️路线[" + pathName + "]已加入");
+            Log.record("行走路线🚶🏻‍♂️加入[" + pathName + "]");
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "joinPath err:");
