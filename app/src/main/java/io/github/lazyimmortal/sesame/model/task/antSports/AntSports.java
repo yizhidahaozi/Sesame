@@ -292,22 +292,15 @@ public class AntSports extends ModelTask {
                 return;
             }
             jo = jo.getJSONObject("data");
-            if (!jo.has("joinedPathId")) {
+            String joinedPathId = jo.optString("joinedPathId");
+            if (isJoinedPathCompleted(joinedPathId)) {
                 String pathId = queryJoinPath();
                 if (!joinPath(pathId)) {
                     return;
                 }
-                jo = queryPath(pathId);
-            } else {
-                jo = queryPath(jo.getString("joinedPathId"));
+                joinedPathId = pathId;
             }
-            if (checkPathData(jo)) {
-                String pathId = queryJoinPath();
-                if (!joinPath(pathId)) {
-                    return;
-                }
-                jo = queryPath(pathId);
-            }
+            jo = queryPath(joinedPathId);
             if (walkGo(jo)) {
                 TimeUtil.sleep(1000);
                 walk();
@@ -318,15 +311,19 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private Boolean checkPathData(JSONObject pathData) {
+    private Boolean isJoinedPathCompleted(String joinedPathId) {
+        if (joinedPathId.isEmpty()) {
+            return true;
+        }
         try {
-            JSONObject userPathStep = pathData.getJSONObject("userPathStep");
-            if ("COMPLETED".equals(userPathStep.optString("pathCompleteStatus"))) {
-                Log.record("行走路线🚶🏻‍♂️路线[" + userPathStep.getString("pathName") + "]已完成");
+            JSONObject jo = queryPath(joinedPathId);
+            jo = jo.getJSONObject("userPathStep");
+            if ("COMPLETED".equals(jo.optString("pathCompleteStatus"))) {
+                Log.record("行走路线🚶🏻‍♂️路线[" + jo.getString("pathName") + "]已完成");
                 return true;
             }
         } catch (Throwable t) {
-            Log.i(TAG, "checkPathData err:");
+            Log.i(TAG, "isJoinedPathCompleted err:");
             Log.printStackTrace(TAG, t);
         }
         return false;
@@ -334,7 +331,7 @@ public class AntSports extends ModelTask {
 
     private Boolean walkGo(JSONObject pathData) {
         try {
-            JSONObject path = pathData.getJSONObject("data");
+            JSONObject path = pathData.getJSONObject("path");
             JSONObject userPathStep = pathData.getJSONObject("userPathStep");
             int minGoStepCount = path.getInt("minGoStepCount");
             int pathStepCount = path.getInt("pathStepCount");
@@ -1116,7 +1113,7 @@ public class AntSports extends ModelTask {
         int DENG_DING_ZHI_MA_SHAN = 2;
         int WEI_C_DA_TIAO_ZHAN = 3;
         int LONG_NIAN_QI_FU = 4;
-        int SHOU_HU_TIYU_MENG = 5;
+        int SHOU_HU_TI_YU_MENG = 5;
 
         String[] nickNames = {"大美中国", "公益一小步", "登顶芝麻山", "维C大挑战", "龙年祈福", "守护体育梦"};
         String[] walkPathThemeIds = {"M202308082226", "M202401042147", "V202405271625", "202404221422", "WF202312050200", "V202409061650"};
