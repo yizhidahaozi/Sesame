@@ -13,6 +13,7 @@ import io.github.lazyimmortal.sesame.entity.AntDodoProp;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm.TaskStatus;
 import io.github.lazyimmortal.sesame.util.Log;
+import io.github.lazyimmortal.sesame.util.MessageUtil;
 import io.github.lazyimmortal.sesame.util.TimeUtil;
 import io.github.lazyimmortal.sesame.util.UserIdMap;
 
@@ -108,7 +109,7 @@ public class AntDodo extends ModelTask {
     private long getEndDateTime() {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.homePage());
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return 0;
             }
             jo = jo.getJSONObject("data");
@@ -129,7 +130,7 @@ public class AntDodo extends ModelTask {
     private void collect() {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.queryAnimalStatus());
-            if (checkMessage(jo)) {
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 JSONObject data = jo.getJSONObject("data");
                 if (data.getBoolean("collect")) {
                     Log.record("神奇物种卡片今日收集完成！");
@@ -146,7 +147,7 @@ public class AntDodo extends ModelTask {
     private void collectAnimalCard() {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.homePage());
-            if (checkMessage(jo)) {
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 JSONObject data = jo.getJSONObject("data");
                 JSONArray ja = data.getJSONArray("limit");
                 int index = -1;
@@ -161,7 +162,7 @@ public class AntDodo extends ModelTask {
                     int leftFreeQuota = jo.getInt("leftFreeQuota");
                     for (int j = 0; j < leftFreeQuota; j++) {
                         jo = new JSONObject(AntDodoRpcCall.collect());
-                        if (checkMessage(jo)) {
+                        if (MessageUtil.checkResultCode(TAG, jo)) {
                             data = jo.getJSONObject("data");
                             JSONObject animal = data.getJSONObject("animal");
                             Log.forest("神奇物种🦕每日抽卡" + getAnimalInfo(animal));
@@ -180,7 +181,7 @@ public class AntDodo extends ModelTask {
             th:do {
                 String s = AntDodoRpcCall.taskList();
                 JSONObject jo = new JSONObject(s);
-                if (checkMessage(jo)) {
+                if (MessageUtil.checkResultCode(TAG, jo)) {
                     JSONArray taskGroupInfoList = jo.getJSONObject("data").optJSONArray("taskGroupInfoList");
                     if (taskGroupInfoList == null)
                         return;
@@ -232,7 +233,7 @@ public class AntDodo extends ModelTask {
             th:
             do {
                 JSONObject jo = new JSONObject(AntDodoRpcCall.propList());
-                if (!checkMessage(jo)) {
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
                     break;
                 }
                 jo = jo.getJSONObject("data");
@@ -286,7 +287,7 @@ public class AntDodo extends ModelTask {
             JSONObject animal = null;
             do {
                 JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookList(9, pageStart));
-                if (!checkMessage(jo)) {
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
                     break;
                 }
                 jo = jo.getJSONObject("data");
@@ -352,7 +353,7 @@ public class AntDodo extends ModelTask {
     private JSONObject queryUniversalAnimal(String bookId, JSONObject animal) {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookInfo(bookId));
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return animal;
             }
             // data: animalBookResult{}
@@ -385,7 +386,7 @@ public class AntDodo extends ModelTask {
     private Boolean consumeProp(String propId, String propType) {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.consumeProp(propId, propType));
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return false;
             }
 
@@ -408,7 +409,7 @@ public class AntDodo extends ModelTask {
     private Boolean consumeProp(String propId, String propType, String animalId) {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.consumeProp(propId, propType, animalId));
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return false;
             }
             jo = jo.getJSONObject("data");
@@ -426,7 +427,7 @@ public class AntDodo extends ModelTask {
     private void collectToFriend() {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.queryFriend());
-            if (checkMessage(jo)) {
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 int count = 0;
                 JSONArray limitList = jo.getJSONObject("data").getJSONObject("extend").getJSONArray("limit");
                 for (int i = 0; i < limitList.length(); i++) {
@@ -455,7 +456,7 @@ public class AntDodo extends ModelTask {
                         continue;
                     }
                     jo = new JSONObject(AntDodoRpcCall.collect(useId));
-                    if (checkMessage(jo)) {
+                    if (MessageUtil.checkResultCode(TAG, jo)) {
                         String userName = UserIdMap.getMaskName(useId);
                         JSONObject animal = jo.getJSONObject("data").optJSONObject("animal");
                         Log.forest("帮抽卡片🦕[" + userName + "]" + getAnimalInfo(animal));
@@ -484,7 +485,7 @@ public class AntDodo extends ModelTask {
             int pageStart = 0;
             do {
                 JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookList(9, pageStart));
-                if (!checkMessage(jo)) {
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
                     break;
                 }
                 jo = jo.getJSONObject("data");
@@ -500,7 +501,7 @@ public class AntDodo extends ModelTask {
                     String bookId = animalBookResult.getString("bookId");
                     String ecosystem = animalBookResult.getString("ecosystem");
                     jo = new JSONObject(AntDodoRpcCall.generateBookMedal(bookId));
-                    if (!checkMessage(jo)) {
+                    if (!MessageUtil.checkResultCode(TAG, jo)) {
                         break;
                     }
                     Log.forest("神奇物种🦕合成勋章[" + ecosystem + "]");
@@ -550,7 +551,7 @@ public class AntDodo extends ModelTask {
             int pageStart = 0;
             do {
                 JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookList(9, pageStart));
-                if (!checkMessage(jo)) {
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
                     break;
                 }
                 jo = jo.getJSONObject("data");
@@ -577,7 +578,7 @@ public class AntDodo extends ModelTask {
     private void giftToFriend(String bookId, String targetUserId) {
         try {
             JSONObject jo = new JSONObject(AntDodoRpcCall.queryBookInfo(bookId));
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
             JSONArray animalForUserList = jo.getJSONObject("data").optJSONArray("animalForUserList");
@@ -610,32 +611,13 @@ public class AntDodo extends ModelTask {
         try {
             String animalId = animal.getString("animalId");
             JSONObject jo = new JSONObject(AntDodoRpcCall.social(animalId, targetUserId));
-            if (checkMessage(jo)) {
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 Log.forest("赠送卡片🦕[" + UserIdMap.getMaskName(targetUserId) + "]" + getAnimalInfo(animal));
             }
         } catch (Throwable th) {
             Log.i(TAG, "AntDodo GiftToFriend err:");
             Log.printStackTrace(TAG, th);
         }
-    }
-
-    private Boolean checkMessage(JSONObject jo) {
-        try {
-            if (!"SUCCESS".equals(jo.optString("resultCode"))) {
-                if (jo.has("resultDesc")) {
-                    Log.record(jo.getString("resultDesc"));
-                    Log.i(jo.getString("resultDesc"), jo.toString());
-                } else {
-                    Log.i(TAG, jo.toString());
-                }
-                return false;
-            }
-            return true;
-        } catch (Throwable t) {
-            Log.i(TAG, "AntDodo CheckMessage err:");
-            Log.printStackTrace(TAG, t);
-        }
-        return false;
     }
 
     public interface TimingType {

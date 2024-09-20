@@ -58,29 +58,10 @@ public class AntCooperate extends ModelTask {
         }
     }
 
-    private Boolean checkMessage(JSONObject jo) {
-        try {
-            if (!"SUCCESS".equals(jo.optString("resultCode"))) {
-                if (jo.has("resultDesc")) {
-                    Log.record(jo.getString("resultDesc"));
-                    Log.i(jo.getString("resultDesc"), jo.toString());
-                } else {
-                    Log.i(TAG, jo.toString());
-                }
-                return false;
-            }
-            return true;
-        } catch (Throwable t) {
-            Log.i(TAG, "checkMessage err:");
-            Log.printStackTrace(TAG, t);
-        }
-        return false;
-    }
-
     private void cooperateWater() {
         try {
             JSONObject jo = new JSONObject(AntCooperateRpcCall.queryUserCooperatePlantList());
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
             String selfId = UserIdMap.getCurrentUid();
@@ -107,7 +88,7 @@ public class AntCooperate extends ModelTask {
     private void cooperateWater(String uid, String cooperationId, int energyCount, String name) {
         try {
             JSONObject jo = new JSONObject(AntCooperateRpcCall.cooperateWater(uid, cooperationId, energyCount));
-            if (checkMessage(jo)) {
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 Log.forest("合种浇水🚿[" + name + "]" + jo.getString("barrageText"));
             }
         } catch (Throwable t) {
@@ -120,7 +101,7 @@ public class AntCooperate extends ModelTask {
     private int calculatedWaterNum(String uid, String cooperationId) {
         try {
             JSONObject jo = new JSONObject(AntCooperateRpcCall.queryCooperatePlant(cooperationId));
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return 0;
             }
             int userCurrentEnergy = jo.getInt("userCurrentEnergy");
@@ -153,7 +134,7 @@ public class AntCooperate extends ModelTask {
     private int getDayWater(String uid, String cooperationId) {
         try {
             JSONObject jo = new JSONObject(AntCooperateRpcCall.queryCooperateRank("D", cooperationId));
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return 0;
             }
             JSONArray cooperateRankInfos = jo.getJSONArray("cooperateRankInfos");
@@ -174,7 +155,7 @@ public class AntCooperate extends ModelTask {
     private int getAllWater(String uid, String cooperationId) {
         try {
             JSONObject jo = new JSONObject(AntCooperateRpcCall.queryCooperateRank("A", cooperationId));
-            if (!checkMessage(jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return 0;
             }
             JSONArray cooperateRankInfos = jo.getJSONArray("cooperateRankInfos");
