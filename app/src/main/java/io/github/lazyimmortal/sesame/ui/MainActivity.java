@@ -223,8 +223,8 @@ public class MainActivity extends BaseActivity {
                 data += FileUtil.getFarmLogFile().getAbsolutePath();
                 break;
 
-            case R.id.btn_all_log:
-                data += FileUtil.getRecordLogFile().getAbsolutePath();
+            case R.id.btn_other_log:
+                data += FileUtil.getOtherLogFile().getAbsolutePath();
                 break;
 
             case R.id.btn_github:
@@ -262,8 +262,9 @@ public class MainActivity extends BaseActivity {
         menu.add(0, 6, 6, R.string.export_the_statistic_file);
         menu.add(0, 7, 7, R.string.import_the_statistic_file);
         menu.add(0, 8, 8, R.string.view_debug);
-        menu.add(0, 9, 9, R.string.settings);
+        menu.add(0, 9, 9, R.string.view_record);
         menu.add(0, 10, 10, R.string.extend);
+        menu.add(0, 11, 11, R.string.settings);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -335,12 +336,21 @@ public class MainActivity extends BaseActivity {
                 break;
 
             case 9:
-                selectSettingUid();
+                String recordData = "file://";
+                recordData += FileUtil.getRecordLogFile().getAbsolutePath();
+                Intent recordIt = new Intent(this, HtmlViewerActivity.class);
+                recordIt.setData(Uri.parse(recordData));
+                recordIt.putExtra("canClear", true);
+                startActivity(recordIt);
                 break;
 
             case 10:
                 Intent extend = new Intent(this, ExtendActivity.class);
                 startActivity(extend);
+                break;
+
+            case 11:
+                selectSettingUid();
                 break;
         }
         return super.onOptionsItemSelected(item);

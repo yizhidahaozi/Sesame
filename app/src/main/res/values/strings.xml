@@ -66,7 +66,7 @@
     <string name="more">MORE</string>
     <string name="forest_log">Forest log</string>
     <string name="farm_log">Farm log</string>
-    <string name="all_log">All log</string>
+    <string name="other_log">Other log</string>
     <string name="runtime_log">Runtime log</string>
     <string name="unactivated">UNACTIVATED</string>
     <string name="tips">Tips</string>
@@ -78,8 +78,9 @@
     <string name="import_the_statistic_file">Import the statistic file</string>
     <string name="view_all_log_file">View runtime log file</string>
     <string name="view_debug">View debug</string>
-    <string name="settings">Settings</string>
+    <string name="view_record">View record</string>
     <string name="extend">Extend options</string>
+    <string name="settings">Settings</string>
     <string name="limit_collect">Limit collect</string>
     <string name="limit_count_per_minute">Limit count per minute</string>
     <string name="energy_rain">Energy Rain</string>
