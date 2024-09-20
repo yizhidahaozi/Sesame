@@ -535,7 +535,7 @@ public class AntMember extends ModelTask {
             }
             jo = jo.getJSONObject("data");
             String promiseName = jo.getString("promiseName");
-            Log.record("生活记录📝[加入" + promiseName + "]");
+            Log.other("生活记录📝[加入" + promiseName + "]");
         } catch (Throwable t) {
             Log.i(TAG, "promiseJoin err:");
             Log.printStackTrace(TAG, t);
@@ -586,7 +586,7 @@ public class AntMember extends ModelTask {
                 return;
             }
             jo = jo.getJSONObject("data").getJSONObject("gainSumInsuredDTO");
-            Log.record("攒保障金💰[领取:" + jo.optString("gainSumInsuredYuan") + "元保额]");
+            Log.other("攒保障金💰[领取:" + jo.optString("gainSumInsuredYuan") + "元保额]");
         } catch (Throwable t) {
             Log.i(TAG, "gainMyAndFamilySumInsured err:");
             Log.printStackTrace(TAG, t);
@@ -808,7 +808,7 @@ public class AntMember extends ModelTask {
                 if (jo.optBoolean("success")) {
                     String prizeName = jo.getJSONObject("result").getJSONArray("prizeSendOrderDTOList").getJSONObject(0)
                             .getString("prizeName");
-                    Log.record("安心豆🫘[" + prizeName + "]");
+                    Log.other("安心豆🫘[" + prizeName + "]");
                 } else {
                     Log.i(jo.toString());
                 }
@@ -843,7 +843,7 @@ public class AntMember extends ModelTask {
             }
             jo = new JSONObject(AntMemberRpcCall.beanExchange(itemId, realConsumePointAmount));
             if (jo.optBoolean("success")) {
-                Log.record("安心豆🫘[兑换:" + itemName + "]");
+                Log.other("安心豆🫘[兑换:" + itemName + "]");
             } else {
                 Log.i(jo.toString());
             }
@@ -877,7 +877,7 @@ public class AntMember extends ModelTask {
             }
             jo = new JSONObject(AntMemberRpcCall.beanExchange(itemId, realConsumePointAmount));
             if (jo.optBoolean("success")) {
-                Log.record("安心豆🫘[兑换:" + itemName + "]");
+                Log.other("安心豆🫘[兑换:" + itemName + "]");
             } else {
                 Log.i(jo.toString());
             }
@@ -920,7 +920,7 @@ public class AntMember extends ModelTask {
                 String itemId = benefitInfo.getString("itemId");
                 if (exchangeBenefit(benefitId, itemId)) {
                     String point = pricePresentation.getString("point");
-                    Log.record("会员积分🎐兑换权益[" + name + "]#花费" + point + "积分");
+                    Log.other("会员积分🎐兑换权益[" + name + "]#花费" + point + "积分");
                 }
             }
             MemberBenefitIdMap.save(userId);
@@ -987,7 +987,7 @@ public class AntMember extends ModelTask {
                     }
                     if (taskBaseInfo != null) {
                         String appletName = taskBaseInfo.optString("appletName", "Unknown Applet");
-                        Log.record("我的快递💌[完成:" + appletName + "]");
+                        Log.other("我的快递💌[完成:" + appletName + "]");
                     }
                 }
                 if (taskMaterial == null || !taskMaterial.has("taskId")) {
@@ -1010,7 +1010,7 @@ public class AntMember extends ModelTask {
                         // 获取 promoCampName
                         String promoCampName = extInfo.optString("promoCampName", "Unknown Promo Campaign");
                         // 输出日志信息
-                        Log.record("我的快递💌[完成:" + promoCampName + "]");
+                        Log.other("我的快递💌[完成:" + promoCampName + "]");
                     }
                 }
             }
@@ -1051,7 +1051,7 @@ public class AntMember extends ModelTask {
                             JSONArray prizeSendInfo = sendTriggerJson.getJSONArray("prizeSendInfo");
                             // 获取 prizeName
                             String prizeName = prizeSendInfo.getJSONObject(0).getString("prizeName");
-                            Log.record("我的快递💌[完成:" + prizeName + "]");
+                            Log.other("我的快递💌[完成:" + prizeName + "]");
                         } else {
                             Log.i(TAG, "sendtrigger failed for taskId: " + taskId);
                         }
@@ -1076,7 +1076,7 @@ public class AntMember extends ModelTask {
                     jo = new JSONObject(AntMemberRpcCall.openBoxAward());
                     if (jo.optBoolean("success")) {
                         int amount = jo.getInt("amount");
-                        Log.record("攒消费金💰[签到:获得" + amount + "金币]");
+                        Log.other("攒消费金💰[签到:获得" + amount + "金币]");
                     }
                 }
             }
