@@ -209,7 +209,7 @@ public class AntSports extends ModelTask {
                     while (limitConfigNum > 0) {
                         jo = new JSONObject(AntSportsRpcCall.completeExerciseTasks(taskId));
                         if (jo.optBoolean("success")) {
-                            Log.record("做任务得运动币👯[完成任务：" + taskName + "，得" + prizeAmount + "🪙]");
+                            Log.other("做任务得运动币👯[完成任务：" + taskName + "，得" + prizeAmount + "🪙]");
                             TimeUtil.sleep(1000);
                             receiveCoinAsset();
                         }
@@ -237,7 +237,7 @@ public class AntSports extends ModelTask {
                     JSONObject subscribeConfig;
                     if (data.has("subscribeConfig")) {
                         subscribeConfig = data.getJSONObject("subscribeConfig");
-                        Log.record("做任务得运动币👯[完成任务：签到" + subscribeConfig.getString("subscribeExpireDays") + "天，" + data.getString("toast") + "🪙]");
+                        Log.other("做任务得运动币👯[完成任务：签到" + subscribeConfig.getString("subscribeExpireDays") + "天，" + data.getString("toast") + "🪙]");
                     } else {
 //                        Log.record("没有签到");
                     }
@@ -360,10 +360,10 @@ public class AntSports extends ModelTask {
             JSONObject jo = new JSONObject(AntSportsRpcCall.walkGo(date, pathId, useStepCount));
             if (jo.optBoolean("success")) {
                 result = true;
-                Log.record("行走路线🚶🏻‍♂️行走[" + pathName + "]#前进了" + useStepCount + "步");
+                Log.other("行走路线🚶🏻‍♂️行走[" + pathName + "]#前进了" + useStepCount + "步");
                 jo = jo.getJSONObject("data");
                 if (jo.has("completeInfo")) {
-                    Log.record("行走路线🚶🏻‍♂️完成[" + pathName + "]");
+                    Log.other("行走路线🚶🏻‍♂️完成[" + pathName + "]");
                 }
                 parseRewardsByJSONObjectData(jo);
             }
@@ -436,7 +436,7 @@ public class AntSports extends ModelTask {
         try {
             for (int i = 0; i < rewards.length(); i++) {
                 JSONObject jo = rewards.getJSONObject(i);
-                Log.record("行走路线🚶🏻‍♂️收获宝箱奖励[" + jo.getString("rewardName") + "]*" + jo.getInt("count"));
+                Log.other("行走路线🚶🏻‍♂️收获宝箱奖励[" + jo.getString("rewardName") + "]*" + jo.getInt("count"));
             }
         } catch (Throwable t) {
             Log.i(TAG, "parseRewardsByJSONArrayRewards err:");
@@ -518,7 +518,7 @@ public class AntSports extends ModelTask {
             }
             JSONObject pathData = queryPath(pathId);
             String pathName = pathData.getJSONObject("path").getString("name");
-            Log.record("行走路线🚶🏻‍♂️加入[" + pathName + "]");
+            Log.other("行走路线🚶🏻‍♂️加入[" + pathName + "]");
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "joinPath err:");
@@ -923,7 +923,7 @@ public class AntSports extends ModelTask {
                     return;
                 }
                 int collectCoin = jo.getInt("collectCoin");
-                Log.record("训练好友💰️[获得:" + collectCoin + "金币]");
+                Log.other("训练好友💰️[获得:" + collectCoin + "金币]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "collectBubble err:");
@@ -988,7 +988,7 @@ public class AntSports extends ModelTask {
             JSONObject jo = new JSONObject(AntSportsRpcCall.trainMember(trainItemType, memberId, originBossId));
             if (jo.optBoolean("success")) {
                 String userName = UserIdMap.getMaskName(originBossId);
-                Log.record("训练好友🥋训练[" + userName + "]" + trainItemName);
+                Log.other("训练好友🥋训练[" + userName + "]" + trainItemName);
                 String taskId = "UPDATE|TRAIN|" + originBossId;
                 long updateTime = System.currentTimeMillis() + 1000 * 10;
                 JSONObject trainInfo = jo.getJSONObject("trainInfo");
@@ -1124,7 +1124,7 @@ public class AntSports extends ModelTask {
             }
             jo = jo.getJSONObject("data");
             if (jo.optBoolean("exgSuccess")) {
-                Log.record("运动好礼🎐兑换[" + itemTitle + "]#花费" + valueCoinCount + "运动币");
+                Log.other("运动好礼🎐兑换[" + itemTitle + "]#花费" + valueCoinCount + "运动币");
             }
         } catch (Throwable t) {
             Log.i(TAG, "trainMember err:");
