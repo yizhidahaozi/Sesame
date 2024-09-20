@@ -626,7 +626,7 @@ public class AntDodo extends ModelTask {
                     Log.record(jo.getString("resultDesc"));
                     Log.i(jo.getString("resultDesc"), jo.toString());
                 } else {
-                    Log.i(jo.toString());
+                    Log.i(TAG, jo.toString());
                 }
                 return false;
             }

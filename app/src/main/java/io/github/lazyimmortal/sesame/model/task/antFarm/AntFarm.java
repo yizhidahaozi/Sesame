@@ -229,7 +229,7 @@ public class AntFarm extends ModelTask {
                     }
 
                     boolean recall = false;
-                    switch (recallAnimalType.getValue()) {
+                    switch ((int)recallAnimalType.getValue()) {
                         case RecallAnimalType.ALWAYS:
                             recall = true;
                             break;
@@ -644,18 +644,19 @@ public class AntFarm extends ModelTask {
         try {
             if (rewardList != null) {
                 for (RewardFriend rewardFriend : rewardList) {
-                    String s = AntFarmRpcCall.rewardFriend(rewardFriend.consistencyKey, rewardFriend.friendId,
-                            rewardProductNum, rewardFriend.time);
-                    JSONObject jo = new JSONObject(s);
-                    String memo = jo.getString("memo");
-                    if ("SUCCESS".equals(memo)) {
+                    JSONObject jo = new JSONObject(
+                            AntFarmRpcCall.rewardFriend(
+                                    rewardFriend.consistencyKey,
+                                    rewardFriend.friendId,
+                                    rewardProductNum,
+                                    rewardFriend.time
+                            )
+                    );
+                    if (checkMessage(jo)) {
                         double rewardCount = benevolenceScore - jo.getDouble("farmProduct");
                         benevolenceScore -= rewardCount;
-                        Log.farm("打赏好友💰[" + UserIdMap.getMaskName(rewardFriend.friendId) + "]#得" + rewardCount
-                                + "颗爱心鸡蛋");
-                    } else {
-                        Log.record(memo);
-                        Log.i(s);
+                        Log.farm("打赏好友💰[" + UserIdMap.getMaskName(rewardFriend.friendId) + "]#得"
+                                + rewardCount + "颗爱心鸡蛋");
                     }
                 }
                 rewardList = null;
@@ -668,18 +669,14 @@ public class AntFarm extends ModelTask {
 
     private void recallAnimal(String animalId, String currentFarmId, String masterFarmId, String user) {
         try {
-            String s = AntFarmRpcCall.recallAnimal(animalId, currentFarmId, masterFarmId);
-            JSONObject jo = new JSONObject(s);
-            String memo = jo.getString("memo");
-            if ("SUCCESS".equals(memo)) {
-                double foodHaveStolen = jo.getDouble("foodHaveStolen");
-                Log.farm("召回小鸡📣，偷吃[" + user + "]#" + foodHaveStolen + "g");
-                // 这里不需要加
-                // add2FoodStock((int)foodHaveStolen);
-            } else {
-                Log.record(memo);
-                Log.i(s);
+            JSONObject jo = new JSONObject(AntFarmRpcCall.recallAnimal(animalId, currentFarmId, masterFarmId));
+            if (!checkMessage(jo)) {
+                return;
             }
+            double foodHaveStolen = jo.getDouble("foodHaveStolen");
+            Log.farm("召回小鸡📣，偷吃[" + user + "]#" + foodHaveStolen + "g");
+            // 这里不需要加
+            // add2FoodStock((int)foodHaveStolen);
         } catch (Throwable t) {
             Log.i(TAG, "recallAnimal err:");
             Log.printStackTrace(TAG, t);
@@ -698,20 +695,24 @@ public class AntFarm extends ModelTask {
                     // 赶鸡
                     String user = AntFarmRpcCall.farmId2UserId(animal.masterFarmId);
                     boolean isSendBackAnimal = sendBackAnimalList.getValue().contains(user);
-                    if (sendBackAnimalType.getValue() == SendBackAnimalType.BACK) {
+                    if (sendBackAnimalType.getValue() == SendBackAnimalType.NOT_BACK) {
                         isSendBackAnimal = !isSendBackAnimal;
                     }
-                    if (isSendBackAnimal) {
+                    if (!isSendBackAnimal) {
                         continue;
                     }
                     int sendTypeInt = sendBackAnimalWay.getValue();
                     user = UserIdMap.getMaskName(user);
-                    String s = AntFarmRpcCall.sendBackAnimal(
-                            SendBackAnimalWay.nickNames[sendTypeInt], animal.animalId,
-                            animal.currentFarmId, animal.masterFarmId);
-                    JSONObject jo = new JSONObject(s);
-                    String memo = jo.getString("memo");
-                    if ("SUCCESS".equals(memo)) {
+                    JSONObject jo = new JSONObject(
+                            AntFarmRpcCall.sendBackAnimal(
+                                    SendBackAnimalWay.nickNames[sendTypeInt],
+                                    animal.animalId,
+                                    animal.currentFarmId,
+                                    animal.masterFarmId
+                            )
+                    );
+                    if (checkMessage(jo)) {
+                        String s;
                         if (sendTypeInt == SendBackAnimalWay.HIT) {
                             if (jo.has("hitLossFood")) {
                                 s = "胖揍小鸡🤺[" + user + "]，掉落[" + jo.getInt("hitLossFood") + "g]";
@@ -723,9 +724,6 @@ public class AntFarm extends ModelTask {
                             s = "驱赶小鸡🧶[" + user + "]";
                         }
                         Log.farm(s);
-                    } else {
-                        Log.record(memo);
-                        Log.i(s);
                     }
                 }
             }
@@ -737,49 +735,39 @@ public class AntFarm extends ModelTask {
 
     private void receiveToolTaskReward() {
         try {
-            String s = AntFarmRpcCall.listToolTaskDetails();
-            JSONObject jo = new JSONObject(s);
-            String memo = jo.getString("memo");
-            if ("SUCCESS".equals(memo)) {
-                JSONArray jaList = jo.getJSONArray("list");
-                for (int i = 0; i < jaList.length(); i++) {
-                    JSONObject joItem = jaList.getJSONObject(i);
-                    if (joItem.has("taskStatus")
-                            && TaskStatus.FINISHED.name().equals(joItem.getString("taskStatus"))) {
-                        JSONObject bizInfo = new JSONObject(joItem.getString("bizInfo"));
-                        String awardType = bizInfo.getString("awardType");
-                        ToolType toolType = ToolType.valueOf(awardType);
-                        boolean isFull = false;
-                        for (FarmTool farmTool : farmTools) {
-                            if (farmTool.toolType == toolType) {
-                                if (farmTool.toolCount == farmTool.toolHoldLimit) {
-                                    isFull = true;
-                                }
-                                break;
-                            }
+            JSONObject jo = new JSONObject(AntFarmRpcCall.listToolTaskDetails());
+            if (!checkMessage(jo)) {
+                return;
+            }
+            JSONArray jaList = jo.getJSONArray("list");
+            for (int i = 0; i < jaList.length(); i++) {
+                JSONObject joItem = jaList.getJSONObject(i);
+                if (!TaskStatus.FINISHED.name().equals(joItem.optString("taskStatus"))) {
+                    continue;
+                }
+                JSONObject bizInfo = new JSONObject(joItem.getString("bizInfo"));
+                String awardType = bizInfo.getString("awardType");
+                ToolType toolType = ToolType.valueOf(awardType);
+                boolean isFull = false;
+                for (FarmTool farmTool : farmTools) {
+                    if (farmTool.toolType == toolType) {
+                        if (farmTool.toolCount == farmTool.toolHoldLimit) {
+                            isFull = true;
                         }
-                        if (isFull) {
-                            Log.record("领取道具[" + toolType.nickName() + "]#已满，暂不领取");
-                            continue;
-                        }
-                        int awardCount = bizInfo.getInt("awardCount");
-                        String taskType = joItem.getString("taskType");
-                        String taskTitle = bizInfo.getString("taskTitle");
-                        s = AntFarmRpcCall.receiveToolTaskReward(awardType, awardCount, taskType);
-                        jo = new JSONObject(s);
-                        memo = jo.getString("memo");
-                        if ("SUCCESS".equals(memo)) {
-                            Log.farm("领取道具🎖️[" + taskTitle + "-" + toolType.nickName() + "]#" + awardCount + "张");
-                        } else {
-                            memo = memo.replace("道具", toolType.nickName());
-                            Log.record(memo);
-                            Log.i(s);
-                        }
+                        break;
                     }
                 }
-            } else {
-                Log.record(memo);
-                Log.i(s);
+                if (isFull) {
+                    Log.record("领取道具[" + toolType.nickName() + "]#已满，暂不领取");
+                    continue;
+                }
+                int awardCount = bizInfo.getInt("awardCount");
+                String taskType = joItem.getString("taskType");
+                String taskTitle = bizInfo.getString("taskTitle");
+                jo = new JSONObject(AntFarmRpcCall.receiveToolTaskReward(awardType, awardCount, taskType));
+                if (checkMessage(jo)) {
+                    Log.farm("领取道具🎖️[" + taskTitle + "-" + toolType.nickName() + "]#" + awardCount + "张");
+                }
             }
         } catch (Throwable t) {
             Log.i(TAG, "receiveToolTaskReward err:");
@@ -789,17 +777,13 @@ public class AntFarm extends ModelTask {
 
     private void harvestProduce(String farmId) {
         try {
-            String s = AntFarmRpcCall.harvestProduce(farmId);
-            JSONObject jo = new JSONObject(s);
-            String memo = jo.getString("memo");
-            if ("SUCCESS".equals(memo)) {
-                double harvest = jo.getDouble("harvestBenevolenceScore");
-                harvestBenevolenceScore = jo.getDouble("finalBenevolenceScore");
-                Log.farm("收取鸡蛋🥚[" + harvest + "颗]#剩余" + harvestBenevolenceScore + "颗");
-            } else {
-                Log.record(memo);
-                Log.i(s);
+            JSONObject jo = new JSONObject(AntFarmRpcCall.harvestProduce(farmId));
+            if (!checkMessage(jo)) {
+                return;
             }
+            double harvest = jo.getDouble("harvestBenevolenceScore");
+            harvestBenevolenceScore = jo.getDouble("finalBenevolenceScore");
+            Log.farm("收取鸡蛋🥚[" + harvest + "颗]#剩余" + harvestBenevolenceScore + "颗");
         } catch (Throwable t) {
             Log.i(TAG, "harvestProduce err:");
             Log.printStackTrace(TAG, t);
@@ -1261,36 +1245,27 @@ public class AntFarm extends ModelTask {
 
     private Boolean useFarmTool(String targetFarmId, ToolType toolType) {
         try {
-            String s = AntFarmRpcCall.listFarmTool();
-            JSONObject jo = new JSONObject(s);
-            String memo = jo.getString("memo");
-            if ("SUCCESS".equals(memo)) {
-                JSONArray jaToolList = jo.getJSONArray("toolList");
-                for (int i = 0; i < jaToolList.length(); i++) {
-                    jo = jaToolList.getJSONObject(i);
-                    if (toolType.name().equals(jo.getString("toolType"))) {
-                        int toolCount = jo.getInt("toolCount");
-                        if (toolCount > 0) {
-                            String toolId = "";
-                            if (jo.has("toolId"))
-                                toolId = jo.getString("toolId");
-                            s = AntFarmRpcCall.useFarmTool(targetFarmId, toolId, toolType.name());
-                            jo = new JSONObject(s);
-                            memo = jo.getString("memo");
-                            if ("SUCCESS".equals(memo)) {
-                                Log.farm("使用道具🎭[" + toolType.nickName() + "]#剩余" + (toolCount - 1) + "张");
-                                return true;
-                            } else {
-                                Log.record(memo);
-                            }
-                            Log.i(s);
-                        }
-                        break;
-                    }
+            JSONObject jo = new JSONObject(AntFarmRpcCall.listFarmTool());
+            if (!checkMessage(jo)) {
+                return false;
+            }
+            JSONArray jaToolList = jo.getJSONArray("toolList");
+            for (int i = 0; i < jaToolList.length(); i++) {
+                jo = jaToolList.getJSONObject(i);
+                if (!toolType.name().equals(jo.getString("toolType"))) {
+                    continue;
                 }
-            } else {
-                Log.record(memo);
-                Log.i(s);
+                int toolCount = jo.optInt("toolCount");
+                if (toolCount == 0) {
+                    return false;
+                }
+                String toolId = jo.optString("toolId");
+                jo = new JSONObject(AntFarmRpcCall.useFarmTool(targetFarmId, toolId, toolType.name()));
+                if (!checkMessage(jo)) {
+                    return false;
+                }
+                Log.farm("使用道具🎭[" + toolType.nickName() + "]#剩余" + (toolCount - 1) + "张");
+                return true;
             }
         } catch (Throwable t) {
             Log.i(TAG, "useFarmTool err:");
@@ -1426,21 +1401,18 @@ public class AntFarm extends ModelTask {
         try {
             if (AnimalInteractStatus.STEALING.name().equals(joAnimalStatusVO.getString("animalInteractStatus"))
                     && AnimalFeedStatus.EATING.name().equals(joAnimalStatusVO.getString("animalFeedStatus"))) {
-                String s = AntFarmRpcCall.notifyFriend(animalId, friendFarmId);
-                JSONObject jo = new JSONObject(s);
-                String memo = jo.getString("memo");
-                if ("SUCCESS".equals(memo)) {
-                    double rewardCount = jo.getDouble("rewardCount");
-                    if (jo.getBoolean("refreshFoodStock"))
-                        foodStock = (int) jo.getDouble("finalFoodStock");
-                    else
-                        add2FoodStock((int) rewardCount);
-                    Log.farm("通知好友📧[" + user + "]被偷吃#奖励" + rewardCount + "g");
-                    return true;
-                } else {
-                    Log.record(memo);
-                    Log.i(s);
+                JSONObject jo = new JSONObject(AntFarmRpcCall.notifyFriend(animalId, friendFarmId));
+                if (!checkMessage(jo)) {
+                    return false;
                 }
+                String memo = jo.getString("memo");
+                double rewardCount = jo.getDouble("rewardCount");
+                if (jo.getBoolean("refreshFoodStock"))
+                    foodStock = (int) jo.getDouble("finalFoodStock");
+                else
+                    add2FoodStock((int) rewardCount);
+                Log.farm("通知好友📧[" + user + "]被偷吃#奖励" + rewardCount + "g");
+                return true;
             }
         } catch (Throwable t) {
             Log.i(TAG, "notifyFriend err:");
@@ -1540,39 +1512,34 @@ public class AntFarm extends ModelTask {
     private void collectDailyFoodMaterial(String userId) {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.enterKitchen(userId));
-            if ("SUCCESS".equals(jo.getString("memo"))) {
-                boolean canCollectDailyFoodMaterial = jo.getBoolean("canCollectDailyFoodMaterial");
-                int dailyFoodMaterialAmount = jo.getInt("dailyFoodMaterialAmount");
-                int garbageAmount = jo.optInt("garbageAmount", 0);
-                if (jo.has("orchardFoodMaterialStatus")) {
-                    JSONObject orchardFoodMaterialStatus = jo.getJSONObject("orchardFoodMaterialStatus");
-                    if ("FINISHED".equals(orchardFoodMaterialStatus.optString("foodStatus"))) {
-                        jo = new JSONObject(AntFarmRpcCall.farmFoodMaterialCollect());
-                        if ("100".equals(jo.getString("resultCode"))) {
-                            Log.farm("小鸡厨房👨🏻‍🍳[领取农场食材]#" + jo.getInt("foodMaterialAddCount") + "g");
-                        } else {
-                            Log.i(TAG, jo.toString());
-                        }
-                    }
-                }
-                if (canCollectDailyFoodMaterial) {
-                    jo = new JSONObject(AntFarmRpcCall.collectDailyFoodMaterial(dailyFoodMaterialAmount));
-                    if ("SUCCESS".equals(jo.getString("memo"))) {
-                        Log.farm("小鸡厨房👨🏻‍🍳[领取今日食材]#" + dailyFoodMaterialAmount + "g");
+            if (!checkMessage(jo)) {
+                return;
+            }
+            boolean canCollectDailyFoodMaterial = jo.getBoolean("canCollectDailyFoodMaterial");
+            int dailyFoodMaterialAmount = jo.getInt("dailyFoodMaterialAmount");
+            int garbageAmount = jo.optInt("garbageAmount", 0);
+            if (jo.has("orchardFoodMaterialStatus")) {
+                JSONObject orchardFoodMaterialStatus = jo.getJSONObject("orchardFoodMaterialStatus");
+                if ("FINISHED".equals(orchardFoodMaterialStatus.optString("foodStatus"))) {
+                    jo = new JSONObject(AntFarmRpcCall.farmFoodMaterialCollect());
+                    if ("100".equals(jo.getString("resultCode"))) {
+                        Log.farm("小鸡厨房👨🏻‍🍳[领取农场食材]#" + jo.getInt("foodMaterialAddCount") + "g");
                     } else {
                         Log.i(TAG, jo.toString());
                     }
                 }
-                if (garbageAmount > 0) {
-                    jo = new JSONObject(AntFarmRpcCall.collectKitchenGarbage());
-                    if ("SUCCESS".equals(jo.getString("memo"))) {
-                        Log.farm("小鸡厨房👨🏻‍🍳[领取肥料]#" + jo.getInt("recievedKitchenGarbageAmount") + "g");
-                    } else {
-                        Log.i(TAG, jo.toString());
-                    }
+            }
+            if (canCollectDailyFoodMaterial) {
+                jo = new JSONObject(AntFarmRpcCall.collectDailyFoodMaterial(dailyFoodMaterialAmount));
+                if (checkMessage(jo)) {
+                    Log.farm("小鸡厨房👨🏻‍🍳[领取今日食材]#" + dailyFoodMaterialAmount + "g");
                 }
-            } else {
-                Log.i(TAG, jo.toString());
+            }
+            if (garbageAmount > 0) {
+                jo = new JSONObject(AntFarmRpcCall.collectKitchenGarbage());
+                if (checkMessage(jo)) {
+                    Log.farm("小鸡厨房👨🏻‍🍳[领取肥料]#" + jo.getInt("recievedKitchenGarbageAmount") + "g");
+                }
             }
         } catch (Throwable t) {
             Log.i(TAG, "collectDailyFoodMaterial err:");
@@ -1583,19 +1550,16 @@ public class AntFarm extends ModelTask {
     private void collectDailyLimitedFoodMaterial() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.queryFoodMaterialPack());
-            if ("SUCCESS".equals(jo.getString("memo"))) {
-                boolean canCollectDailyLimitedFoodMaterial = jo.getBoolean("canCollectDailyLimitedFoodMaterial");
-                if (canCollectDailyLimitedFoodMaterial) {
-                    int dailyLimitedFoodMaterialAmount = jo.getInt("dailyLimitedFoodMaterialAmount");
-                    jo = new JSONObject(AntFarmRpcCall.collectDailyLimitedFoodMaterial(dailyLimitedFoodMaterialAmount));
-                    if ("SUCCESS".equals(jo.getString("memo"))) {
-                        Log.farm("小鸡厨房👨🏻‍🍳[领取爱心食材店食材]#" + dailyLimitedFoodMaterialAmount + "g");
-                    } else {
-                        Log.i(TAG, jo.toString());
-                    }
+            if (!checkMessage(jo)) {
+                return;
+            }
+            boolean canCollectDailyLimitedFoodMaterial = jo.getBoolean("canCollectDailyLimitedFoodMaterial");
+            if (canCollectDailyLimitedFoodMaterial) {
+                int dailyLimitedFoodMaterialAmount = jo.getInt("dailyLimitedFoodMaterialAmount");
+                jo = new JSONObject(AntFarmRpcCall.collectDailyLimitedFoodMaterial(dailyLimitedFoodMaterialAmount));
+                if (checkMessage(jo)) {
+                    Log.farm("小鸡厨房👨🏻‍🍳[领取爱心食材店食材]#" + dailyLimitedFoodMaterialAmount + "g");
                 }
-            } else {
-                Log.i(TAG, jo.toString());
             }
         } catch (Throwable t) {
             Log.i(TAG, "collectDailyLimitedFoodMaterial err:");
@@ -1606,22 +1570,19 @@ public class AntFarm extends ModelTask {
     private void cook(String userId) {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.enterKitchen(userId));
-            if ("SUCCESS".equals(jo.getString("memo"))) {
-                int cookTimesAllowed = jo.getInt("cookTimesAllowed");
-                if (cookTimesAllowed > 0) {
-                    for (int i = 0; i < cookTimesAllowed; i++) {
-                        jo = new JSONObject(AntFarmRpcCall.cook(userId));
-                        if ("SUCCESS".equals(jo.getString("memo"))) {
-                            JSONObject cuisineVO = jo.getJSONObject("cuisineVO");
-                            Log.farm("小鸡厨房👨🏻‍🍳[" + cuisineVO.getString("name") + "]制作成功");
-                        } else {
-                            Log.i(TAG, jo.toString());
-                        }
-                        Thread.sleep(RandomUtil.delay());
+            if (!checkMessage(jo)) {
+                return;
+            }
+            int cookTimesAllowed = jo.getInt("cookTimesAllowed");
+            if (cookTimesAllowed > 0) {
+                for (int i = 0; i < cookTimesAllowed; i++) {
+                    jo = new JSONObject(AntFarmRpcCall.cook(userId));
+                    if (checkMessage(jo)) {
+                        JSONObject cuisineVO = jo.getJSONObject("cuisineVO");
+                        Log.farm("小鸡厨房👨🏻‍🍳[" + cuisineVO.getString("name") + "]制作成功");
                     }
+                    Thread.sleep(RandomUtil.delay());
                 }
-            } else {
-                Log.i(TAG, jo.toString());
             }
         } catch (Throwable t) {
             Log.i(TAG, "cook err:");
@@ -1706,10 +1667,8 @@ public class AntFarm extends ModelTask {
                             break;
                         }
                         jo = new JSONObject(AntFarmRpcCall.drawLotteryPlus());
-                        if ("SUCCESS".equals(jo.getString("memo"))) {
+                        if (checkMessage(jo)) {
                             Log.farm("惊喜礼包🎁[" + singleDesc + "*" + awardCount + "]");
-                        } else {
-                            Log.i(TAG, jo.getString("memo"));
                         }
                     } else {
                         Log.record("当日奖励已领取");
@@ -1788,13 +1747,10 @@ public class AntFarm extends ModelTask {
     private void acceptGift() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.acceptGift());
-            if ("SUCCESS".equals(jo.getString("memo"))) {
+            if (checkMessage(jo)) {
                 int receiveFoodNum = jo.getInt("receiveFoodNum");
                 Log.farm("收取麦子🌾[" + receiveFoodNum + "g]");
-            } else {
-                Log.i(TAG, jo.toString());
             }
-
         } catch (Throwable t) {
             Log.i(TAG, "acceptGift err:");
             Log.printStackTrace(TAG, t);
@@ -2306,7 +2262,7 @@ public class AntFarm extends ModelTask {
                     Log.record(jo.getString("memo"));
                     Log.i(jo.getString("memo"), jo.toString());
                 } else {
-                    Log.i(jo.toString());
+                    Log.i(TAG, jo.toString());
                 }
                 return false;
             }

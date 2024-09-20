@@ -1093,7 +1093,7 @@ public class AntMember extends ModelTask {
                     Log.record(jo.getString("resultView"));
                     Log.i(jo.getString("resultView"), jo.toString());
                 } else {
-                    Log.i(jo.toString());
+                    Log.i(TAG, jo.toString());
                 }
                 return false;
             }
