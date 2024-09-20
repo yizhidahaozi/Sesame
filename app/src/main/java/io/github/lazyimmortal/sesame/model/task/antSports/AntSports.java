@@ -319,7 +319,6 @@ public class AntSports extends ModelTask {
             JSONObject jo = queryPath(joinedPathId);
             jo = jo.getJSONObject("userPathStep");
             if ("COMPLETED".equals(jo.optString("pathCompleteStatus"))) {
-                Log.record("行走路线🚶🏻‍♂️完成[" + jo.getString("pathName") + "]");
                 return true;
             }
         } catch (Throwable t) {
@@ -338,7 +337,7 @@ public class AntSports extends ModelTask {
             int forwardStepCount = userPathStep.getInt("forwardStepCount");
             int remainStepCount = userPathStep.getInt("remainStepCount");
             int useStepCount = Math.min(
-                    Math.min(remainStepCount, 500),
+                    Math.min(remainStepCount, RandomUtil.nextInt(1000, 2000)),
                     Math.max(pathStepCount - forwardStepCount, minGoStepCount)
             );
             if (useStepCount < minGoStepCount) {
@@ -363,6 +362,9 @@ public class AntSports extends ModelTask {
                 result = true;
                 Log.record("行走路线🚶🏻‍♂️行走[" + pathName + "]#前进了" + useStepCount + "步");
                 jo = jo.getJSONObject("data");
+                if (jo.has("completeInfo")) {
+                    Log.record("行走路线🚶🏻‍♂️完成[" + pathName + "]");
+                }
                 parseRewardsByJSONObjectData(jo);
             }
         } catch (Throwable t) {
