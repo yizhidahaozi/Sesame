@@ -38,8 +38,8 @@ public class AntDodo extends ModelTask {
     private SelectModelField usePropList;
     private ChoiceModelField useCollectTimingType;
     private ChoiceModelField useUniversalCardBookStatusType;
-    private ChoiceModelField useUniversalCardBookCollectedStatus;
-    private ChoiceModelField useUniversalCardMedalGenerationStatus;
+    private ChoiceModelField useUniversalCardBookCollectedStatusType;
+    private ChoiceModelField useUniversalCardMedalGenerationStatusType;
     private ChoiceModelField useUniversalCardFantasticLevelType;
     private BooleanModelField generateBookMedal;
     private BooleanModelField collectToFriend;
@@ -47,8 +47,8 @@ public class AntDodo extends ModelTask {
     private SelectModelField collectToFriendList;
     private BooleanModelField giftToFriend;
     private ChoiceModelField giftToFriendBookStatusType;
-    private ChoiceModelField giftToFriendBookCollectedStatus;
-    private ChoiceModelField giftToFriendMedalGenerationStatus;
+    private ChoiceModelField giftToFriendBookCollectedStatusType;
+    private ChoiceModelField giftToFriendMedalGenerationStatusType;
     private ChoiceModelField giftToFriendFantasticLevelType;
     private SelectModelField giftToFriendList;
 
@@ -59,8 +59,8 @@ public class AntDodo extends ModelTask {
         modelFields.addField(usePropList = new SelectModelField("usePropList", "使用道具 | 道具列表", new LinkedHashSet<>(), AntDodoProp::getList));
         modelFields.addField(useCollectTimingType = new ChoiceModelField("useCollectTimingType", "抽卡道具 | 使用时机", TimingType.EVERY_DAY, TimingType.nickNames));
         modelFields.addField(useUniversalCardBookStatusType = new ChoiceModelField("useUniversalCardBookStatusType", "万能卡片 | 图鉴状态类型", BookStatusType.END, BookStatusType.nickNames));
-        modelFields.addField(useUniversalCardBookCollectedStatus = new ChoiceModelField("useUniversalCardBookCollectedStatus", "万能卡片 | 图鉴收集状态", BookCollectedStatus.ALL, BookCollectedStatus.nickNames));
-        modelFields.addField(useUniversalCardMedalGenerationStatus = new ChoiceModelField("useUniversalCardMedalGenerationStatus", "万能卡片 | 勋章合成状态", MedalGenerationStatus.ALL, MedalGenerationStatus.nickNames));
+        modelFields.addField(useUniversalCardBookCollectedStatusType = new ChoiceModelField("useUniversalCardBookCollectedStatusType", "万能卡片 | 图鉴收集状态", BookCollectedStatusType.ALL, BookCollectedStatusType.nickNames));
+        modelFields.addField(useUniversalCardMedalGenerationStatusType = new ChoiceModelField("useUniversalCardMedalGenerationStatusType", "万能卡片 | 勋章合成状态", MedalGenerationStatusType.ALL, MedalGenerationStatusType.nickNames));
         modelFields.addField(useUniversalCardFantasticLevelType = new ChoiceModelField("useUniversalCardFantasticLevelType", "万能卡片 | 最低等级", FantasticLevelType.MAGIC, FantasticLevelType.nickNames));
         modelFields.addField(generateBookMedal = new BooleanModelField("generateBookMedal", "合成勋章", false));
         modelFields.addField(collectToFriend = new BooleanModelField("collectToFriend", "帮抽卡片 | 开启", false));
@@ -68,8 +68,8 @@ public class AntDodo extends ModelTask {
         modelFields.addField(collectToFriendList = new SelectModelField("collectToFriendList", "帮抽卡片 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(giftToFriend = new BooleanModelField("giftToFriend", "赠送卡片 | 开启", false));
         modelFields.addField(giftToFriendBookStatusType = new ChoiceModelField("giftToFriendBookStatusType", "赠送卡片 | 图鉴状态类型", BookStatusType.ALL, BookStatusType.nickNames));
-        modelFields.addField(giftToFriendBookCollectedStatus = new ChoiceModelField("giftToFriendBookCollectedStatus", "赠送卡片 | 图鉴收集状态", BookCollectedStatus.ALL, BookCollectedStatus.nickNames));
-        modelFields.addField(giftToFriendMedalGenerationStatus = new ChoiceModelField("giftToFriendMedalGenerationStatus", "赠送卡片 | 勋章合成状态", MedalGenerationStatus.ALL, MedalGenerationStatus.nickNames));
+        modelFields.addField(giftToFriendBookCollectedStatusType = new ChoiceModelField("giftToFriendBookCollectedStatusType", "赠送卡片 | 图鉴收集状态", BookCollectedStatusType.ALL, BookCollectedStatusType.nickNames));
+        modelFields.addField(giftToFriendMedalGenerationStatusType = new ChoiceModelField("giftToFriendMedalGenerationStatusType", "赠送卡片 | 勋章合成状态", MedalGenerationStatusType.ALL, MedalGenerationStatusType.nickNames));
         modelFields.addField(giftToFriendFantasticLevelType = new ChoiceModelField("giftToFriendFantasticLevelType", "赠送卡片 | 最低等级", FantasticLevelType.COMMON, FantasticLevelType.nickNames));
         modelFields.addField(giftToFriendList = new SelectModelField("giftToFriendList", "赠送卡片 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         return modelFields;
@@ -249,7 +249,7 @@ public class AntDodo extends ModelTask {
                     if (!isUseProp && !willExpireSoon) {
                         continue;
                     }
-                    if ("UNIVERSAL_CARD_7_DAYS".equals(propType)) {
+                    if (PropType.UNIVERSAL_CARD_7_DAYS.name().equals(propType)) {
                         if (!usePropUniversalCard(propId, propType)) {
                             continue;
                         }
@@ -257,7 +257,7 @@ public class AntDodo extends ModelTask {
                         // COLLECT_TIMES_7_DAYS
                         // COLLECT_HISTORY_ANIMAL_7_DAYS
                         // COLLECT_TO_FRIEND_TIMES_7_DAYS
-                        if ("COLLECT_TIMES_7_DAYS".equals(propType)
+                        if (PropType.COLLECT_TIMES_7_DAYS.name().equals(propType)
                                 && !willExpireSoon
                                 && useCollectTimingType.getValue() == TimingType.LAST_DAY
                                 && !isLastDay()) {
@@ -266,6 +266,9 @@ public class AntDodo extends ModelTask {
                         if (!consumeProp(propId, propType)) {
                             continue;
                         }
+                    }
+                    if (giftToFriend.getValue() && useCollectTimingType.getValue() == TimingType.LAST_DAY) {
+                        giftToFriend();
                     }
                     if (prop.optInt("holdsNum", 1) > 1) {
                         continue th;
@@ -315,39 +318,30 @@ public class AntDodo extends ModelTask {
 
     private Boolean isQueryBookInfo(JSONObject bookForUser,
                                     int type) {
-        boolean isQueryBookInfo = false;
-
         int statusType = type == 0
                 ? useUniversalCardBookStatusType.getValue()
                 : giftToFriendBookStatusType.getValue();
         String bookStatus = bookForUser.optString("bookStatus");
-        if (statusType == BookStatusType.ALL
-                && ("END".equals(bookStatus) || "DOING".equals(bookStatus))) {
-            isQueryBookInfo = true;
-        } else if (bookStatus.equals(BookStatusType.types[statusType])) {
-            isQueryBookInfo = true;
-        }
-        if (!isQueryBookInfo) {
+        if (!BookStatus.valueOf(bookStatus).match(
+                BookStatusType.types[statusType])) {
             return false;
         }
 
-        int collectedStatus = type == 0
-                ? useUniversalCardBookCollectedStatus.getValue()
-                : giftToFriendBookCollectedStatus.getValue();
+        int bookCollectedStatusType = type == 0
+                ? useUniversalCardBookCollectedStatusType.getValue()
+                : giftToFriendBookCollectedStatusType.getValue();
         String bookCollectedStatus = bookForUser.optString("bookCollectedStatus");
-        isQueryBookInfo = collectedStatus == BookCollectedStatus.ALL
-                || bookCollectedStatus.equals(BookCollectedStatus.statuses[collectedStatus]);
-        if (!isQueryBookInfo) {
+        if (!BookCollectedStatus.valueOf(bookCollectedStatus).match(
+                BookCollectedStatusType.types[bookCollectedStatusType])) {
             return false;
         }
 
-        int generationStatus = type == 0
-                ? useUniversalCardMedalGenerationStatus.getValue()
-                : giftToFriendMedalGenerationStatus.getValue();
+        int medalGenerationStatusType = type == 0
+                ? useUniversalCardMedalGenerationStatusType.getValue()
+                : giftToFriendMedalGenerationStatusType.getValue();
         String medalGenerationStatus = bookForUser.optString("medalGenerationStatus");
-        isQueryBookInfo = generationStatus == MedalGenerationStatus.ALL
-                || medalGenerationStatus.equals(MedalGenerationStatus.statuses[generationStatus]);
-        return isQueryBookInfo;
+        return MedalGenerationStatus.valueOf(medalGenerationStatus).match(
+                MedalGenerationStatusType.types[medalGenerationStatusType]);
     }
 
     private JSONObject queryUniversalAnimal(String bookId, JSONObject animal) {
@@ -494,7 +488,8 @@ public class AntDodo extends ModelTask {
                 JSONArray bookForUserList = jo.getJSONArray("bookForUserList");
                 for (int i = 0; i < bookForUserList.length(); i++) {
                     jo = bookForUserList.getJSONObject(i);
-                    if (!"CAN_GENERATE".equals(jo.getString("medalGenerationStatus"))) {
+                    if (!MedalGenerationStatus.CAN_GENERATE.name().equals(
+                            jo.optString("medalGenerationStatus"))) {
                         continue;
                     }
                     JSONObject animalBookResult = jo.getJSONObject("animalBookResult");
@@ -519,17 +514,8 @@ public class AntDodo extends ModelTask {
         }
         String ecosystem = animal.optString("ecosystem", "未知专辑");
         String name = animal.optString("name", "未知动物");
-        int fantasticStarQuantity = animal.optInt("fantasticStarQuantity", 0);
-        String fantasticLevel = "未知";
-        if (fantasticStarQuantity == 1) {
-            fantasticLevel = "普通";
-        } else if (fantasticStarQuantity == 2) {
-            fantasticLevel = "稀有";
-        } else if (fantasticStarQuantity == 3) {
-            fantasticLevel = "神奇";
-        }
-
-        return "#[" + ecosystem + "]" + name + "[" + fantasticLevel +  "]";
+        String fantasticLevel = animal.optString("fantasticLevel", "Unknown");
+        return "#[" + ecosystem + "]" + name + "[" + FantasticLevel.valueOf(fantasticLevel).nickName() +  "]";
     }
 
     private void giftToFriend() {
@@ -620,6 +606,65 @@ public class AntDodo extends ModelTask {
         }
     }
 
+    public enum PropType {
+        COLLECT_TIMES_7_DAYS, COLLECT_HISTORY_ANIMAL_7_DAYS, COLLECT_TO_FRIEND_TIMES_7_DAYS, UNIVERSAL_CARD_7_DAYS;
+
+        public final String[] nickNames = {"抽卡道具", "抽历史卡道具", "抽好友卡道具", "万能卡道具"};
+
+        public String nickName() {
+            return nickNames[ordinal()];
+        }
+    }
+
+    public enum BookStatus {
+        NOT_START, DOING, END;
+
+        public final String[] nickNames = {"未开启","进行中", "已结束"};
+
+        public String nickName() {
+            return nickNames[ordinal()];
+        }
+
+        public Boolean match(String status) {
+            if (name().equals(NOT_START.name())) {
+                return false;
+            }
+            return name().equals(status) || "ALL".equals(status);
+        }
+    }
+
+    public enum BookCollectedStatus {
+        NOT_COMPLETED, COMPLETED;
+
+        public Boolean match(String status) {
+            return name().equals(status) || "ALL".equals(status);
+        }
+    }
+
+    public enum MedalGenerationStatus {
+        CAN_NOT_GENERATE, CAN_GENERATE, GENERATED;
+
+        public final String[] nickNames = {"收集中", "已集齐", "已合成"};
+
+        public String nickName() {
+            return nickNames[ordinal()];
+        }
+
+        public Boolean match(String status) {
+            return name().equals(status) || "ALL".equals(status);
+        }
+    }
+
+    public enum FantasticLevel {
+        COMMON, RARE, MAGIC;
+
+        public final String[] nickNames = {"普通", "稀有", "神奇"};
+
+        public String nickName() {
+            return nickNames[ordinal()];
+        }
+    }
+
     public interface TimingType {
         int EVERY_DAY = 0;
         int LAST_DAY = 1;
@@ -645,23 +690,23 @@ public class AntDodo extends ModelTask {
         String[] types = {"ALL", "END", "DOING"};
     }
 
-    public interface BookCollectedStatus {
+    public interface BookCollectedStatusType {
         int ALL = 0;
         int NOT_COMPLETED = 1;
         int COMPLETED = 2;
 
         String[] nickNames = {"全部状态", "未完成收集", "已完成收集"};
-        String[] statuses = {"ALL", "NOT_COMPLETED", "COMPLETED"};
+        String[] types = {"ALL", "NOT_COMPLETED", "COMPLETED"};
     }
 
-    public interface MedalGenerationStatus {
+    public interface MedalGenerationStatusType {
         int ALL = 0;
         int CAN_NOT_GENERATE = 1;
         int CAN_GENERATE = 2;
         int GENERATED = 3;
 
         String[] nickNames = {"全部类型", "未能合成", "可以合成", "已经合成"};
-        String[] statuses = {"ALL", "CAN_NOT_GENERATE", "CAN_GENERATE", "GENERATED"};
+        String[] types = {"ALL", "CAN_NOT_GENERATE", "CAN_GENERATE", "GENERATED"};
     }
 
     public interface FantasticLevelType {
