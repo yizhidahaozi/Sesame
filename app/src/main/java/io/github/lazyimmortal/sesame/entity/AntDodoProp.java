@@ -28,8 +28,8 @@ public class AntDodoProp extends IdAndName {
             } catch (Throwable e) {
                 antDodoProp = "[" +
                         "{\"propType\":\"COLLECT_TIMES_7_DAYS\",\"propName\":\"抽卡道具\"}," +
-                        "{\"propType\":\"COLLECT_HISTORY_ANIMAL_7_DAYS\",\"propName\":\"抽历史卡道具\"}," +
-                        "{\"propType\":\"COLLECT_TO_FRIEND_TIMES_7_DAYS\",\"propName\":\"抽好友道具\"}," +
+                        "{\"propType\":\"COLLECT_HISTORY_ANIMAL_7_DAYS\",\"propName\":\"历史图鉴随机卡道具\"}," +
+                        "{\"propType\":\"COLLECT_TO_FRIEND_TIMES_7_DAYS\",\"propName\":\"抽好友卡道具\"}," +
                         "{\"propType\":\"UNIVERSAL_CARD_7_DAYS\",\"propName\":\"万能卡道具\"}" +
                         "]";
                 try {

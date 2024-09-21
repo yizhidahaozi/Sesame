@@ -166,6 +166,7 @@ public class AntDodo extends ModelTask {
                             data = jo.getJSONObject("data");
                             JSONObject animal = data.getJSONObject("animal");
                             Log.forest("神奇物种🦕每日抽卡" + getAnimalInfo(animal));
+                            checkAnimalAndGiftToFriend(animal);
                         }
                     }
                 }
@@ -241,6 +242,7 @@ public class AntDodo extends ModelTask {
                 for (int i = 0; i < propList.length(); i++) {
                     JSONObject prop = propList.getJSONObject(i);
                     String propType = prop.getString("propType");
+                    String propGroup = prop.getJSONObject("propConfig").getString("propGroup");
                     JSONArray propIdList = prop.getJSONArray("propIdList");
                     String propId = propIdList.getString(0);
                     long recentExpireTime = prop.getLong("recentExpireTime");
@@ -249,15 +251,12 @@ public class AntDodo extends ModelTask {
                     if (!isUseProp && !willExpireSoon) {
                         continue;
                     }
-                    if (PropType.UNIVERSAL_CARD_7_DAYS.name().equals(propType)) {
+                    if (PropGroup.UNIVERSAL_CARD.name().equals(propGroup)) {
                         if (!usePropUniversalCard(propId, propType)) {
                             continue;
                         }
                     } else {
-                        // COLLECT_TIMES_7_DAYS
-                        // COLLECT_HISTORY_ANIMAL_7_DAYS
-                        // COLLECT_TO_FRIEND_TIMES_7_DAYS
-                        if (PropType.COLLECT_TIMES_7_DAYS.name().equals(propType)
+                        if (PropGroup.COLLECT_ANIMAL.name().equals(propGroup)
                                 && !willExpireSoon
                                 && useCollectTimingType.getValue() == TimingType.LAST_DAY
                                 && !isLastDay()) {
@@ -266,9 +265,6 @@ public class AntDodo extends ModelTask {
                         if (!consumeProp(propId, propType)) {
                             continue;
                         }
-                    }
-                    if (giftToFriend.getValue() && useCollectTimingType.getValue() == TimingType.LAST_DAY) {
-                        giftToFriend();
                     }
                     if (prop.optInt("holdsNum", 1) > 1) {
                         continue th;
@@ -387,11 +383,9 @@ public class AntDodo extends ModelTask {
             jo = jo.getJSONObject("data");
             String propName = jo.getJSONObject("propConfig").getString("propName");
 
-            // COLLECT_TIMES_7_DAYS
-            // COLLECT_HISTORY_ANIMAL_7_DAYS
-            // COLLECT_TO_FRIEND_TIMES_7_DAYS
             JSONObject animal = jo.getJSONObject("useResult").optJSONObject("animal");
             Log.forest("使用道具🎭[" + propName + "]" + getAnimalInfo(animal));
+            checkAnimalAndGiftToFriend(animal);
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "AntDodo consumeProp err:");
@@ -410,6 +404,7 @@ public class AntDodo extends ModelTask {
             String propName = jo.getJSONObject("propConfig").getString("propName");
             JSONObject animal = jo.getJSONObject("useResult").optJSONObject("animal");
             Log.forest("使用道具🎭[" + propName + "]" + getAnimalInfo(animal));
+            checkAnimalAndGiftToFriend(animal);
             return true;
         } catch (Throwable th) {
             Log.i(TAG, "AntDodo consumeProp err:");
@@ -518,17 +513,55 @@ public class AntDodo extends ModelTask {
         return "#[" + ecosystem + "]" + name + "[" + FantasticLevel.valueOf(fantasticLevel).nickName() +  "]";
     }
 
-    private void giftToFriend() {
+    private void checkAnimalAndGiftToFriend(JSONObject animal) {
+        if (animal == null
+                || !giftToFriend.getValue()
+                || useCollectTimingType.getValue() != TimingType.LAST_DAY) {
+            return;
+        }
+        String targetUserId = getGiftToFriendTargetUserId();
+        if (targetUserId == null) {
+            return;
+        }
+        try {
+            if (!FantasticLevel.MAGIC.name().equals(animal.getString("fantasticLevel"))) {
+                return;
+            }
+            String bookId = animal.getString("bookId");
+            JSONObject jo = new JSONObject(AntDodoRpcCall.homePage());
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data").getJSONObject("animalBook");
+            if (!bookId.equals(jo.getString("bookId"))) {
+                return;
+            }
+            giftToFriend(animal, targetUserId);
+        } catch (Throwable t) {
+            Log.i(TAG, "AntDodo CheckAnimalAndGiftToFriend err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private String getGiftToFriendTargetUserId() {
         Set<String> set = giftToFriendList.getValue();
         if (set.isEmpty()) {
-            return;
+            return null;
         }
         for (String userId : set) {
             if (!UserIdMap.getCurrentUid().equals(userId)) {
-                giftToFriend(userId);
-                break;
+                return userId;
             }
         }
+        return null;
+    }
+
+    private void giftToFriend() {
+        String targetUserId = getGiftToFriendTargetUserId();
+        if (targetUserId == null) {
+            return;
+        }
+        giftToFriend(targetUserId);
     }
 
     private void giftToFriend(String targetUserId) {
@@ -606,10 +639,10 @@ public class AntDodo extends ModelTask {
         }
     }
 
-    public enum PropType {
-        COLLECT_TIMES_7_DAYS, COLLECT_HISTORY_ANIMAL_7_DAYS, COLLECT_TO_FRIEND_TIMES_7_DAYS, UNIVERSAL_CARD_7_DAYS;
+    public enum PropGroup {
+        COLLECT_ANIMAL, COLLECT_HISTORY_ANIMAL, ADD_COLLECT_TO_FRIEND_LIMIT, UNIVERSAL_CARD;
 
-        public final String[] nickNames = {"抽卡道具", "抽历史卡道具", "抽好友卡道具", "万能卡道具"};
+        public final String[] nickNames = {"抽卡道具", "历史图鉴随机卡道具", "抽好友卡道具", "万能卡道具"};
 
         public String nickName() {
             return nickNames[ordinal()];
