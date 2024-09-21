@@ -66,7 +66,7 @@ public class AntSports extends ModelTask {
         modelFields.addField(walkPathTheme = new ChoiceModelField("walkPathTheme", "行走路线 | 主题", WalkPathTheme.DA_MEI_ZHONG_GUO, WalkPathTheme.nickNames));
         modelFields.addField(walkCustomPath = new BooleanModelField("walkCustomPath", "行走路线 | 开启自定义路线", false));
         modelFields.addField(walkCustomPathId = new StringModelField("walkCustomPathId", "行走路线 | 自定义路线代码(debug)", "p000202408231708"));
-        modelFields.addField(sportsTasks = new BooleanModelField("sportsTasks", "开启运动任务", false));
+        modelFields.addField(sportsTasks = new BooleanModelField("sportsTasks", "运动任务", false));
         modelFields.addField(receiveCoinAsset = new BooleanModelField("receiveCoinAsset", "收运动币", false));
         modelFields.addField(donateCharityCoin = new BooleanModelField("donateCharityCoin", "捐运动币 | 开启", false));
         modelFields.addField(donateCharityCoinType = new ChoiceModelField("donateCharityCoinType", "捐运动币 | 方式", DonateCharityCoinType.ONE, DonateCharityCoinType.nickNames));
@@ -135,8 +135,8 @@ public class AntSports extends ModelTask {
                 walk();
             }
 
-            if (donateCharityCoin.getValue() && Status.canDonateCharityCoinToday())
-                queryProjectList(loader);
+            if (donateCharityCoin.getValue())
+                queryProjectList();
 
             if (coinExchangeDoubleCard.getValue()) {
                 coinExchangeItem("AMS2024032927086104");
@@ -268,9 +268,9 @@ public class AntSports extends ModelTask {
                     int coinAmount = jo.getInt("coinAmount");
                     jo = new JSONObject(AntSportsRpcCall.receiveCoinAsset(assetId, coinAmount));
                     if (jo.optBoolean("success")) {
-                        Log.other("收集金币💰[" + coinAmount + "个]");
+                        Log.other("收运动币💰[" + coinAmount + "个]");
                     } else {
-                        Log.record("首页收集金币" + " " + jo);
+                        Log.record("首页收运动币" + " " + jo);
                     }
                 }
             } else {
@@ -580,31 +580,59 @@ public class AntSports extends ModelTask {
     /*
      * 新版行走路线 -- end
      */
+    private Boolean checkDonateRecordToday() {
+        try {
+            JSONObject jo = new JSONObject(AntSportsRpcCall.queryDonateRecord());
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
+            }
+            JSONArray footballFieldLongModel = jo.getJSONArray("footballFieldLongModel");
+            if (footballFieldLongModel.length() == 0) {
+                return false;
+            }
+            jo = footballFieldLongModel.getJSONObject(0);
+            jo = jo.getJSONObject("personStatModel");
+            long lastDonationTime = jo.getLong("lastDonationTime");
+            if (TimeUtil.isLessThanNowOfDays(lastDonationTime)) {
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "checkDonateRecordToday err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
 
-    private void queryProjectList(ClassLoader loader) {
+    private void queryProjectList() {
+        if (!checkDonateRecordToday()) {
+            return;
+        }
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryProjectList(0));
-            if ("SUCCESS".equals(jo.getString("resultCode"))) {
-                int charityCoinCount = jo.getInt("charityCoinCount");
-                if (charityCoinCount < donateCharityCoinAmount.getValue()) {
-                    return;
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return;
+            }
+            int charityCoinCount = jo.getInt("charityCoinCount");
+            int donateCharityCoin = donateCharityCoinAmount.getValue();
+            if (charityCoinCount < donateCharityCoin) {
+                return;
+            }
+            JSONArray ja = jo.getJSONObject("projectPage").getJSONArray("data");
+            for (int i = 0; i < ja.length(); i++) {
+                jo = ja.getJSONObject(i).getJSONObject("basicModel");
+                // footballFieldStatus: OPENING_DONATE DONATE_COMPLETED
+                if ("DONATE_COMPLETED".equals(jo.getString("footballFieldStatus"))) {
+                    break;
                 }
-                JSONArray ja = jo.getJSONObject("projectPage").getJSONArray("data");
-                for (int i = 0; i < ja.length() && charityCoinCount >= donateCharityCoinAmount.getValue(); i++) {
-                    jo = ja.getJSONObject(i).getJSONObject("basicModel");
-                    if ("DONATE_COMPLETED".equals(jo.getString("footballFieldStatus"))) {
-                        break;
-                    }
-                    donate(loader, donateCharityCoinAmount.getValue(), jo.getString("projectId"), jo.getString("title"));
-                    Status.donateCharityCoinToday();
-                    charityCoinCount -= donateCharityCoinAmount.getValue();
+                if (donate(donateCharityCoin, jo.getString("projectId"), jo.getString("title"))) {
+                    charityCoinCount -= donateCharityCoin;
                     if (donateCharityCoinType.getValue() == DonateCharityCoinType.ONE) {
                         break;
                     }
+                    if (charityCoinCount < donateCharityCoin) {
+                        break;
+                    }
                 }
-            } else {
-                Log.record(TAG);
-                Log.i(jo.getString("resultDesc"));
             }
         } catch (Throwable t) {
             Log.i(TAG, "queryProjectList err:");
@@ -612,19 +640,18 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private void donate(ClassLoader loader, int donateCharityCoin, String projectId, String title) {
+    private Boolean donate(int donateCharityCoin, String projectId, String title) {
         try {
-            String s = AntSportsRpcCall.donate(donateCharityCoin, projectId);
-            JSONObject jo = new JSONObject(s);
-            if ("SUCCESS".equals(jo.getString("resultCode"))) {
+            JSONObject jo = new JSONObject(AntSportsRpcCall.donate(donateCharityCoin, projectId));
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 Log.other("捐赠活动❤️[" + title + "][" + donateCharityCoin + "运动币]");
-            } else {
-                Log.i(TAG, jo.getString("resultDesc"));
+                return true;
             }
         } catch (Throwable t) {
             Log.i(TAG, "donate err:");
             Log.printStackTrace(TAG, t);
         }
+        return false;
     }
 
     private void queryWalkStep(ClassLoader loader) {

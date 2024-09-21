@@ -83,17 +83,24 @@ public class AntSportsRpcCall {
                         + ",\"features\":[\"DAILY_STEPS_RANK_V2\",\"STEP_BATTLE\",\"CLUB_HOME_CARD\",\"NEW_HOME_PAGE_STATIC\",\"CLOUD_SDK_AUTH\",\"STAY_ON_COMPLETE\",\"EXTRA_TREASURE_BOX\",\"NEW_HOME_PAGE_STATIC\",\"SUPPORT_TAB3\",\"SUPPORT_FLYRABBIT\",\"PROP\",\"PROPV2\",\"ASIAN_GAMES\"],\"tracertPos\":\"首页金币收集\"}]");
     }
 
+    public static String queryDonateRecord() {
+        String args = "[{\"pageIndex\":1,\"pageSize\":10}]";
+        return ApplicationHook.requestString("alipay.antsports.walk.charity.queryDonateRecord", args);
+    }
+
     public static String queryProjectList(int index) {
-        return ApplicationHook.requestString("alipay.antsports.walk.charity.queryProjectList", "[{\"chInfo\":\"" + chInfo
-                + "\",\"clientOS\":\"android\",\"features\":[\"DAILY_STEPS_RANK_V2\",\"STEP_BATTLE\",\"CLUB_HOME_CARD\",\"NEW_HOME_PAGE_STATIC\",\"CLOUD_SDK_AUTH\",\"STAY_ON_COMPLETE\",\"EXTRA_TREASURE_BOX\",\"NEW_HOME_PAGE_STATIC\",\"SUPPORT_TAB3\",\"SUPPORT_FLYRABBIT\",\"PROP\",\"PROPV2\",\"ASIAN_GAMES\"],\"index\":"
-                + index + ",\"projectListUseVertical\":true}]");
+        String args = "[{\"index\":" + index + ",\"projectListUseVertical\":true}]";
+        return ApplicationHook.requestString("alipay.antsports.walk.charity.queryProjectList", args);
+    }
+
+    public static String queryProjectDetail(String projectId) {
+        String args = "[{\"projectId\": \"" + projectId + "\"}]";
+        return ApplicationHook.requestString("alipay.antsports.walk.charity.queryProjectDetail", args);
     }
 
     public static String donate(int donateCharityCoin, String projectId) {
-        return ApplicationHook.requestString("alipay.antsports.walk.charity.donate", "[{\"chInfo\":\"" + chInfo
-                + "\",\"clientOS\":\"android\",\"donateCharityCoin\":" + donateCharityCoin
-                + ",\"features\":[\"DAILY_STEPS_RANK_V2\",\"STEP_BATTLE\",\"CLUB_HOME_CARD\",\"NEW_HOME_PAGE_STATIC\",\"CLOUD_SDK_AUTH\",\"STAY_ON_COMPLETE\",\"EXTRA_TREASURE_BOX\",\"NEW_HOME_PAGE_STATIC\",\"SUPPORT_TAB3\",\"SUPPORT_FLYRABBIT\",\"PROP\",\"PROPV2\",\"ASIAN_GAMES\"],\"projectId\":\""
-                + projectId + "\"}]");
+        String args = "[{\"donateCharityCoin\":" + donateCharityCoin + ",\"projectId\":\"" + projectId + "\"}]";
+        return ApplicationHook.requestString("alipay.antsports.walk.charity.donate", args);
     }
 
     public static String queryWalkStep() {

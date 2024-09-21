@@ -44,7 +44,6 @@ public class Status {
     // sport
     private boolean syncStep = false;
     private boolean exchange = false;
-    private boolean donateCharityCoin = false;
 
     // other
     private boolean memberSignIn = false;
@@ -356,18 +355,6 @@ public class Status {
     public static void DoubleToday() {
         INSTANCE.doubleTimes += 1;
         save();
-    }
-
-    public static boolean canDonateCharityCoinToday() {
-        return !INSTANCE.donateCharityCoin;
-    }
-
-    public static void donateCharityCoinToday() {
-        Status stat = INSTANCE;
-        if (!stat.donateCharityCoin) {
-            stat.donateCharityCoin = true;
-            save();
-        }
     }
 
     public static boolean canSyncStepToday() {
