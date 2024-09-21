@@ -43,7 +43,6 @@ public class Status {
 
     // sport
     private boolean syncStep = false;
-    private boolean exchange = false;
 
     // other
     private boolean memberSignIn = false;
@@ -365,18 +364,6 @@ public class Status {
         Status stat = INSTANCE;
         if (!stat.syncStep) {
             stat.syncStep = true;
-            save();
-        }
-    }
-
-    public static boolean canExchangeToday() {
-        return !INSTANCE.exchange;
-    }
-
-    public static void exchangeToday() {
-        Status stat = INSTANCE;
-        if (!stat.exchange) {
-            stat.exchange = true;
             save();
         }
     }

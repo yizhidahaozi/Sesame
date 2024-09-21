@@ -130,7 +130,6 @@ public class AntSports extends ModelTask {
                 }));
             }
 
-            ClassLoader loader = ApplicationHook.getClassLoader();
             if (walk.getValue()) {
                 walk();
             }
@@ -142,8 +141,8 @@ public class AntSports extends ModelTask {
                 coinExchangeItem("AMS2024032927086104");
             }
 
-            if (minExchangeCount.getValue() > 0 && Status.canExchangeToday())
-                queryWalkStep(loader);
+            if (minExchangeCount.getValue() > 0)
+                queryWalkStep();
 
             if (tiyubiz.getValue()) {
                 userTaskGroupQuery("SPORTS_DAILY_SIGN_GROUP");
@@ -580,7 +579,7 @@ public class AntSports extends ModelTask {
     /*
      * 新版行走路线 -- end
      */
-    private Boolean checkDonateRecordToday() {
+    private Boolean canDonateCharityCoinToday() {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryDonateRecord());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -588,7 +587,7 @@ public class AntSports extends ModelTask {
             }
             JSONArray footballFieldLongModel = jo.getJSONArray("footballFieldLongModel");
             if (footballFieldLongModel.length() == 0) {
-                return false;
+                return true;
             }
             jo = footballFieldLongModel.getJSONObject(0);
             jo = jo.getJSONObject("personStatModel");
@@ -597,14 +596,14 @@ public class AntSports extends ModelTask {
                 return true;
             }
         } catch (Throwable t) {
-            Log.i(TAG, "checkDonateRecordToday err:");
+            Log.i(TAG, "canDonateCharityCoinToday err:");
             Log.printStackTrace(TAG, t);
         }
         return false;
     }
 
     private void queryProjectList() {
-        if (!checkDonateRecordToday()) {
+        if (!canDonateCharityCoinToday()) {
             return;
         }
         try {
@@ -654,53 +653,71 @@ public class AntSports extends ModelTask {
         return false;
     }
 
-    private void queryWalkStep(ClassLoader loader) {
+    private Boolean canDonateWalkExchangeToday() {
         try {
-            String s = AntSportsRpcCall.queryWalkStep();
-            JSONObject jo = new JSONObject(s);
-            if ("SUCCESS".equals(jo.getString("resultCode"))) {
-                jo = jo.getJSONObject("dailyStepModel");
-                int produceQuantity = jo.getInt("produceQuantity");
-                int hour = Integer.parseInt(Log.getFormatTime().split(":")[0]);
-                if (produceQuantity >= minExchangeCount.getValue() || hour >= latestExchangeTime.getValue()) {
-                    s = AntSportsRpcCall.walkDonateSignInfo(produceQuantity);
-                    s = AntSportsRpcCall.donateWalkHome(produceQuantity);
-                    jo = new JSONObject(s);
-                    if (!jo.getBoolean("isSuccess"))
-                        return;
-                    JSONObject walkDonateHomeModel = jo.getJSONObject("walkDonateHomeModel");
-                    JSONObject walkUserInfoModel = walkDonateHomeModel.getJSONObject("walkUserInfoModel");
-                    if (!walkUserInfoModel.has("exchangeFlag")) {
-                        Status.exchangeToday();
-                        return;
-                    }
-
-                    String donateToken = walkDonateHomeModel.getString("donateToken");
-                    JSONObject walkCharityActivityModel = walkDonateHomeModel.getJSONObject("walkCharityActivityModel");
-                    String activityId = walkCharityActivityModel.getString("activityId");
-
-                    s = AntSportsRpcCall.exchange(activityId, produceQuantity, donateToken);
-                    jo = new JSONObject(s);
-                    if (jo.getBoolean("isSuccess")) {
-                        JSONObject donateExchangeResultModel = jo.getJSONObject("donateExchangeResultModel");
-                        int userCount = donateExchangeResultModel.getInt("userCount");
-                        double amount = donateExchangeResultModel.getJSONObject("userAmount").getDouble("amount");
-                        Log.other("捐出活动❤️[" + userCount + "步]#兑换" + amount + "元公益金");
-                        Status.exchangeToday();
-
-                    } else if (s.contains("已捐步")) {
-                        Status.exchangeToday();
-                    } else {
-                        Log.i(TAG, jo.getString("resultDesc"));
-                    }
-                }
-            } else {
-                Log.i(TAG, jo.getString("resultDesc"));
+            JSONObject jo = new JSONObject(AntSportsRpcCall.donateExchangeRecord());
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
+            }
+            JSONArray userExchangeRecords = jo.getJSONArray("userExchangeRecords");
+            if (userExchangeRecords.length() == 0) {
+                return true;
+            }
+            jo = userExchangeRecords.getJSONObject(0);
+            long gmtCreate = jo.getLong("gmtCreate");
+            if (TimeUtil.isLessThanNowOfDays(gmtCreate)) {
+                return true;
             }
         } catch (Throwable t) {
-            Log.i(TAG, "queryWalkStep err:");
+            Log.i(TAG, "canDonateWalkExchangeToday err:");
             Log.printStackTrace(TAG, t);
         }
+        return false;
+    }
+
+    private void queryWalkStep() {
+        if (!canDonateWalkExchangeToday()) {
+            return;
+        }
+         try {
+             JSONObject jo = new JSONObject(AntSportsRpcCall.queryWalkStep());
+             if (!MessageUtil.checkResultCode(TAG, jo)) {
+                 return;
+             }
+             jo = jo.getJSONObject("dailyStepModel");
+             int produceQuantity = jo.getInt("produceQuantity");
+             int hour = Integer.parseInt(Log.getFormatTime().split(":")[0]);
+             if (produceQuantity < minExchangeCount.getValue() && hour < latestExchangeTime.getValue()) {
+                 return;
+             }
+
+             AntSportsRpcCall.walkDonateSignInfo(produceQuantity);
+             jo = new JSONObject(AntSportsRpcCall.donateWalkHome(produceQuantity));
+             if (!MessageUtil.checkResultCode(TAG, jo)) {
+                 return;
+             }
+             JSONObject walkDonateHomeModel = jo.getJSONObject("walkDonateHomeModel");
+             JSONObject walkUserInfoModel = walkDonateHomeModel.getJSONObject("walkUserInfoModel");
+             if (!walkUserInfoModel.has("exchangeFlag")) {
+                 return;
+             }
+
+             String donateToken = walkDonateHomeModel.getString("donateToken");
+             JSONObject walkCharityActivityModel = walkDonateHomeModel.getJSONObject("walkCharityActivityModel");
+             String activityId = walkCharityActivityModel.getString("activityId");
+
+             jo = new JSONObject(AntSportsRpcCall.donateWalkExchange(activityId, produceQuantity, donateToken));
+             if (!MessageUtil.checkResultCode(TAG, jo)) {
+                 return;
+             }
+             JSONObject donateExchangeResultModel = jo.getJSONObject("donateExchangeResultModel");
+             int userCount = donateExchangeResultModel.getInt("userCount");
+             double amount = donateExchangeResultModel.getJSONObject("userAmount").getDouble("amount");
+             Log.other("捐出活动❤️[" + userCount + "步]#兑换" + amount + "元公益金");
+         } catch (Throwable t) {
+             Log.i(TAG, "queryWalkStep err:");
+             Log.printStackTrace(TAG, t);
+         }
     }
 
     /* 文体中心 */// SPORTS_DAILY_SIGN_GROUP SPORTS_DAILY_GROUP

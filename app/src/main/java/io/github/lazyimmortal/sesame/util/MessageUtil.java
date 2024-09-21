@@ -35,7 +35,8 @@ public class MessageUtil {
 
     public static Boolean checkResultCode(String tag, JSONObject jo) {
         try {
-            if (!"SUCCESS".equals(jo.optString("resultCode"))) {
+            String resultCode = jo.optString("resultCode");
+            if (!resultCode.equals("SUCCESS") && !resultCode.equals("100")) {
                 if (jo.has("resultDesc")) {
                     Log.record(jo.getString("resultDesc"));
                     Log.i(jo.getString("resultDesc"), jo.toString());
