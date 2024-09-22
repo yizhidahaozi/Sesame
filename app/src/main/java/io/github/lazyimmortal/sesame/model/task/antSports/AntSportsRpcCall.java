@@ -290,93 +290,17 @@ public class AntSportsRpcCall {
 
     // 运动币兑好礼
     public static String queryItemDetail(String itemId) {
-        String arg = "[\n" +
-                "        {\n" +
-                "            \"chInfo\": \"ch_url-https://render.alipay.com/p/s/i/\",\n" +
-                "            \"cityCode\": \"\",\n" +
-                "            \"clientOS\": \"android\",\n" +
-                "            \"features\": [\n" +
-                "                \"DAILY_STEPS_RANK_V2\",\n" +
-                "                \"STEP_BATTLE\",\n" +
-                "                \"CLUB_HOME_CARD\",\n" +
-                "                \"NEW_HOME_PAGE_STATIC\",\n" +
-                "                \"CLOUD_SDK_AUTH\",\n" +
-                "                \"STAY_ON_COMPLETE\",\n" +
-                "                \"EXTRA_TREASURE_BOX\",\n" +
-                "                \"NEW_HOME_PAGE_STATIC\",\n" +
-                "                \"SUPPORT_AI\",\n" +
-                "                \"SUPPORT_TAB3\",\n" +
-                "                \"SUPPORT_FLYRABBIT\",\n" +
-                "                \"SUPPORT_NEW_MATCH\",\n" +
-                "                \"EXTERNAL_ADVERTISEMENT_TASK\",\n" +
-                "                \"PROP\",\n" +
-                "                \"PROPV2\",\n" +
-                "                \"ASIAN_GAMES\"\n" +
-                "            ],\n" +
-                "            \"itemId\": \"" + itemId + "\"\n" +
-                "        }\n" +
-                "    ]";
+        String arg = "[{\"itemId\":\"" + itemId + "\"}]";
         return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthItemCenterRpc.queryItemDetail", arg);
     }
 
     public static String exchangeItem(String itemId, int coinAmount) {
-        String arg = "[\n" +
-                "        {\n" +
-                "            \"chInfo\": \"ch_url-https://render.alipay.com/p/s/i/\",\n" +
-                "            \"cityCode\": \"\",\n" +
-                "            \"clientOS\": \"android\",\n" +
-                "            \"coinAmount\":" + coinAmount + ",\n" +
-                "            \"features\": [\n" +
-                "                \"DAILY_STEPS_RANK_V2\",\n" +
-                "                \"STEP_BATTLE\",\n" +
-                "                \"CLUB_HOME_CARD\",\n" +
-                "                \"NEW_HOME_PAGE_STATIC\",\n" +
-                "                \"CLOUD_SDK_AUTH\",\n" +
-                "                \"STAY_ON_COMPLETE\",\n" +
-                "                \"EXTRA_TREASURE_BOX\",\n" +
-                "                \"NEW_HOME_PAGE_STATIC\",\n" +
-                "                \"SUPPORT_AI\",\n" +
-                "                \"SUPPORT_TAB3\",\n" +
-                "                \"SUPPORT_FLYRABBIT\",\n" +
-                "                \"SUPPORT_NEW_MATCH\",\n" +
-                "                \"EXTERNAL_ADVERTISEMENT_TASK\",\n" +
-                "                \"PROP\",\n" +
-                "                \"PROPV2\",\n" +
-                "                \"ASIAN_GAMES\"\n" +
-                "            ],\n" +
-                "            \"itemId\": \"" + itemId + "\",\n" +
-                "            \"source\": \"ch_url-https://render.alipay.com/p/s/i/\"\n" +
-                "        }\n" +
-                "    ]";
+        String arg = "[{\"coinAmount\":" + coinAmount + ",\"itemId\":\"" + itemId + "\"}]";
         return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthItemCenterRpc.exchangeItem", arg);
     }
 
     public static String queryExchangeRecordPage(String exchangeRecordId) {
-        String arg = "[\n" +
-                "        {\n" +
-                "            \"chInfo\": \"ch_url-https://render.alipay.com/p/s/i/\",\n" +
-                "            \"clientOS\": \"android\",\n" +
-                "            \"exchangeRecordId\": \"" + exchangeRecordId + "\",\n" +
-                "            \"features\": [\n" +
-                "                \"DAILY_STEPS_RANK_V2\",\n" +
-                "                \"STEP_BATTLE\",\n" +
-                "                \"CLUB_HOME_CARD\",\n" +
-                "                \"NEW_HOME_PAGE_STATIC\",\n" +
-                "                \"CLOUD_SDK_AUTH\",\n" +
-                "                \"STAY_ON_COMPLETE\",\n" +
-                "                \"EXTRA_TREASURE_BOX\",\n" +
-                "                \"NEW_HOME_PAGE_STATIC\",\n" +
-                "                \"SUPPORT_AI\",\n" +
-                "                \"SUPPORT_TAB3\",\n" +
-                "                \"SUPPORT_FLYRABBIT\",\n" +
-                "                \"SUPPORT_NEW_MATCH\",\n" +
-                "                \"EXTERNAL_ADVERTISEMENT_TASK\",\n" +
-                "                \"PROP\",\n" +
-                "                \"PROPV2\",\n" +
-                "                \"ASIAN_GAMES\"\n" +
-                "            ]\n" +
-                "        }\n" +
-                "    ]";
+        String arg = "[{\"exchangeRecordId\":\"" + exchangeRecordId + "\"}]";
         return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthItemCenterRpc.queryExchangeRecordPage", arg);
     }
 }

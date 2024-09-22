@@ -369,7 +369,7 @@ public class AntSports extends ModelTask {
         try {
             String date = Log.getFormatDate();
             JSONObject jo = new JSONObject(AntSportsRpcCall.walkGo(date, pathId, useStepCount));
-            if (jo.optBoolean("success")) {
+            if (MessageUtil.checkSuccess(TAG, jo)) {
                 result = true;
                 Log.other("行走路线🚶🏻‍♂️行走[" + pathName + "]#前进了" + useStepCount + "步");
                 jo = jo.getJSONObject("data");
@@ -389,7 +389,7 @@ public class AntSports extends ModelTask {
         JSONObject theme = null;
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryWorldMap(themeId));
-            if (jo.optBoolean("success")) {
+            if (MessageUtil.checkSuccess(TAG, jo)) {
                 theme = jo.getJSONObject("data");
             }
         } catch (Throwable t) {
@@ -403,7 +403,7 @@ public class AntSports extends ModelTask {
         JSONObject city = null;
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryCityPath(cityId));
-            if (jo.optBoolean("success")) {
+            if (MessageUtil.checkSuccess(TAG, jo)) {
                 city = jo.getJSONObject("data");
             }
         } catch (Throwable t) {
@@ -418,7 +418,7 @@ public class AntSports extends ModelTask {
         try {
             String date = Log.getFormatDate();
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryPath(date, pathId));
-            if (jo.optBoolean("success")) {
+            if (MessageUtil.checkSuccess(TAG, jo)) {
                 path = jo.getJSONObject("data");
                 parseRewardsByJSONObjectData(path);
             }
@@ -432,11 +432,10 @@ public class AntSports extends ModelTask {
     private void receiveEvent(String eventBillNo) {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.receiveEvent(eventBillNo));
-            if (!jo.optBoolean("success")) {
-                return;
+            if (MessageUtil.checkSuccess(TAG, jo)) {
+                jo = jo.getJSONObject("data");
+                parseRewardsByJSONArrayRewards(jo.getJSONArray("rewards"), false);
             }
-            jo = jo.getJSONObject("data");
-            parseRewardsByJSONArrayRewards(jo.getJSONArray("rewards"), false);
         } catch (Throwable t) {
             Log.i(TAG, "receiveEvent err:");
             Log.printStackTrace(TAG, t);
@@ -490,7 +489,7 @@ public class AntSports extends ModelTask {
         try {
             String date = Log.getFormatDate();
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryPath(date, ""));
-            if (jo.optBoolean("success")) {
+            if (MessageUtil.checkSuccess(TAG, jo)) {
                 jo = jo.getJSONObject("data");
                 goingPathId = jo.optString("goingPathId");
             }
@@ -560,19 +559,17 @@ public class AntSports extends ModelTask {
         }
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.joinPath(pathId));
-            if (!jo.optBoolean("success")) {
-                Log.record(jo.toString());
-                return false;
+            if (MessageUtil.checkSuccess(TAG, jo)) {
+                JSONObject pathData = queryPath(pathId);
+                String pathName = pathData.getJSONObject("path").getString("name");
+                Log.other("行走路线🚶🏻‍♂️加入[" + pathName + "]");
+                return true;
             }
-            JSONObject pathData = queryPath(pathId);
-            String pathName = pathData.getJSONObject("path").getString("name");
-            Log.other("行走路线🚶🏻‍♂️加入[" + pathName + "]");
-            return true;
         } catch (Throwable t) {
             Log.i(TAG, "joinPath err:");
             Log.printStackTrace(TAG, t);
-            return false;
         }
+        return false;
     }
 
     /*
@@ -959,8 +956,7 @@ public class AntSports extends ModelTask {
     private void queryClubHomeBeforeCollect() {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryClubHome());
-            if (!"SUCCESS".equals(jo.getString("resultCode"))) {
-                Log.i(TAG, jo.getString("resultDesc"));
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
             JSONArray roomList = jo.optJSONArray("roomList");
@@ -981,8 +977,7 @@ public class AntSports extends ModelTask {
     private void queryClubHomeBeforeTrain() {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryClubHome());
-            if (!"SUCCESS".equals(jo.getString("resultCode"))) {
-                Log.i(TAG, jo.getString("resultDesc"));
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
             JSONArray roomList = jo.optJSONArray("roomList");
@@ -1011,8 +1006,7 @@ public class AntSports extends ModelTask {
                 JSONObject bubble = bubbleList.getJSONObject(i);
                 String bubbleId = bubble.getString("bubbleId");
                 JSONObject jo = new JSONObject(AntSportsRpcCall.collectBubble(bubbleId));
-                if (!"SUCCESS".equals(jo.getString("resultCode"))) {
-                    Log.i(TAG, jo.getString("resultDesc"));
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
                     return;
                 }
                 int collectCoin = jo.getInt("collectCoin");
@@ -1053,7 +1047,7 @@ public class AntSports extends ModelTask {
         JSONObject trainItem = null;
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryTrainItem());
-            if (!jo.optBoolean("success")) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return trainItem;
             }
             String selectedTrainItemType = TrainItemType.itemTypes[trainItemType.getValue()];
@@ -1079,7 +1073,7 @@ public class AntSports extends ModelTask {
             String trainItemName = trainItem.getString("name");
             String trainItemType = trainItem.getString("itemType");
             JSONObject jo = new JSONObject(AntSportsRpcCall.trainMember(trainItemType, memberId, originBossId));
-            if (jo.optBoolean("success")) {
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 String userName = UserIdMap.getMaskName(originBossId);
                 Log.other("训练好友🥋训练[" + userName + "]" + trainItemName);
                 String taskId = "UPDATE|TRAIN|" + originBossId;
@@ -1199,8 +1193,7 @@ public class AntSports extends ModelTask {
     private void coinExchangeItem(String itemId) {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryItemDetail(itemId));
-            if (!jo.optBoolean("success")) {
-                Log.record(jo.toString());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
                 return;
             }
             jo = jo.getJSONObject("data");
@@ -1211,8 +1204,7 @@ public class AntSports extends ModelTask {
             String itemTitle = jo.getString("itemTitle");
             int valueCoinCount = jo.getInt("valueCoinCount");
             jo = new JSONObject(AntSportsRpcCall.exchangeItem(itemId, valueCoinCount));
-            if (!jo.optBoolean("success")) {
-                Log.record(jo.toString());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
                 return;
             }
             jo = jo.getJSONObject("data");
