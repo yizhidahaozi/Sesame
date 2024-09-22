@@ -7,43 +7,20 @@ public class AntSportsRpcCall {
             timeZone = "Asia/Shanghai", version = "3.0.1.2", alipayAppVersion = "0.0.852",
             cityCode = "330100", appId = "2021002116659397";
 
-    private static final String features=                "[\n" +
-            "            \"DAILY_STEPS_RANK_V2\",\n" +
-            "            \"STEP_BATTLE\",\n" +
-            "            \"CLUB_HOME_CARD\",\n" +
-            "            \"NEW_HOME_PAGE_STATIC\",\n" +
-            "            \"CLOUD_SDK_AUTH\",\n" +
-            "            \"STAY_ON_COMPLETE\",\n" +
-            "            \"EXTRA_TREASURE_BOX\",\n" +
-            "            \"NEW_HOME_PAGE_STATIC\",\n" +
-            "            \"SUPPORT_AI\",\n" +
-            "            \"SUPPORT_TAB3\",\n" +
-            "            \"SUPPORT_FLYRABBIT\",\n" +
-            "            \"SUPPORT_NEW_MATCH\",\n" +
-            "            \"EXTERNAL_ADVERTISEMENT_TASK\",\n" +
-            "            \"PROP\",\n" +
-            "            \"PROPV2\",\n" +
-            "            \"ASIAN_GAMES\"\n" +
-            "        ],\n" ;
-
     // 运动任务查询
     public static String queryCoinTaskPanel() {
         String args = "[{}]";
         return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.queryCoinTaskPanel", args);
     }
-    // 去完成任务
-    public static String completeExerciseTasks(String taskId) {
-        String args1 = "[\n" +
-                "    {\n" +
-                "        \"chInfo\": \"ch_appcenter__chsub_9patch\",\n" +
-                "        \"clientOS\": \"android\",\n" +
-                "        \"features\": " +features+
-                "        \"taskAction\": \"JUMP\",\n" +
-                "        \"taskId\": \""+taskId+"\"\n" +
-                "    }\n" +
-                "]";
 
-        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.completeTask", args1);
+    public static String signUpTask(String taskId) {
+        String args = "[{\"taskId\":\"" + taskId + "\"}]";
+        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.signUpTask", args);
+    }
+
+    public static String completeTask(String taskAction, String taskId) {
+        String args = "[{\"taskAction\":\"" + taskAction + "\",\"taskId\":\"" + taskId + "\"}]";
+        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.completeTask", args);
     }
     public static String signInCoinTask() {
         String args = "[{\"operatorType\":\"signIn\"}]";
@@ -51,18 +28,14 @@ public class AntSportsRpcCall {
     }
 
     public static String queryCoinBubbleModule() {
-        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.sportsHealthHomeRpc.queryCoinBubbleModule",
-                "[{\"bubbleId\":\"\",\"canAddHome\":false,\"chInfo\":\"" + chInfo
-                        + "\",\"clientAuthStatus\":\"not_support\",\"clientOS\":\"android\",\"distributionChannel\":\"\",\"features\":[\"DAILY_STEPS_RANK_V2\",\"STEP_BATTLE\",\"CLUB_HOME_CARD\",\"NEW_HOME_PAGE_STATIC\",\"CLOUD_SDK_AUTH\",\"STAY_ON_COMPLETE\",\"EXTRA_TREASURE_BOX\",\"NEW_HOME_PAGE_STATIC\",\"SUPPORT_AI\",\"SUPPORT_TAB3\",\"SUPPORT_FLYRABBIT\",\"PROP\",\"PROPV2\",\"ASIAN_GAMES\"]}]");
+        String args = "[{}]";
+        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.sportsHealthHomeRpc.queryCoinBubbleModule", args);
     }
 
     public static String receiveCoinAsset(String assetId, int coinAmount) {
-        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinCenterRpc.receiveCoinAsset",
-                "[{\"assetId\":\"" + assetId
-                        + "\",\"chInfo\":\"" + chInfo
-                        + "\",\"clientOS\":\"android\",\"coinAmount\":"
-                        + coinAmount
-                        + ",\"features\":[\"DAILY_STEPS_RANK_V2\",\"STEP_BATTLE\",\"CLUB_HOME_CARD\",\"NEW_HOME_PAGE_STATIC\",\"CLOUD_SDK_AUTH\",\"STAY_ON_COMPLETE\",\"EXTRA_TREASURE_BOX\",\"NEW_HOME_PAGE_STATIC\",\"SUPPORT_TAB3\",\"SUPPORT_FLYRABBIT\",\"PROP\",\"PROPV2\",\"ASIAN_GAMES\"],\"tracertPos\":\"首页金币收集\"}]");
+        // "tracertPos": "首页金币收集" "任务面板"
+        String args = "[{\"assetId\":\"" + assetId + "\",\"coinAmount\":" + coinAmount + "}]";
+        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinCenterRpc.receiveCoinAsset", args);
     }
 
     public static String queryDonateRecord() {
