@@ -84,7 +84,7 @@ public class AntDodo extends ModelTask {
     public void run() {
         try {
             collect();
-            receiveTaskAward();
+            taskList();
             if (useProp.getValue()) {
                 propList();
             }
@@ -177,52 +177,68 @@ public class AntDodo extends ModelTask {
         }
     }
 
-    private void receiveTaskAward() {
+    private void taskList() {
         try {
-            th:do {
-                String s = AntDodoRpcCall.taskList();
-                JSONObject jo = new JSONObject(s);
-                if (MessageUtil.checkResultCode(TAG, jo)) {
-                    JSONArray taskGroupInfoList = jo.getJSONObject("data").optJSONArray("taskGroupInfoList");
-                    if (taskGroupInfoList == null)
-                        return;
-                    for (int i = 0; i < taskGroupInfoList.length(); i++) {
-                        JSONObject antDodoTask = taskGroupInfoList.getJSONObject(i);
-                        JSONArray taskInfoList = antDodoTask.getJSONArray("taskInfoList");
-                        for (int j = 0; j < taskInfoList.length(); j++) {
-                            JSONObject taskInfo = taskInfoList.getJSONObject(j);
-                            JSONObject taskBaseInfo = taskInfo.getJSONObject("taskBaseInfo");
-                            JSONObject bizInfo = new JSONObject(taskBaseInfo.getString("bizInfo"));
-                            String taskType = taskBaseInfo.getString("taskType");
-                            String taskTitle = bizInfo.optString("taskTitle", taskType);
-                            String awardCount = bizInfo.optString("awardCount", "1");
-                            String sceneCode = taskBaseInfo.getString("sceneCode");
-                            String taskStatus = taskBaseInfo.getString("taskStatus");
-                            if (TaskStatus.FINISHED.name().equals(taskStatus)) {
-                                JSONObject joAward = new JSONObject(
-                                        AntDodoRpcCall.receiveTaskAward(sceneCode, taskType));
-                                if (joAward.optBoolean("success"))
-                                    Log.forest("任务奖励🎖️[" + taskTitle + "]#" + awardCount + "个");
-                                else
-                                    Log.record("领取失败，" + s);
-                                Log.i(joAward.toString());
-                            } else if (TaskStatus.TODO.name().equals(taskStatus)) {
-                                if ("SEND_FRIEND_CARD".equals(taskType) || "AD_BIODIVERSITY_MASTERCARD".equals(taskType)) {
-                                    JSONObject joFinishTask = new JSONObject(
-                                            AntDodoRpcCall.finishTask(sceneCode, taskType));
-                                    if (joFinishTask.optBoolean("success")) {
-                                        Log.forest("物种任务🧾️[" + taskTitle + "]");
-                                        continue th;
-                                    } else {
-                                        Log.record("完成任务失败，" + taskTitle);
-                                    }
-                                }
+            JSONObject jo = new JSONObject(AntDodoRpcCall.taskList());
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            JSONArray taskGroupInfoList = jo.optJSONArray("taskGroupInfoList");
+            if (taskGroupInfoList == null) {
+                return;
+            }
+            for (int i = 0; i < taskGroupInfoList.length(); i++) {
+                JSONObject antDodoTask = taskGroupInfoList.getJSONObject(i);
+                String taskGroupName = antDodoTask.getString("taskGroupName");
+                JSONArray taskInfoList = antDodoTask.getJSONArray("taskInfoList");
+                for (int j = 0; j < taskInfoList.length(); j++) {
+                    JSONObject taskInfo = taskInfoList.getJSONObject(j);
+                    JSONObject taskBaseInfo = taskInfo.getJSONObject("taskBaseInfo");
+                    String taskStatus = taskBaseInfo.getString("taskStatus");
+                    if (TaskStatus.RECEIVED.name().equals(taskStatus)) {
+                        continue;
+                    }
+                    String sceneCode = taskBaseInfo.getString("sceneCode");
+                    String taskType = taskBaseInfo.getString("taskType");
+                    if (TaskStatus.TODO.name().equals(taskStatus)) {
+                        if ("SEND_FRIEND_CARD".equals(taskType) || "AD_BIODIVERSITY_MASTERCARD".equals(taskType)) {
+                            if (!finishTask(sceneCode, taskType, taskGroupName)) {
+                                continue;
                             }
+                        } else {
+                            continue;
                         }
                     }
+                    receiveTaskAward(sceneCode, taskType, taskGroupName);
                 }
-                break;
-            } while (true);
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "AntDodo TaskList err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private Boolean finishTask(String sceneCode, String taskType, String taskTitle) {
+        try {
+            JSONObject jo = new JSONObject(AntDodoRpcCall.finishTask(sceneCode, taskType));
+            if (MessageUtil.checkSuccess(TAG, jo)) {
+                Log.forest("神奇物种🦕完成任务[" + taskTitle + "]");
+                return true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "AntDodo FinishTask err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private void receiveTaskAward(String sceneCode, String taskType, String taskTitle) {
+        try {
+            JSONObject jo = new JSONObject(AntDodoRpcCall.receiveTaskAward(sceneCode, taskType));
+            if (MessageUtil.checkSuccess(TAG, jo)) {
+                Log.forest("神奇物种🦕领取任务奖励[" + taskTitle + "]");
+            }
         } catch (Throwable t) {
             Log.i(TAG, "AntDodo ReceiveTaskAward err:");
             Log.printStackTrace(TAG, t);

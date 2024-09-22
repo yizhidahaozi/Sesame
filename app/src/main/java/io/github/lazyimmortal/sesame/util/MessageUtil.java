@@ -66,6 +66,9 @@ public class MessageUtil {
                 if (jo.has("errorMsg")) {
                     Log.record(jo.getString("errorMsg"));
                     Log.i(jo.getString("errorMsg"), jo.toString());
+                } else if (jo.has("desc")) {
+                    Log.record(jo.getString("desc"));
+                    Log.i(jo.getString("desc"), jo.toString());
                 } else {
                     Log.i(tag, jo.toString());
                 }
