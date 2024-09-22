@@ -792,7 +792,7 @@ public class AntFarm extends ModelTask {
 
     /* 捐赠爱心鸡蛋 */
     private void donation(){
-        if (!checkCharityRecordsToday()) {
+        if (!canDonationToday()) {
             return;
         }
         try {
@@ -855,7 +855,7 @@ public class AntFarm extends ModelTask {
             jo = jo.getJSONObject("donation");
             harvestBenevolenceScore = jo.getDouble("harvestBenevolenceScore");
             int donationTimesStat = jo.getInt("donationTimesStat");
-            Log.farm("捐赠活动❤️[" + activityName + "]" + donationAmount + "颗爱心鸡蛋#累计捐赠" + donationTimesStat + "次");
+            Log.farm("公益捐赠❤️[捐爱心蛋:" + activityName + "]捐赠" + donationAmount + "颗爱心蛋#累计捐赠" + donationTimesStat + "次");
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "donation err:");
@@ -878,7 +878,7 @@ public class AntFarm extends ModelTask {
         return 0;
     }
 
-    private Boolean checkCharityRecordsToday() {
+    private Boolean canDonationToday() {
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.getCharityAccount(userId));
             if (!MessageUtil.checkMemo(TAG, jo)) {
@@ -894,7 +894,7 @@ public class AntFarm extends ModelTask {
                 return true;
             }
         } catch (Throwable t) {
-            Log.i(TAG, "checkCharityRecordsToday err:");
+            Log.i(TAG, "canDonationToday err:");
             Log.printStackTrace(TAG, t);
         }
         return false;

@@ -28,18 +28,8 @@ public class AntSportsRpcCall {
 
     // 运动任务查询
     public static String queryCoinTaskPanel() {
-        String args1 = "[\n" +
-                "    {\n" +
-                "        \"canAddHome\": false,\n" +
-                "        \"chInfo\": \"ch_appcenter__chsub_9patch\",\n" +
-                "        \"clientAuthStatus\": \"not_support\",\n" +
-                "        \"clientOS\": \"android\",\n" +
-                "        \"features\": " +features+
-                "        \"topTaskId\": \"\"\n" +
-                "    }\n" +
-                "]";
-
-        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.queryCoinTaskPanel", args1);
+        String args = "[{}]";
+        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.queryCoinTaskPanel", args);
     }
     // 去完成任务
     public static String completeExerciseTasks(String taskId) {
@@ -55,17 +45,9 @@ public class AntSportsRpcCall {
 
         return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.completeTask", args1);
     }
-    public static String sportsCheck_in() {
-        String args1 = "[\n" +
-                "    {\n" +
-                "        \"chInfo\": \"homecard\",\n" +
-                "        \"clientOS\": \"android\",\n" +
-                "        \"features\": " +features+
-                "        \"operatorType\": \"signIn\"\n" +
-                "    }\n" +
-                "]";
-
-        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.signInCoinTask", args1);
+    public static String signInCoinTask() {
+        String args = "[{\"operatorType\":\"signIn\"}]";
+        return ApplicationHook.requestString("com.alipay.sportshealth.biz.rpc.SportsHealthCoinTaskRpc.signInCoinTask", args);
     }
 
     public static String queryCoinBubbleModule() {

@@ -55,4 +55,27 @@ public class MessageUtil {
         }
         return false;
     }
+
+    public static Boolean checkSuccess(JSONObject jo) {
+        return checkSuccess(UNKNOWN_TAG, jo);
+    }
+
+    public static Boolean checkSuccess(String tag, JSONObject jo) {
+        try {
+            if (!jo.optBoolean("success") && !jo.optBoolean("isSuccess")) {
+                if (jo.has("errorMsg")) {
+                    Log.record(jo.getString("errorMsg"));
+                    Log.i(jo.getString("errorMsg"), jo.toString());
+                } else {
+                    Log.i(tag, jo.toString());
+                }
+                return false;
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.i(TAG, "checkSuccess err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
 }
