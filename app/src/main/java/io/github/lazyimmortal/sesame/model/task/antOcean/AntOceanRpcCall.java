@@ -72,8 +72,19 @@ public class AntOceanRpcCall {
     }
 
     public static String queryReplicaHome() {
-        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryReplicaHome",
-                "[{\"replicaCode\":\"avatar\",\"source\":\"senlinzuoshangjiao\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
+        // source : senlinzuoshangjiao seaAreaList
+        String args = "[{\"replicaCode\":\"avatar\",\"source\":\"seaAreaList\",\"uniqueId\":\"" + getUniqueId() + "\"}]";
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryReplicaHome", args);
+    }
+
+    public static String queryReplicaTaskList() {
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryTaskList",
+                "[{\"fromAct\":\"dynamic_task\",\"sceneCode\":\"ANTOCEAN_AVATAR_TASK\",\"source\":\"seaAreaList\",\"uniqueId\":\"" + getUniqueId() + "\",\"version\":\"" + VERSION + "\"}]");
+    }
+
+    public static String receiveReplicaTaskAward(String taskType) {
+        return ApplicationHook.requestString("com.alipay.antiep.receiveTaskAward",
+                "[{\"ignoreLimit\":\"false\",\"requestType\":\"RPC\",\"sceneCode\":\"ANTOCEAN_AVATAR_TASK\",\"source\":\"ANTFOCEAN\",\"taskType\":\"" + taskType + "\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
     }
 
     public static String repairSeaArea() {
@@ -178,22 +189,6 @@ public class AntOceanRpcCall {
     public static String submitAnswer(String answer, String questionId) {
         return ApplicationHook.requestString("com.alipay.reading.game.dada.openDailyAnswer.submitAnswer",
                 "[{\"activityId\":\"363\",\"answer\":\"" + answer + "\",\"dadaVersion\":\"1.3.0\",\"outBizId\":\"ANTOCEAN_DATI_PINTU_722_new\",\"questionId\":\"" + questionId + "\",\"version\":\"1\"}]");
-    }
-
-    // 潘多拉任务
-    public static String PDLqueryReplicaHome() {
-        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryReplicaHome",
-                "[{\"replicaCode\":\"avatar\",\"source\":\"seaAreaList\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
-    }
-
-    public static String PDLqueryTaskList() {
-        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryTaskList",
-                "[{\"fromAct\":\"dynamic_task\",\"sceneCode\":\"ANTOCEAN_AVATAR_TASK\",\"source\":\"seaAreaList\",\"uniqueId\":\"" + getUniqueId() + "\",\"version\":\"20220707\"}]");
-    }
-
-    public static String PDLreceiveTaskAward(String taskType) {
-        return ApplicationHook.requestString("com.alipay.antiep.receiveTaskAward",
-                "[{\"ignoreLimit\":\"false\",\"requestType\":\"RPC\",\"sceneCode\":\"ANTOCEAN_AVATAR_TASK\",\"source\":\"ANTFOCEAN\",\"taskType\":\"" + taskType + "\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
     }
 
     // 制作万能拼图
