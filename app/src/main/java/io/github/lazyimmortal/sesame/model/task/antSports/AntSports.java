@@ -187,39 +187,57 @@ public class AntSports extends ModelTask {
     private void sportsTasks() {
         try {
             signInCoinTask();
-            JSONObject jo = new JSONObject(AntSportsRpcCall.queryCoinTaskPanel());
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            jo = jo.getJSONObject("data");
-            JSONArray taskList = jo.getJSONArray("taskList");
-            for (int i = 0; i < taskList.length(); i++) {
-                jo = taskList.getJSONObject(i);
-
-                // taskStatus: WAIT_COMPLETE WAIT_RECEIVE HAS_RECEIVED
-                String taskStatus = jo.getString("taskStatus");
-                if (taskStatus.equals("HAS_RECEIVED")) {
+            queryCoinTaskPanel:
+            do {
+                TimeUtil.sleep(1000);
+                JSONObject jo = new JSONObject(AntSportsRpcCall.queryCoinTaskPanel());
+                if (!MessageUtil.checkSuccess(TAG, jo)) {
                     return;
                 }
+                jo = jo.getJSONObject("data");
+                JSONArray taskList = jo.getJSONArray("taskList");
+                for (int i = 0; i < taskList.length(); i++) {
+                    jo = taskList.getJSONObject(i);
 
-                boolean multiTask = jo.optBoolean("multiTask");
-                int currentNum = jo.getInt("currentNum");
-                int limitConfigNum = jo.getInt("limitConfigNum");
-                if (taskStatus.equals("WAIT_RECEIVE")) {
-                    String assetId = jo.getString("assetId");
-                    int prizeAmount = jo.getInt("prizeAmount");
+                    String taskStatus = jo.getString("taskStatus");
+                    if (TaskStatus.HAS_RECEIVED.name().equals(taskStatus)) {
+                        return;
+                    }
+
                     String taskName = jo.getString("taskName");
-                    receiveCoinAsset(assetId, prizeAmount, taskName);
-                    if (!multiTask || currentNum == limitConfigNum) {
+                    if (TaskStatus.WAIT_RECEIVE.name().equals(taskStatus)) {
+                        String assetId = jo.getString("assetId");
+                        int prizeAmount = jo.getInt("prizeAmount");
+                        if (!receiveCoinAsset(assetId, prizeAmount, taskName)) {
+                            continue;
+                        }
+                        continue queryCoinTaskPanel;
+                    }
+
+                    if (!jo.has("taskAction")) {
                         continue;
                     }
-                }
+                    if (TaskStatus.WAIT_COMPLETE.name().equals(taskStatus)) {
+                        String taskAction = jo.getString("taskAction");
+                        String taskId = jo.getString("taskId");
+                        if (jo.optBoolean("multiTask")) {
+                            int currentNum = jo.getInt("currentNum") + 1;
+                            int limitConfigNum = jo.getInt("limitConfigNum");
+                            taskName = taskName.replaceAll("（.*/.*）", "（" + currentNum + "/" + limitConfigNum + "）");
+                        }
+                        if (!completeTask(taskAction, taskId, taskName)) {
+                            continue;
+                        }
+                        if ("SHOW_AD".equals(taskAction)) {
+                            TimeUtil.sleep(9000);
+                        }
+                        continue queryCoinTaskPanel;
+                    }
 
-                int count = multiTask ? limitConfigNum - currentNum : 1;
-                if (count > 0) {
-                    completeTask(jo, count);
+                    Log.record("Found New Sport TaskStatus:" + taskStatus);
                 }
-            }
+                break;
+            } while (true);
         } catch (Throwable t) {
             Log.i(TAG, "sportsTasks err:");
             Log.printStackTrace(TAG, t);
@@ -238,45 +256,12 @@ public class AntSports extends ModelTask {
         }
         return false;
     }
-    
-    private void completeTask(JSONObject task, int count) {
-        if (!task.has("taskAction")) {
-            return;
-        }
-        try {
-            // taskAction: JUMP SHOW_AD
-            String taskAction = task.getString("taskAction");
-            String taskId = task.getString("taskId");
-            String taskName = task.getString("taskName").replaceAll("（.*/.*）", "");
-            if (task.optBoolean("needSignUp") && !signUpTask(taskId)) {
-                return;
-            }
-            for (int i = 0; i < count; i++) {
-                if (!completeTask(taskAction, taskId, taskName)) {
-                    return;
-                }
-                if ("SHOW_AD".equals(taskAction) && i + 1 < count) {
-                    TimeUtil.sleep(10000);
-                }
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "completeTask err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
 
     private Boolean completeTask(String taskAction, String taskId, String taskName) {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.completeTask(taskAction, taskId));
             if (MessageUtil.checkSuccess(TAG, jo)) {
-                jo = jo.getJSONObject("data");
-                int assetCoinAmount = jo.getInt("assetCoinAmount");
-                String assetId = jo.getString("assetId");
                 Log.other("运动任务🧾完成[做任务得运动币:" + taskName + "]");
-                if (receiveCoinAsset.getValue()) {
-                    TimeUtil.sleep(1000);
-                    receiveCoinAsset(assetId, assetCoinAmount, taskName);
-                }
                 return true;
             }
         } catch (Throwable t) {
@@ -1336,6 +1321,10 @@ public class AntSports extends ModelTask {
 
     public enum PathCompleteStatus {
         NOT_JOIN, JOIN, NOT_COMPLETED, COMPLETED, INTERRUPT;
+    }
+
+    public enum TaskStatus {
+        WAIT_COMPLETE, WAIT_RECEIVE, HAS_RECEIVED;
     }
 
     public interface WalkPathTheme {
