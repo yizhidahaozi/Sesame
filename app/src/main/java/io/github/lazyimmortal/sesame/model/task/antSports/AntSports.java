@@ -272,7 +272,7 @@ public class AntSports extends ModelTask {
                 jo = jo.getJSONObject("data");
                 int assetCoinAmount = jo.getInt("assetCoinAmount");
                 String assetId = jo.getString("assetId");
-                Log.other("运动任务👯完成[做任务得运动币:" + taskName + "]奖励" + assetCoinAmount + "运动币");
+                Log.other("运动任务🧾完成[做任务得运动币:" + taskName + "]");
                 if (receiveCoinAsset.getValue()) {
                     TimeUtil.sleep(1000);
                     receiveCoinAsset(assetId, assetCoinAmount, taskName);
@@ -298,7 +298,7 @@ public class AntSports extends ModelTask {
                 JSONObject subscribeConfig;
                 if (data.has("subscribeConfig")) {
                     subscribeConfig = data.getJSONObject("subscribeConfig");
-                    Log.other("运动任务👯[做任务得运动币:签到"
+                    Log.other("运动任务🧾[做任务得运动币:签到"
                             + subscribeConfig.getString("subscribeExpireDays") + "天]奖励"
                             + data.getString("toast") + "运动币");
                 } else {
@@ -342,7 +342,7 @@ public class AntSports extends ModelTask {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.receiveCoinAsset(assetId, coinAmount));
             if (MessageUtil.checkSuccess(TAG, jo)) {
-                Log.other("收运动币💰领取[" + title + "]获得" + coinAmount + "运动币");
+                Log.other("收运动币💰领取[" + title + "]奖励[" + coinAmount + "运动币]");
                 return true;
             }
         } catch (Throwable t) {
@@ -356,17 +356,18 @@ public class AntSports extends ModelTask {
      * 新版行走路线 -- begin
      */
     private void walk() {
-        try {
-            String goingPathId = queryGoingPathId();
-            if (walkDayReward.getValue()) {
-                String joinPathId = "p000202407261531001";
-                if (checkJoinPathId(joinPathId)) {
-                    if (!joinPath(joinPathId)) {
-                        return;
-                    }
-                    goingPathId = joinPathId;
+        String goingPathId = queryGoingPathId();
+        if (walkDayReward.getValue()) {
+            String joinPathId = "p000202407261531001";
+            if (checkJoinPathId(joinPathId)) {
+                if (!joinPath(joinPathId)) {
+                    return;
                 }
+                goingPathId = joinPathId;
             }
+        }
+        do {
+            TimeUtil.sleep(1000);
             if (isNeedJoinNewPath(goingPathId)) {
                 String joinPathId = queryJoinPathId();
                 if (checkJoinPathId(joinPathId)) {
@@ -376,14 +377,7 @@ public class AntSports extends ModelTask {
                     goingPathId = joinPathId;
                 }
             }
-            if (walkGo(queryPath(goingPathId))) {
-                TimeUtil.sleep(1000);
-                walk();
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "walk err:");
-            Log.printStackTrace(TAG, t);
-        }
+        } while (walkGo(queryPath(goingPathId)));
     }
 
     private Boolean isNeedJoinNewPath(String goingPathId) {
@@ -407,6 +401,32 @@ public class AntSports extends ModelTask {
         return false;
     }
 
+    private Boolean hasTreasureBox() {
+        try {
+            JSONObject jo = new JSONObject(AntSportsRpcCall.queryMailList());
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
+            }
+            JSONArray ja = jo.getJSONArray("userMailList");
+            int count = 0;
+            for (int i = 0; i < ja.length(); i++) {
+                jo = ja.getJSONObject(i);
+                if (!"SPORTSPROD_GOPATH_AWARD_BOX".equals(jo.getString("templateId"))) {
+                    continue;
+                }
+                if (!TimeUtil.isToday(jo.getLong("receiveTime"))) {
+                    break;
+                }
+                count++;
+            }
+            return count < 20;
+        } catch (Throwable t) {
+            Log.i(TAG, "hasTreasureBox err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
     private Boolean walkGo(JSONObject pathData) {
         try {
             JSONObject path = pathData.getJSONObject("path");
@@ -420,7 +440,7 @@ public class AntSports extends ModelTask {
             int remainStepCount = userPathStep.getInt("remainStepCount");
             boolean dayLimit = userPathStep.getBoolean("dayLimit");
             int useStepCount = Math.min(
-                    Math.min(remainStepCount, RandomUtil.nextInt(500, 1000)),
+                    Math.min(remainStepCount, hasTreasureBox() ? 500 : remainStepCount),
                     Math.max(pathStepCount - forwardStepCount % pathStepCount, minGoStepCount)
             );
             if (useStepCount < minGoStepCount || dayLimit) {
@@ -501,12 +521,25 @@ public class AntSports extends ModelTask {
         return path;
     }
 
+    private void openTreasureBox(JSONArray treasureBoxList) {
+        try {
+            for (int i = 0; i < treasureBoxList.length(); i++) {
+                JSONObject treasureBox = treasureBoxList.getJSONObject(i);
+                receiveEvent(treasureBox.getString("boxNo"));
+                TimeUtil.sleep(1000);
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "openTreasureBox err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
     private void receiveEvent(String eventBillNo) {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.receiveEvent(eventBillNo));
             if (MessageUtil.checkSuccess(TAG, jo)) {
                 jo = jo.getJSONObject("data");
-                parseRewardsByJSONArrayRewards(jo.getJSONArray("rewards"), false);
+                parseRewardsByJSONArrayRewards(jo.getJSONArray("rewards"), 0);
             }
         } catch (Throwable t) {
             Log.i(TAG, "receiveEvent err:");
@@ -514,14 +547,32 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private void parseRewardsByJSONArrayRewards(JSONArray rewards, boolean isCompleted) {
+    private void parseRewardsByJSONArrayRewards(JSONArray rewards, int rewardsType) {
+        String rewardsTypeName;
+        switch (rewardsType) {
+            case 0:
+                rewardsTypeName = "宝箱奖励";
+                break;
+            case 1:
+                rewardsTypeName = "中奖奖励";
+                break;
+            case 2:
+                rewardsTypeName = "终点奖励";
+                break;
+            default:
+                rewardsTypeName = "未知奖励";
+                break;
+        }
         try {
             for (int i = 0; i < rewards.length(); i++) {
                 JSONObject jo = rewards.getJSONObject(i);
-                Log.other("行走路线🚶🏻‍♂️收获"
-                        + (isCompleted ? "终点" : "宝箱") + "奖励["
-                        + jo.getString("rewardName") + "]*"
-                        + jo.getInt("count")
+                if (jo.has("rewardStatus")
+                        && !"SUCCESS".equals(jo.getString("rewardStatus"))) {
+                    // rewardStatus : SUCCESS NOT_HIT
+                    continue;
+                }
+                Log.other("行走路线🚶🏻‍♂️收获" + rewardsTypeName
+                        + "[" + jo.getString("rewardName") + "*" + jo.getInt("count") + "]"
                 );
             }
         } catch (Throwable t) {
@@ -532,26 +583,19 @@ public class AntSports extends ModelTask {
 
     private void parseRewardsByJSONObjectData(JSONObject data) {
         try {
-            openTreasureBox(data.getJSONArray("treasureBoxList"));
+            JSONArray treasureBoxList = data.getJSONArray("treasureBoxList");
+            openTreasureBox(treasureBoxList);
+            if (data.has("brandRewardVOs")) {
+                JSONArray brandRewardVOs = data.getJSONArray("brandRewardVOs");
+                parseRewardsByJSONArrayRewards(brandRewardVOs, 1);
+            }
             if (data.has("completeInfo")) {
                 data = data.getJSONObject("completeInfo");
-                parseRewardsByJSONArrayRewards(data.getJSONArray("completeRewards"), true);
+                JSONArray completeRewards = data.getJSONArray("completeRewards");
+                parseRewardsByJSONArrayRewards(completeRewards, 2);
             }
         } catch (Throwable t) {
             Log.i(TAG, "parseRewardsByJSONObjectData err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    private void openTreasureBox(JSONArray treasureBoxList) {
-        try {
-            for (int i = 0; i < treasureBoxList.length(); i++) {
-                JSONObject treasureBox = treasureBoxList.getJSONObject(i);
-                receiveEvent(treasureBox.getString("boxNo"));
-                TimeUtil.sleep(1000);
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "openTreasureBox err:");
             Log.printStackTrace(TAG, t);
         }
     }
@@ -781,7 +825,8 @@ public class AntSports extends ModelTask {
             JSONObject donateExchangeResultModel = jo.getJSONObject("donateExchangeResultModel");
             int userCount = donateExchangeResultModel.getInt("userCount");
             double amount = donateExchangeResultModel.getJSONObject("userAmount").getDouble("amount");
-            Log.other("公益捐赠❤️[捐步做公益]捐赠" + userCount + "步,兑换" + amount + "元公益金");
+            String donateTitle = donateExchangeResultModel.getString("donateTitle");
+            Log.other("公益捐赠❤️[捐步做公益:" + donateTitle + "]捐赠" + userCount + "步,兑换" + amount + "元公益金");
         } catch (Throwable t) {
             Log.i(TAG, "queryWalkStep err:");
             Log.printStackTrace(TAG, t);
@@ -1082,7 +1127,7 @@ public class AntSports extends ModelTask {
                     return;
                 }
                 int collectCoin = jo.getInt("collectCoin");
-                Log.other("训练好友💰️获得[运动币]*" + collectCoin);
+                Log.other("训练好友💰️获得[" + collectCoin + "运动币]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "collectBubble err:");
@@ -1281,7 +1326,7 @@ public class AntSports extends ModelTask {
             }
             jo = jo.getJSONObject("data");
             if (jo.optBoolean("exgSuccess")) {
-                Log.other("运动好礼🎐兑换[" + itemTitle + "]#花费" + valueCoinCount + "运动币");
+                Log.other("运动好礼🎐兑换[" + itemTitle + "]花费" + valueCoinCount + "运动币");
             }
         } catch (Throwable t) {
             Log.i(TAG, "trainMember err:");

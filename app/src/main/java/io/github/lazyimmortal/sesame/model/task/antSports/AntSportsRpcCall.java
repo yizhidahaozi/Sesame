@@ -132,6 +132,11 @@ public class AntSportsRpcCall {
         return ApplicationHook.requestString("com.alipay.sportsplay.biz.rpc.walk.go", args);
     }
 
+    public static String queryMailList() {
+        String args = "[{\"mailType\":\"SYSTEM\",\"pageSize\":50,\"userMailStartIndex\":1}]";
+        return ApplicationHook.requestString("alipay.antsports.walk.mail.queryMailList", args);
+    }
+
     // 开启宝箱
     // eventBillNo = boxNo(WalkGo)
     public static String receiveEvent(String eventBillNo) {
