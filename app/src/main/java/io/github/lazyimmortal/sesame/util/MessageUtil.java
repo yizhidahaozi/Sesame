@@ -109,6 +109,9 @@ public class MessageUtil {
                 } else if (jo.has("desc")) {
                     Log.record(jo.getString("desc"));
                     Log.i(jo.getString("desc"), jo.toString());
+                } else if (jo.has("resultDesc")) {
+                    Log.record(jo.getString("resultDesc"));
+                    Log.i(jo.getString("resultDesc"), jo.toString());
                 } else if (jo.has("resultView")) {
                     Log.record(jo.getString("resultView"));
                     Log.i(jo.getString("resultView"), jo.toString());

@@ -1005,10 +1005,10 @@ public class AntForestV2 extends ModelTask {
             for (int i = 0; i < usingUserPropsNew.length(); i++) {
                 JSONObject userUsingProp = usingUserPropsNew.getJSONObject(i);
                 String propGroup = userUsingProp.getString("propGroup");
-                if ("doubleClick".equals(propGroup)) {
+                if (PropGroup.doubleClick.name().equals(propGroup)) {
                     doubleEndTime = userUsingProp.getLong("endTime");
                     // Log.forest("双倍卡剩余时间⏰" + (doubleEndTime - System.currentTimeMillis()) / 1000);
-                } else if ("robExpandCard".equals(propGroup)) {
+                } else if (PropGroup.robExpandCard.name().equals(propGroup)) {
                     String extInfo = userUsingProp.optString("extInfo");
                     if (!extInfo.isEmpty()) {
                         JSONObject extInfoObj = new JSONObject(extInfo);
@@ -1025,7 +1025,7 @@ public class AntForestV2 extends ModelTask {
                             }
                         }
                     }
-                } else if ("stealthCard".equals(propGroup)) {
+                } else if (PropGroup.stealthCard.name().equals(propGroup)) {
                     stealthEndTime = userUsingProp.getLong("endTime");
                 }
             }
@@ -1575,16 +1575,16 @@ public class AntForestV2 extends ModelTask {
             boolean needStealth = stealthCard.getValue() && stealthEndTime < System.currentTimeMillis();
             if (needDouble || needStealth) {
                 synchronized (doubleCardLockObj) {
-                    JSONObject bagObject = null;
+                    JSONArray forestPropVOList = null;
                     if (doubleCard.getValue() && doubleEndTime < System.currentTimeMillis()) {
-                        bagObject = getBag();
-                        useDoubleCard(bagObject);
+                        forestPropVOList = getForestPropVOList();
+                        useDoubleCard(forestPropVOList);
                     }
                     if (stealthCard.getValue() && stealthEndTime < System.currentTimeMillis()) {
-                        if (bagObject == null) {
-                            bagObject = getBag();
+                        if (forestPropVOList == null) {
+                            forestPropVOList = getForestPropVOList();
                         }
-                        useStealthCard(bagObject);
+                        useStealthCard(forestPropVOList);
                     }
                 }
             }
@@ -1593,22 +1593,22 @@ public class AntForestV2 extends ModelTask {
         }
     }
 
-    private void useDoubleCard(JSONObject bagObject) {
+    private void useDoubleCard(JSONArray forestPropVOList) {
         try {
             if (hasDoubleCardTime() && Status.canDoubleToday()) {
                 // 背包查找 能量双击卡
                 JSONObject jo = null;
-                JSONArray ja = getPropGroup(bagObject, "doubleClick");
-                if (ja != null) {
-                    jo = ja.getJSONObject(0);
+                List<JSONObject> list = getPropGroup(forestPropVOList, PropGroup.doubleClick.name());
+                if (!list.isEmpty()) {
+                    jo = list.get(0);
                 }
                 if (jo == null || !jo.has("recentExpireTime")) {
                     if (doubleCardConstant.getValue()) {
                         // 商店兑换 限时能量双击卡
                         if (exchangeBenefit("SK20240805004754")) {
-                            jo = findPropBag(getBag(), "ENERGY_DOUBLE_CLICK_31DAYS");
+                            jo = getForestPropVO(getForestPropVOList(), "ENERGY_DOUBLE_CLICK_31DAYS");
                         } else if (exchangeBenefit("CR20230516000363")) {
-                            jo = findPropBag(getBag(), "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
+                            jo = getForestPropVO(getForestPropVOList(), "LIMIT_TIME_ENERGY_DOUBLE_CLICK");
                         }
                     }
                 }
@@ -1634,19 +1634,19 @@ public class AntForestV2 extends ModelTask {
         }
     }
 
-    private void useStealthCard(JSONObject bagObject) {
+    private void useStealthCard(JSONArray forestPropVOList) {
         try {
             // 背包查找 隐身卡
             JSONObject jo = null;
-            JSONArray ja = getPropGroup(bagObject, "stealthCard");
-            if (ja != null) {
-                jo = ja.getJSONObject(0);
+            List<JSONObject> list = getPropGroup(forestPropVOList, PropGroup.stealthCard.name());
+            if (!list.isEmpty()) {
+                jo = list.get(0);
             }
             if (jo == null || !jo.has("recentExpireTime")) {
                 if (stealthCardConstant.getValue()) {
                     // 商店兑换 限时隐身卡
                     if (exchangeBenefit("SK20230521000206")) {
-                        jo = findPropBag(getBag(), "LIMIT_TIME_STEALTH_CARD");
+                        jo = getForestPropVO(getForestPropVOList(), "LIMIT_TIME_STEALTH_CARD");
                     }
                 }
             }
@@ -2156,37 +2156,29 @@ public class AntForestV2 extends ModelTask {
         return helped;
     }
 
-    private JSONObject getBag() {
+    public static JSONArray getForestPropVOList() {
+        JSONArray forestPropVOList = new JSONArray();
         try {
-            // 获取背包信息
-            JSONObject bagObject = new JSONObject(AntForestRpcCall.queryPropList(false));
-            if (!"SUCCESS".equals(bagObject.getString("resultCode"))) {
-                Log.record(bagObject.getString("resultDesc"));
-                Log.i(bagObject.toString());
-                return null;
+            JSONObject jo = new JSONObject(AntForestRpcCall.queryPropList(false));
+            if (MessageUtil.checkResultCode(TAG, jo)) {
+                forestPropVOList = jo.getJSONArray("forestPropVOList");
             }
-            return bagObject;
         } catch (Throwable th) {
-            Log.i(TAG, "findPropBag err:");
+            Log.i(TAG, "getForestPropVOList err:");
             Log.printStackTrace(TAG, th);
         }
-        return null;
+        return forestPropVOList;
     }
 
     // 获取道具组全部道具
-    private JSONArray getPropGroup(JSONObject bagObject, String propGroup) {
+    public static List<JSONObject> getPropGroup(JSONArray forestPropVOList, String propGroup) {
+        List<JSONObject> list = new ArrayList<>();
         try {
-            List<JSONObject> list = new ArrayList<>();
-            // 遍历背包查找道具
-            JSONArray forestPropVOList = bagObject.getJSONArray("forestPropVOList");
             for (int i = 0; i < forestPropVOList.length(); i++) {
                 JSONObject forestPropVO = forestPropVOList.getJSONObject(i);
                 if (forestPropVO.getString("propGroup").equals(propGroup)) {
                     list.add(forestPropVO);
                 }
-            }
-            if (list.isEmpty()) {
-                return null;
             }
             Collections.sort(list, new Comparator<JSONObject>() {
                 @Override
@@ -2194,31 +2186,29 @@ public class AntForestV2 extends ModelTask {
                     try {
                         int durationTime1 = jsonObject1.getJSONObject("propConfigVO").getInt("durationTime");
                         int durationTime2 = jsonObject2.getJSONObject("propConfigVO").getInt("durationTime");
-                        // 永久道具
-                        boolean noExpireTime1 = !jsonObject1.has("recentExpireTime");
-                        boolean noExpireTime2 = !jsonObject2.has("recentExpireTime");
-                        if (noExpireTime1 && noExpireTime2) {
+                        boolean hasExpireTime1 = jsonObject1.has("recentExpireTime");
+                        boolean hasExpireTime2 = jsonObject2.has("recentExpireTime");
+                        if (hasExpireTime1 && hasExpireTime2) {
+                            long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(durationTime1);
+                            long recentExpireTime = jsonObject2.getLong("recentExpireTime");
+                            if (endTime < recentExpireTime) {
+                                return -1;
+                            } else return durationTime2 - durationTime1;
+                        } else if (!hasExpireTime1 && !hasExpireTime2) {
                             return durationTime1 - durationTime2;
-                        } else if (noExpireTime1 || noExpireTime2) {
-                            return noExpireTime1 ? 1 : -1;
+                        } else {
+                            return hasExpireTime1 ? -1 : 1;
                         }
-                        // 限时道具
-                        long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(durationTime1);
-                        long recentExpireTime = jsonObject2.getLong("recentExpireTime");
-                        if (endTime < recentExpireTime) {
-                            return -1;
-                        } else return durationTime2 - durationTime1;
                     } catch (JSONException e) {
                         throw new RuntimeException(e);
                     }
                 }
             });
-            return new JSONArray(list);
         } catch (Throwable th) {
             Log.i(TAG, "getPropGroup err:");
             Log.printStackTrace(TAG, th);
         }
-        return null;
+        return list;
     }
 
     /*
@@ -2226,10 +2216,8 @@ public class AntForestV2 extends ModelTask {
      * prop
      * propGroup, propType, holdsNum, propIdList[], propConfigVO[propName]
      */
-    private JSONObject findPropBag(JSONObject bagObject, String propType) {
+    private JSONObject getForestPropVO(JSONArray forestPropVOList, String propType) {
         try {
-            // 遍历背包查找道具
-            JSONArray forestPropVOList = bagObject.getJSONArray("forestPropVOList");
             for (int i = 0; i < forestPropVOList.length(); i++) {
                 JSONObject forestPropVO = forestPropVOList.getJSONObject(i);
                 if (forestPropVO.getString("propType").equals(propType)) {
@@ -2237,7 +2225,7 @@ public class AntForestV2 extends ModelTask {
                 }
             }
         } catch (Throwable th) {
-            Log.i(TAG, "findPropBag err:");
+            Log.i(TAG, "getForestPropVO err:");
             Log.printStackTrace(TAG, th);
         }
         return null;
@@ -2248,7 +2236,7 @@ public class AntForestV2 extends ModelTask {
      * prop
      * propGroup, propType, holdsNum, propIdList[], propConfigVO[propName]
      */
-    private Boolean consumeProp(JSONObject prop) {
+    public static Boolean consumeProp(JSONObject prop) {
         try {
             // 使用道具
             String propId = prop.getJSONArray("propIdList").getString(0);
@@ -2262,15 +2250,12 @@ public class AntForestV2 extends ModelTask {
         return false;
     }
 
-    private Boolean consumeProp(String propId, String propType, String propName) {
+    private static Boolean consumeProp(String propId, String propType, String propName) {
         try {
             JSONObject jo = new JSONObject(AntForestRpcCall.consumeProp(propId, propType));
-            if ("SUCCESS".equals(jo.getString("resultCode"))) {
+            if (MessageUtil.checkResultCode(TAG, jo)) {
                 Log.forest("使用道具🎭[" + propName + "]");
                 return true;
-            } else {
-                Log.record(jo.getString("resultDesc"));
-                Log.i(jo.toString());
             }
         } catch (Throwable th) {
             Log.i(TAG, "consumeProp err:");
@@ -2370,15 +2355,13 @@ public class AntForestV2 extends ModelTask {
             JSONArray itemStatusList = sku.getJSONArray("itemStatusList");
             for (int i = 0; i < itemStatusList.length(); i++) {
                 String itemStatus = itemStatusList.getString(i);
-                if ("REACH_LIMIT".equals(itemStatus)) {
-                    Log.record("活力兑换🎐[" + skuName + "]停止:已达兑换次数上限！");
-                    Status.setVitalityExchangeBenefitCountToday(skuId, vitalityExchangeBenefitList.getValue().get(skuId));
-                    return false;
-                } else if ("NO_ENOUGH_POINT".equals(itemStatus)) {
-                    Log.record("活力兑换🎐[" + skuName + "]停止:活力值不足以兑换！");
-                    return false;
-                } else if ("NO_ENOUGH_STOCK".equals(itemStatus)) {
-                    Log.record("活力兑换🎐[" + skuName + "]停止:库存量不足以兑换！");
+                if (ItemStatus.REACH_LIMIT.name().equals(itemStatus)
+                        || ItemStatus.NO_ENOUGH_POINT.name().equals(itemStatus)
+                        || ItemStatus.NO_ENOUGH_STOCK.name().equals(itemStatus)) {
+                    Log.record("活力兑换🎐[" + skuName + "]停止:" + ItemStatus.valueOf(itemStatus).nickName());
+                    if (ItemStatus.REACH_LIMIT.name().equals(itemStatus)) {
+                        Status.setVitalityExchangeBenefitCountToday(skuId, vitalityExchangeBenefitList.getValue().get(skuId));
+                    }
                     return false;
                 }
             }
@@ -2685,6 +2668,26 @@ public class AntForestV2 extends ModelTask {
 
     public static String getBubbleTimerTid(String ui, long bi) {
         return "BT|" + ui + "|" + bi;
+    }
+
+    public enum ItemStatus {
+        NO_ENOUGH_POINT, NO_ENOUGH_STOCK, REACH_LIMIT, SECKILL_NOT_BEGIN, SECKILL_HAS_END, HAS_NEVER_EXPIRE_DRESS;
+
+        public static final String[] nickNames = {"活力值不足", "库存量不足", "兑换达上限", "秒杀未开始", "秒杀已结束", "不限时皮肤"};
+
+        public String nickName() {
+            return nickNames[ordinal()];
+        }
+    }
+
+    public enum PropGroup {
+        shield, boost, doubleClick, vitalitySignDouble, stealthCard, robExpandCard;
+
+        public static final String[] nickNames = {"能量保护罩", "时光加速器", "能量双击卡", "活力翻倍卡", "隐身卡", "能量翻倍卡"};
+
+        public String nickName() {
+            return nickNames[ordinal()];
+        }
     }
 
     public interface WaterFriendType {
