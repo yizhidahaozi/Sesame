@@ -1,5 +1,7 @@
 package io.github.lazyimmortal.sesame.model.task.antForest;
 
+import org.json.JSONArray;
+
 import io.github.lazyimmortal.sesame.entity.AlipayVersion;
 import io.github.lazyimmortal.sesame.entity.RpcEntity;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
@@ -383,6 +385,25 @@ public class AntForestRpcCall {
                 "[{\"activityCode\":\"harvest_forest_energy\",\"activityId\":\"2024052300762676\",\"appId\":\"2021003141652419\",\"body\":{\"bubbles\":[{\"energy\":"
                         + energy + ",\"id\":\"" + id
                         + "\"}],\"scene\":\"FEEDS\"},\"version\":\"2.0\"}]");
+    }
+
+    // 查询森林能量
+    public static String queryForestEnergy(String scene) {
+        String args = "[{\"activityCode\":\"query_forest_energy\",\"activityId\":\"2024052300762675\",\"body\":{\"scene\":\"" + scene + "\"},\"version\":\"2.0\"}]";
+        return ApplicationHook.requestString("alipay.iblib.channel.data", args);
+    }
+
+    // 生成森林能量
+    public static String produceForestEnergy(String scene) {
+        long uniqueId = System.currentTimeMillis();
+        String args = "[{\"activityCode\":\"produce_forest_energy\",\"activityId\":\"2024052300762674\",\"body\":{\"scene\":\"" + scene + "\",\"uniqueId\":\"" + uniqueId + "\"},\"version\":\"2.0\"}]";
+        return ApplicationHook.requestString("alipay.iblib.channel.data", args);
+    }
+
+    // 领取森林能量
+    public static String harvestForestEnergy(String scene, JSONArray bubbles) {
+        String args = "[{\"activityCode\":\"harvest_forest_energy\",\"activityId\":\"2024052300762676\",\"body\":{\"bubbles\":" + bubbles + ",\"scene\":\"" + scene + "\"},\"version\":\"2.0\"}]";
+        return ApplicationHook.requestString("alipay.iblib.channel.data", args);
     }
 
     // 森林皮肤
