@@ -43,10 +43,10 @@ public class AntSports extends ModelTask {
     private IntegerModelField latestExchangeTime;
     private IntegerModelField syncStepCount;
     private BooleanModelField tiyubiz;
-    private BooleanModelField battleForFriends;
-    private ChoiceModelField trainItemType;
-    private ChoiceModelField battleForFriendType;
-    private SelectModelField originBossIdList;
+    private BooleanModelField club;
+    private ChoiceModelField clubTrainItemType;
+    private ChoiceModelField clubTradeMemberType;
+    private SelectModelField clubTradeMemberList;
     private BooleanModelField sportsTasks;
 
     @Override
@@ -73,10 +73,10 @@ public class AntSports extends ModelTask {
         modelFields.addField(donateCharityCoinType = new ChoiceModelField("donateCharityCoinType", "捐运动币 | 方式", DonateCharityCoinType.ONE, DonateCharityCoinType.nickNames));
         modelFields.addField(donateCharityCoinAmount = new IntegerModelField("donateCharityCoinAmount", "捐运动币 | 数量(每次)", 100));
         modelFields.addField(coinExchangeDoubleCard = new BooleanModelField("coinExchangeDoubleCard", "运动币兑换限时能量双击卡", false));
-        modelFields.addField(battleForFriends = new BooleanModelField("battleForFriends", "抢好友 | 开启", false));
-        modelFields.addField(trainItemType = new ChoiceModelField("trainItemType", "抢好友 | 训练项目", TrainItemType.BARBELL, TrainItemType.nickNames));
-        modelFields.addField(battleForFriendType = new ChoiceModelField("battleForFriendType", "抢好友 | 动作", BattleForFriendType.ROB, BattleForFriendType.nickNames));
-        modelFields.addField(originBossIdList = new SelectModelField("originBossIdList", "抢好友 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
+        modelFields.addField(club = new BooleanModelField("club", "抢好友 | 开启", false));
+        modelFields.addField(clubTrainItemType = new ChoiceModelField("clubTrainItemType", "抢好友 | 训练动作", TrainItemType.CLOSE, TrainItemType.nickNames));
+        modelFields.addField(clubTradeMemberType = new ChoiceModelField("clubTradeMemberType", "抢好友 | 抢购动作", TradeMemberType.CLOSE, TradeMemberType.nickNames));
+        modelFields.addField(clubTradeMemberList = new SelectModelField("clubTradeMemberList", "抢好友 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(tiyubiz = new BooleanModelField("tiyubiz", "文体中心", false));
         modelFields.addField(minExchangeCount = new IntegerModelField("minExchangeCount", "行走捐 | 最小捐步步数", 0));
         modelFields.addField(latestExchangeTime = new IntegerModelField("latestExchangeTime", "行走捐 | 最晚捐步时间(24小时制)", 22));
@@ -153,7 +153,7 @@ public class AntSports extends ModelTask {
                 participate();
             }
 
-            if (battleForFriends.getValue()) {
+            if (club.getValue()) {
                 queryClubHome();
             }
 
@@ -1095,13 +1095,20 @@ public class AntSports extends ModelTask {
             }
             JSONArray memberDetailList = jo.getJSONArray("memberDetailList");
             if (memberDetailList.length() == 0) {
-                queryMemberPriceRanking(roomId);
+                if (clubTradeMemberType.getValue() != TradeMemberType.CLOSE) {
+                    JSONObject member = queryMemberPriceRanking();
+                    if (buyMember(roomId, member)) {
+                        queryClubRoom(roomId);
+                    }
+                }
                 return;
             }
-            for (int i = 0; i < memberDetailList.length(); i++) {
-                JSONObject member = memberDetailList.getJSONObject(i);
-                member = member.getJSONObject("memberModel");
-                trainMember(member);
+            if (clubTrainItemType.getValue() != TrainItemType.CLOSE) {
+                for (int i = 0; i < memberDetailList.length(); i++) {
+                    JSONObject member = memberDetailList.getJSONObject(i);
+                    member = member.getJSONObject("memberModel");
+                    trainMember(member);
+                }
             }
         } catch (Throwable t) {
             Log.i(TAG, "queryClubRoom err:");
@@ -1134,12 +1141,15 @@ public class AntSports extends ModelTask {
 
             String userName = UserIdMap.getMaskName(originBossId);
             if (!trainInfo.getBoolean("training")) {
-                String itemType = TrainItemType.itemTypes[trainItemType.getValue()];
+                String itemType = TrainItemType.itemTypes[clubTrainItemType.getValue()];
+                if (StringUtil.isEmpty(itemType)) {
+                    return;
+                }
                 JSONObject jo = new JSONObject(AntSportsRpcCall.trainMember(itemType, memberId, originBossId));
                 if (!MessageUtil.checkResultCode(TAG, jo)) {
                     return;
                 }
-                String name = TrainItemType.nickNames[trainItemType.getValue()];
+                String name = TrainItemType.nickNames[clubTrainItemType.getValue()];
                 Log.other("训练好友🥋训练[" + userName + "]" + name);
                 trainInfo = jo.getJSONObject("trainInfo");
             }
@@ -1168,11 +1178,11 @@ public class AntSports extends ModelTask {
     }
 
     // 抢好友大战-抢购好友
-    private void queryMemberPriceRanking(String roomId) {
+    private JSONObject queryMemberPriceRanking() {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryMemberPriceRanking());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
-                return;
+                return null;
             }
             int coinBalance = jo.getInt("coinBalance");
             jo = jo.getJSONObject("rank");
@@ -1183,52 +1193,53 @@ public class AntSports extends ModelTask {
                 if (price > coinBalance) {
                     continue;
                 }
-                if (buyMember(roomId, jo)) {
-                    return;
+                String originBossId = jo.getString("originBossId");
+                boolean isTradeMember = clubTradeMemberList.getValue().contains(originBossId);
+                if (clubTradeMemberType.getValue() != TradeMemberType.TRADE) {
+                    isTradeMember = !isTradeMember;
                 }
+                if (!isTradeMember) {
+                    continue;
+                }
+                return queryClubMember(jo);
             }
         } catch (Throwable t) {
             Log.i(TAG, "queryMemberPriceRanking err:");
             Log.printStackTrace(TAG, t);
         }
+        return null;
     }
 
-    private JSONObject queryClubMember(String memberId, String originBossId) {
-        JSONObject priceInfo = null;
+    private JSONObject queryClubMember(JSONObject member) {
         try {
+            String memberId = member.getString("memberId");
+            String originBossId = member.getString("originBossId");
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryClubMember(memberId, originBossId));
             if (MessageUtil.checkResultCode(TAG, jo)) {
-                priceInfo = jo.getJSONObject("member").getJSONObject("priceInfo");
+                JSONObject priceInfo = jo.getJSONObject("member").getJSONObject("priceInfo");
+                member.put("priceInfo", priceInfo);
+                return member;
             }
         } catch (Throwable t) {
             Log.i(TAG, "queryClubMember err:");
             Log.printStackTrace(TAG, t);
         }
-        return priceInfo;
+        return null;
     }
 
     private Boolean buyMember(String roomId, JSONObject member) {
+        if (member == null) {
+            return false;
+        }
         try {
-            String originBossId = member.getString("originBossId");
-            boolean isBattleForFriend = originBossIdList.getValue().contains(originBossId);
-            if (battleForFriendType.getValue() == BattleForFriendType.DONT_ROB) {
-                isBattleForFriend = !isBattleForFriend;
-            }
-            if (!isBattleForFriend) {
-                return false;
-            }
-
             String currentBossId = member.getString("currentBossId");
             String memberId = member.getString("memberId");
-            int price = member.getInt("price");
-            JSONObject priceInfo = queryClubMember(memberId, originBossId);
-            if (priceInfo == null) {
-                return false;
-            }
-
+            String originBossId = member.getString("originBossId");
+            JSONObject priceInfo = member.getJSONObject("priceInfo");
             JSONObject jo = new JSONObject(AntSportsRpcCall.buyMember(currentBossId, memberId, originBossId, priceInfo, roomId));
             if (MessageUtil.checkResultCode(TAG, jo)) {
                 String userName = UserIdMap.getMaskName(originBossId);
+                int price = member.getInt("price");
                 Log.other("抢购好友🥋抢购[" + userName + "]花费[" + price + "运动币]");
                 return true;
             }
@@ -1295,26 +1306,28 @@ public class AntSports extends ModelTask {
 
     }
 
-    public interface BattleForFriendType {
+    public interface TradeMemberType {
 
-        int ROB = 0;
-        int DONT_ROB = 1;
+        int CLOSE = 0;
+        int TRADE = 1;
+        int NO_TRADE = 2;
 
-        String[] nickNames = {"选中抢", "选中不抢"};
+        String[] nickNames = {"关闭", "选中抢", "选中不抢"};
 
     }
 
     public interface TrainItemType {
 
-        int BALLET = 0;
-        int SANDBAG = 1;
-        int BARBELL = 2;
-        int YANGKO = 3;
-        int SKATE = 4;
-        int MUD = 5;
+        int CLOSE = 0;
+        int BALLET = 1;
+        int SANDBAG = 2;
+        int BARBELL = 3;
+        int YANGKO = 4;
+        int SKATE = 5;
+        int MUD = 6;
 
-        String[] nickNames = {"跳芭蕾", "打沙包", "举杠铃", "扭秧歌", "玩滑板", "踩泥坑"};
-        String[] itemTypes = {"ballet", "sandbag", "barbell", "yangko", "skate", "mud"};
+        String[] nickNames = {"关闭", "跳芭蕾", "打沙包", "举杠铃", "扭秧歌", "玩滑板", "踩泥坑"};
+        String[] itemTypes = {"", "ballet", "sandbag", "barbell", "yangko", "skate", "mud"};
 
     }
 }
