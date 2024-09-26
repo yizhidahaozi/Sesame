@@ -222,13 +222,16 @@ public class AntSports extends ModelTask {
                         if (jo.optBoolean("multiTask")) {
                             int currentNum = jo.getInt("currentNum") + 1;
                             int limitConfigNum = jo.getInt("limitConfigNum");
-                            taskName = taskName.replaceAll("（.*/.*）", "（" + currentNum + "/" + limitConfigNum + "）");
+                            taskName = taskName.replaceAll("（.*/.*）", "(" + currentNum + "/" + limitConfigNum + ")");
+                        }
+                        if (jo.optBoolean("needSignUp") && !signUpTask(taskId)) {
+                            continue ;
                         }
                         if (!completeTask(taskAction, taskId, taskName)) {
                             continue;
                         }
                         if ("SHOW_AD".equals(taskAction)) {
-                            TimeUtil.sleep(9000);
+                            TimeUtil.sleep(15000);
                         }
                         continue queryCoinTaskPanel;
                     }
@@ -261,6 +264,10 @@ public class AntSports extends ModelTask {
             JSONObject jo = new JSONObject(AntSportsRpcCall.completeTask(taskAction, taskId));
             if (MessageUtil.checkSuccess(TAG, jo)) {
                 Log.other("运动任务🧾完成[做任务得运动币:" + taskName + "]");
+                jo = jo.getJSONObject("data");
+                String assetId = jo.getString("assetId");
+                int assetCoinAmount = jo.getInt("assetCoinAmount");
+                receiveCoinAsset(assetId, assetCoinAmount, taskName);
                 return true;
             }
         } catch (Throwable t) {
@@ -424,7 +431,7 @@ public class AntSports extends ModelTask {
             int remainStepCount = userPathStep.getInt("remainStepCount");
             boolean dayLimit = userPathStep.getBoolean("dayLimit");
             int useStepCount = Math.min(
-                    Math.min(remainStepCount, hasTreasureBox() ? 500 : remainStepCount),
+                    Math.min(remainStepCount, hasTreasureBox() ? RandomUtil.nextInt(500, 1000) : remainStepCount),
                     Math.max(pathStepCount - forwardStepCount % pathStepCount, minGoStepCount)
             );
             if (useStepCount < minGoStepCount || dayLimit) {
