@@ -1,5 +1,7 @@
 package io.github.lazyimmortal.sesame.model.task.antSports;
 
+import org.json.JSONObject;
+
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 
 public class AntSportsRpcCall {
@@ -236,6 +238,11 @@ public class AntSportsRpcCall {
                 "[{\"chInfo\":\"healthstep\",\"timeZone\":\"" + timeZone + "\"}]");
     }
 
+    public static String queryClubRoom(String roomId) {
+        String args = "[{\"chInfo\":\"healthstep\",\"roomId\":\"" + roomId + "\"}]";
+        return ApplicationHook.requestString("alipay.antsports.club.trade.queryClubRoom", args);
+    }
+
     public static String collectBubble(String bubbleId) {
         return ApplicationHook.requestString("alipay.antsports.club.home.collectBubble",
                 "[{\"bubbleId\":\"" + bubbleId + "\",\"chInfo\":\"healthstep\"}]");
@@ -251,9 +258,9 @@ public class AntSportsRpcCall {
                 "[{\"chInfo\":\"healthstep\",\"itemType\":\"" + itemType + "\",\"memberId\":\"" + memberId + "\",\"originBossId\":\"" + originBossId + "\"}]");
     }
 
-    public static String queryMemberPriceRanking(String coinBalance) {
-        return ApplicationHook.requestString("alipay.antsports.club.ranking.queryMemberPriceRanking",
-                "[{\"buyMember\":\"true\",\"chInfo\":\"healthstep\",\"coinBalance\":\"" + coinBalance + "\"}]");
+    public static String queryMemberPriceRanking() {
+        String args = "[{\"buyMember\":true,\"chInfo\":\"healthstep\"}]";
+        return ApplicationHook.requestString("alipay.antsports.club.ranking.queryMemberPriceRanking", args);
     }
 
     public static String queryClubMember(String memberId, String originBossId) {
@@ -261,7 +268,7 @@ public class AntSportsRpcCall {
                 "[{\"chInfo\":\"healthstep\",\"memberId\":\"" + memberId + "\",\"originBossId\":\"" + originBossId + "\"}]");
     }
 
-    public static String buyMember(String currentBossId, String memberId, String originBossId, String priceInfo, String roomId) {
+    public static String buyMember(String currentBossId, String memberId, String originBossId, JSONObject priceInfo, String roomId) {
         String requestData = "[{\"chInfo\":\"healthstep\",\"currentBossId\":\"" + currentBossId + "\",\"memberId\":\"" + memberId + "\",\"originBossId\":\"" + originBossId + "\",\"priceInfo\":" + priceInfo + ",\"roomId\":\"" + roomId + "\"}]";
         return ApplicationHook.requestString("alipay.antsports.club.trade.buyMember", requestData);
     }
