@@ -462,8 +462,6 @@ public class AntForestV2 extends ModelTask {
                 }
 
                 if (medicalHealth.getValue()) {
-//                    medicalHealthFeeds();
-
                     // 医疗健康 绿色医疗 16g*6能量
                     queryForestEnergy("FEEDS");
                     // 医疗健康 电子小票 4g*10能量
@@ -1040,86 +1038,6 @@ public class AntForestV2 extends ModelTask {
         }
     }
 
-    /* 健康医疗 16g*6能量 */
-    private void medicalHealthFeeds() {
-        try {
-            String s = AntForestRpcCall.query_forest_energy();
-            JSONObject jo = new JSONObject(s);
-            int countj = 0;
-            if (jo.optBoolean("success")) {
-                JSONObject response = jo.getJSONObject("data").getJSONObject("response");
-                JSONArray energyGeneratedList = response.optJSONArray("energyGeneratedList");
-                if (energyGeneratedList != null && energyGeneratedList.length() > 0) {
-                    harvestForestEnergy(energyGeneratedList);
-                }
-                int remainBubble = response.optInt("remainBubble", 0);
-                if (remainBubble > 0) {
-                    jo = new JSONObject(AntForestRpcCall.medical_health_feeds_query());
-                    TimeUtil.sleep(300);
-                    if ("SUCCESS".equals(jo.getString("resultCode"))) {
-                        response = jo.getJSONObject("data").getJSONObject("response")
-                                .optJSONObject("COMMON_FEEDS_BLOCK_2024041200243259").getJSONObject("data")
-                                .getJSONObject("response");
-                        JSONArray feeds = response.optJSONArray("feeds");
-                        if (feeds != null && feeds.length() > 0) {
-                            for (int i = 0; i < feeds.length(); i++) {
-                                jo = feeds.optJSONObject(i);
-                                if (jo == null) {
-                                    continue;
-                                }
-                                String feedId = jo.optString("feedId", "null");
-                                if (!"null".equals(feedId)) {
-                                    jo = new JSONObject(AntForestRpcCall.produce_forest_energy(feedId));
-                                    TimeUtil.sleep(300);
-                                    if (jo.optBoolean("success")) {
-                                        response = jo.getJSONObject("data").getJSONObject("response");
-                                        int cumulativeEnergy = response.optInt("cumulativeEnergy");
-                                        if (cumulativeEnergy > 0) {
-                                            Log.forest("健康医疗🚑[完成一次]");
-                                            countj++;
-                                        }
-                                        energyGeneratedList = response.optJSONArray("energyGeneratedList");
-                                        if (energyGeneratedList != null && energyGeneratedList.length() > 0) {
-                                            harvestForestEnergy(energyGeneratedList);
-                                        }
-                                    }
-                                }
-                                if (countj >= remainBubble) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                Log.record(jo.getString("resultDesc"));
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "medicalHealthFeeds err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    private void harvestForestEnergy(JSONArray energyGeneratedList) {
-        try {
-            for (int i = 0; i < energyGeneratedList.length(); i++) {
-                JSONObject jo = energyGeneratedList.getJSONObject(i);
-                int energy = jo.optInt("energy");
-                String id = jo.getString("id");
-                jo = new JSONObject(AntForestRpcCall.harvest_forest_energy(energy, id));
-                TimeUtil.sleep(300);
-                if (jo.optBoolean("success")) {
-                    Log.forest("健康医疗🚑[收取能量]#" + energy + "g");
-                    totalCollected += energy;
-                    Statistics.addData(Statistics.DataType.COLLECTED, energy);
-                }
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "harvestForestEnergy err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
     private void queryForestEnergy(String scene) {
         try {
             JSONObject jo = new JSONObject(AntForestRpcCall.queryForestEnergy(scene));
@@ -1129,7 +1047,7 @@ public class AntForestV2 extends ModelTask {
             jo = jo.getJSONObject("data").getJSONObject("response");
             JSONArray ja = jo.getJSONArray("energyGeneratedList");
             if (ja.length() > 0) {
-                harvestForestEnergy(ja);
+                harvestForestEnergy(scene, ja);
             }
             int remainBubble = jo.optInt("remainBubble");
             for (int i = 0; i < remainBubble; i++) {
