@@ -35,7 +35,6 @@ public class AntSports extends ModelTask {
     private BooleanModelField walkCustomPath;
     private StringModelField walkCustomPathId;
     private BooleanModelField receiveCoinAsset;
-    private BooleanModelField donateCharityCoin;
     private ChoiceModelField donateCharityCoinType;
     private IntegerModelField donateCharityCoinAmount;
     private BooleanModelField coinExchangeDoubleCard;
@@ -69,13 +68,12 @@ public class AntSports extends ModelTask {
         modelFields.addField(walkCustomPathId = new StringModelField("walkCustomPathId", "行走路线 | 自定义路线代码(debug)", "p000202408231708"));
         modelFields.addField(sportsTasks = new BooleanModelField("sportsTasks", "运动任务", false));
         modelFields.addField(receiveCoinAsset = new BooleanModelField("receiveCoinAsset", "收运动币", false));
-        modelFields.addField(donateCharityCoin = new BooleanModelField("donateCharityCoin", "捐运动币 | 开启", false));
-        modelFields.addField(donateCharityCoinType = new ChoiceModelField("donateCharityCoinType", "捐运动币 | 方式", DonateCharityCoinType.ONE, DonateCharityCoinType.nickNames));
+        modelFields.addField(donateCharityCoinType = new ChoiceModelField("donateCharityCoinType", "捐运动币 | 方式", DonateCharityCoinType.ZERO, DonateCharityCoinType.nickNames));
         modelFields.addField(donateCharityCoinAmount = new IntegerModelField("donateCharityCoinAmount", "捐运动币 | 数量(每次)", 100));
         modelFields.addField(coinExchangeDoubleCard = new BooleanModelField("coinExchangeDoubleCard", "运动币兑换限时能量双击卡", false));
         modelFields.addField(club = new BooleanModelField("club", "抢好友 | 开启", false));
-        modelFields.addField(clubTrainItemType = new ChoiceModelField("clubTrainItemType", "抢好友 | 训练动作", TrainItemType.CLOSE, TrainItemType.nickNames));
-        modelFields.addField(clubTradeMemberType = new ChoiceModelField("clubTradeMemberType", "抢好友 | 抢购动作", TradeMemberType.CLOSE, TradeMemberType.nickNames));
+        modelFields.addField(clubTrainItemType = new ChoiceModelField("clubTrainItemType", "抢好友 | 训练动作", TrainItemType.NONE, TrainItemType.nickNames));
+        modelFields.addField(clubTradeMemberType = new ChoiceModelField("clubTradeMemberType", "抢好友 | 抢购动作", TradeMemberType.NONE, TradeMemberType.nickNames));
         modelFields.addField(clubTradeMemberList = new SelectModelField("clubTradeMemberList", "抢好友 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(tiyubiz = new BooleanModelField("tiyubiz", "文体中心", false));
         modelFields.addField(minExchangeCount = new IntegerModelField("minExchangeCount", "行走捐 | 最小捐步步数", 0));
@@ -135,7 +133,7 @@ public class AntSports extends ModelTask {
                 walk();
             }
 
-            if (donateCharityCoin.getValue())
+            if (donateCharityCoinType.getValue() != DonateCharityCoinType.ZERO)
                 queryProjectList();
 
             if (coinExchangeDoubleCard.getValue()) {
@@ -186,60 +184,52 @@ public class AntSports extends ModelTask {
     private void sportsTasks() {
         try {
             signInCoinTask();
-            queryCoinTaskPanel:
-            do {
-                TimeUtil.sleep(1000);
-                JSONObject jo = new JSONObject(AntSportsRpcCall.queryCoinTaskPanel());
-                if (!MessageUtil.checkSuccess(TAG, jo)) {
+            JSONObject jo = new JSONObject(AntSportsRpcCall.queryCoinTaskPanel());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            JSONArray taskList = jo.getJSONArray("taskList");
+            for (int i = 0; i < taskList.length(); i++) {
+                jo = taskList.getJSONObject(i);
+
+                String taskStatus = jo.getString("taskStatus");
+                if (TaskStatus.HAS_RECEIVED.name().equals(taskStatus)) {
                     return;
                 }
-                jo = jo.getJSONObject("data");
-                JSONArray taskList = jo.getJSONArray("taskList");
-                for (int i = 0; i < taskList.length(); i++) {
-                    jo = taskList.getJSONObject(i);
 
-                    String taskStatus = jo.getString("taskStatus");
-                    if (TaskStatus.HAS_RECEIVED.name().equals(taskStatus)) {
-                        return;
+                String taskName = jo.getString("taskName");
+                if (TaskStatus.WAIT_RECEIVE.name().equals(taskStatus)) {
+                    String assetId = jo.getString("assetId");
+                    int prizeAmount = jo.getInt("prizeAmount");
+                    if (receiveCoinAsset(assetId, prizeAmount, taskName)) {
+                        TimeUtil.sleep(1000);
                     }
-
-                    String taskName = jo.getString("taskName");
-                    if (TaskStatus.WAIT_RECEIVE.name().equals(taskStatus)) {
-                        String assetId = jo.getString("assetId");
-                        int prizeAmount = jo.getInt("prizeAmount");
-                        if (!receiveCoinAsset(assetId, prizeAmount, taskName)) {
-                            continue;
-                        }
-                        continue queryCoinTaskPanel;
-                    }
-
-                    if (!jo.has("taskAction")) {
-                        continue;
-                    }
-                    if (TaskStatus.WAIT_COMPLETE.name().equals(taskStatus)) {
-                        String taskAction = jo.getString("taskAction");
-                        String taskId = jo.getString("taskId");
-                        if (jo.optBoolean("multiTask")) {
-                            int currentNum = jo.getInt("currentNum") + 1;
-                            int limitConfigNum = jo.getInt("limitConfigNum");
-                            taskName = taskName.replaceAll("（.*/.*）", "(" + currentNum + "/" + limitConfigNum + ")");
-                        }
-                        if (jo.optBoolean("needSignUp") && !signUpTask(taskId)) {
-                            continue ;
-                        }
-                        if (!completeTask(taskAction, taskId, taskName)) {
-                            continue;
-                        }
-                        if ("SHOW_AD".equals(taskAction)) {
-                            TimeUtil.sleep(15000);
-                        }
-                        continue queryCoinTaskPanel;
-                    }
-
-                    Log.record("Found New Sport TaskStatus:" + taskStatus);
+                    continue;
                 }
-                break;
-            } while (true);
+
+                if (!jo.has("taskAction")) {
+                    continue;
+                }
+                if (TaskStatus.WAIT_COMPLETE.name().equals(taskStatus)) {
+                    String taskAction = jo.getString("taskAction");
+                    String taskId = jo.getString("taskId");
+                    if (jo.optBoolean("multiTask")) {
+                        int currentNum = jo.getInt("currentNum") + 1;
+                        int limitConfigNum = jo.getInt("limitConfigNum");
+                        taskName = taskName.replaceAll("（.*/.*）", "(" + currentNum + "/" + limitConfigNum + ")");
+                    }
+                    if (jo.optBoolean("needSignUp") && !signUpTask(taskId)) {
+                        continue ;
+                    }
+                    if (completeTask(taskAction, taskId, taskName)) {
+                        TimeUtil.sleep(1000);
+                    }
+                    continue;
+                }
+
+                Log.record("Found New Sport TaskStatus:" + taskStatus);
+            }
         } catch (Throwable t) {
             Log.i(TAG, "sportsTasks err:");
             Log.printStackTrace(TAG, t);
@@ -264,10 +254,6 @@ public class AntSports extends ModelTask {
             JSONObject jo = new JSONObject(AntSportsRpcCall.completeTask(taskAction, taskId));
             if (MessageUtil.checkSuccess(TAG, jo)) {
                 Log.other("运动任务🧾完成[做任务得运动币:" + taskName + "]");
-                jo = jo.getJSONObject("data");
-                String assetId = jo.getString("assetId");
-                int assetCoinAmount = jo.getInt("assetCoinAmount");
-                receiveCoinAsset(assetId, assetCoinAmount, taskName);
                 return true;
             }
         } catch (Throwable t) {
@@ -728,7 +714,7 @@ public class AntSports extends ModelTask {
                 }
                 if (donate(donateCharityCoin, jo.getString("projectId"), jo.getString("title"))) {
                     charityCoinCount -= donateCharityCoin;
-                    if (donateCharityCoinType.getValue() == DonateCharityCoinType.ONE) {
+                    if (donateCharityCoinType.getValue() != DonateCharityCoinType.ALL) {
                         break;
                     }
                     if (charityCoinCount < donateCharityCoin) {
@@ -1095,7 +1081,7 @@ public class AntSports extends ModelTask {
             }
             JSONArray memberDetailList = jo.getJSONArray("memberDetailList");
             if (memberDetailList.length() == 0) {
-                if (clubTradeMemberType.getValue() != TradeMemberType.CLOSE) {
+                if (clubTradeMemberType.getValue() != TradeMemberType.NONE) {
                     JSONObject member = queryMemberPriceRanking();
                     if (buyMember(roomId, member)) {
                         queryClubRoom(roomId);
@@ -1103,7 +1089,7 @@ public class AntSports extends ModelTask {
                 }
                 return;
             }
-            if (clubTrainItemType.getValue() != TrainItemType.CLOSE) {
+            if (clubTrainItemType.getValue() != TrainItemType.NONE) {
                 for (int i = 0; i < memberDetailList.length(); i++) {
                     JSONObject member = memberDetailList.getJSONObject(i);
                     member = member.getJSONObject("memberModel");
@@ -1299,26 +1285,27 @@ public class AntSports extends ModelTask {
 
     public interface DonateCharityCoinType {
 
-        int ONE = 0;
-        int ALL = 1;
+        int ZERO = 0;
+        int ONE = 1;
+        int ALL = 2;
 
-        String[] nickNames = {"捐赠一个项目", "捐赠所有项目"};
+        String[] nickNames = {"不捐赠", "捐赠一个项目", "捐赠所有项目"};
 
     }
 
     public interface TradeMemberType {
 
-        int CLOSE = 0;
+        int NONE = 0;
         int TRADE = 1;
-        int NO_TRADE = 2;
+        int NOT_TRADE = 2;
 
-        String[] nickNames = {"关闭", "选中抢", "选中不抢"};
+        String[] nickNames = {"不抢购", "抢购已选好友", "抢购未选好友"};
 
     }
 
     public interface TrainItemType {
 
-        int CLOSE = 0;
+        int NONE = 0;
         int BALLET = 1;
         int SANDBAG = 2;
         int BARBELL = 3;
@@ -1326,7 +1313,7 @@ public class AntSports extends ModelTask {
         int SKATE = 5;
         int MUD = 6;
 
-        String[] nickNames = {"关闭", "跳芭蕾", "打沙包", "举杠铃", "扭秧歌", "玩滑板", "踩泥坑"};
+        String[] nickNames = {"不训练", "跳芭蕾", "打沙包", "举杠铃", "扭秧歌", "玩滑板", "踩泥坑"};
         String[] itemTypes = {"", "ballet", "sandbag", "barbell", "yangko", "skate", "mud"};
 
     }
