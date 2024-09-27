@@ -42,7 +42,6 @@ public class AntOcean extends ModelTask {
 
     private BooleanModelField dailyOceanTask;
     private BooleanModelField receiveOceanTaskAward;
-    private BooleanModelField cleanOcean;
     private ChoiceModelField cleanOceanType;
     private SelectModelField cleanOceanList;
     private BooleanModelField exchangeUniversalPiece;
@@ -56,8 +55,7 @@ public class AntOcean extends ModelTask {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(dailyOceanTask = new BooleanModelField("dailyOceanTask", "海洋任务 | 自动完成", false));
         modelFields.addField(receiveOceanTaskAward = new BooleanModelField("receiveOceanTaskAward", "海洋任务 | 领取奖励", false));
-        modelFields.addField(cleanOcean = new BooleanModelField("cleanOcean", "清理海域 | 开启", false));
-        modelFields.addField(cleanOceanType = new ChoiceModelField("cleanOceanType", "清理海域 | 动作", CleanOceanType.DONT_CLEAN, CleanOceanType.nickNames));
+        modelFields.addField(cleanOceanType = new ChoiceModelField("cleanOceanType", "清理海域 | 动作", CleanOceanType.NONE, CleanOceanType.nickNames));
         modelFields.addField(cleanOceanList = new SelectModelField("cleanOceanList", "清理海域 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(exchangeUniversalPiece = new BooleanModelField("exchangeUniversalPiece", "万能拼图 | 制作", false));
         modelFields.addField(useUniversalPiece = new BooleanModelField("useUniversalPiece", "万能拼图 | 使用", false));
@@ -85,7 +83,7 @@ public class AntOcean extends ModelTask {
             if (receiveOceanTaskAward.getValue()) {
                 receiveTaskAward();
             }
-            if (cleanOcean.getValue()) {
+            if (cleanOceanType.getValue() != CleanOceanType.NONE) {
                 queryUserRanking();
             }
             if (exchangeUniversalPiece.getValue()) {
@@ -460,7 +458,7 @@ public class AntOcean extends ModelTask {
             JSONArray fillFlagVOList = jo.getJSONArray("fillFlagVOList");
             for (int i = 0; i < fillFlagVOList.length(); i++) {
                 JSONObject fillFlag = fillFlagVOList.getJSONObject(i);
-                if (cleanOcean.getValue()) {
+                if (cleanOceanType.getValue() != CleanOceanType.NONE) {
                     cleanFriendOcean(fillFlag);
                 }
             }
@@ -476,11 +474,11 @@ public class AntOcean extends ModelTask {
         }
         try {
             String userId = fillFlag.getString("userId");
-            boolean isOceanClean = cleanOceanList.getValue().contains(userId);
-            if (cleanOceanType.getValue() == CleanOceanType.DONT_CLEAN) {
-                isOceanClean = !isOceanClean;
+            boolean isCleanOcean = cleanOceanList.getValue().contains(userId);
+            if (cleanOceanType.getValue() != CleanOceanType.CLEAN) {
+                isCleanOcean = !isCleanOcean;
             }
-            if (!isOceanClean) {
+            if (!isCleanOcean) {
                 return;
             }
             if (cleanFriendOcean(userId)) {
@@ -872,10 +870,11 @@ public class AntOcean extends ModelTask {
 
     public interface CleanOceanType {
 
-        int CLEAN = 0;
-        int DONT_CLEAN = 1;
+        int NONE = 0;
+        int CLEAN = 1;
+        int NOT_CLEAN = 2;
 
-        String[] nickNames = {"选中清理", "选中不清理"};
+        String[] nickNames = {"不清理海域", "清理已选好友", "清理未选好友"};
 
     }
 
