@@ -61,11 +61,9 @@ public class AntStall extends ModelTask {
         return ModelGroup.STALL;
     }
 
-    private BooleanModelField stallAutoOpen;
     private ChoiceModelField stallOpenType;
     private SelectModelField stallOpenList;
     private BooleanModelField stallAutoClose;
-    private BooleanModelField stallAutoTicket;
     private ChoiceModelField stallTicketType;
     private SelectModelField stallTicketList;
     private BooleanModelField stallAutoTask;
@@ -77,10 +75,8 @@ public class AntStall extends ModelTask {
     private IntegerModelField stallSelfOpenTime;
     private BooleanModelField stallDonate;
     private BooleanModelField stallInviteRegister;
-    private BooleanModelField stallThrowManure;
     private ChoiceModelField stallThrowManureType;
     private SelectModelField stallThrowManureList;
-    private BooleanModelField stallInviteShop;
     private ChoiceModelField stallInviteShopType;
     private SelectModelField stallInviteShopList;
     private BooleanModelField roadmap;
@@ -96,19 +92,15 @@ public class AntStall extends ModelTask {
     @Override
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
-        modelFields.addField(stallAutoOpen = new BooleanModelField("stallAutoOpen", "摆摊 | 开启", false));
-        modelFields.addField(stallOpenType = new ChoiceModelField("stallOpenType", "摆摊 | 动作", StallOpenType.OPEN, StallOpenType.nickNames));
+        modelFields.addField(stallOpenType = new ChoiceModelField("stallOpenType", "摆摊 | 动作", StallOpenType.NONE, StallOpenType.nickNames));
         modelFields.addField(stallOpenList = new SelectModelField("stallOpenList", "摆摊 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(stallAutoClose = new BooleanModelField("stallAutoClose", "收摊 | 开启", false));
         modelFields.addField(stallSelfOpenTime = new IntegerModelField("stallSelfOpenTime", "收摊 | 摆摊时长(分钟)", 120));
-        modelFields.addField(stallAutoTicket = new BooleanModelField("stallAutoTicket", "贴罚单 | 开启", false));
-        modelFields.addField(stallTicketType = new ChoiceModelField("stallTicketType", "贴罚单 | 动作", StallTicketType.DONT_TICKET, StallTicketType.nickNames));
+        modelFields.addField(stallTicketType = new ChoiceModelField("stallTicketType", "贴罚单 | 动作", StallTicketType.NONE, StallTicketType.nickNames));
         modelFields.addField(stallTicketList = new SelectModelField("stallTicketList", "贴罚单 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(stallThrowManure = new BooleanModelField("stallThrowManure", "丢肥料 | 开启", false));
-        modelFields.addField(stallThrowManureType = new ChoiceModelField("stallThrowManureType", "丢肥料 | 动作", StallThrowManureType.DONT_THROW, StallThrowManureType.nickNames));
+        modelFields.addField(stallThrowManureType = new ChoiceModelField("stallThrowManureType", "丢肥料 | 动作", StallThrowManureType.NONE, StallThrowManureType.nickNames));
         modelFields.addField(stallThrowManureList = new SelectModelField("stallThrowManureList", "丢肥料 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(stallInviteShop = new BooleanModelField("stallInviteShop", "邀请摆摊 | 开启", false));
-        modelFields.addField(stallInviteShopType = new ChoiceModelField("stallInviteShopType", "邀请摆摊 | 动作", StallInviteShopType.INVITE, StallInviteShopType.nickNames));
+        modelFields.addField(stallInviteShopType = new ChoiceModelField("stallInviteShopType", "邀请摆摊 | 动作", StallInviteShopType.NONE, StallInviteShopType.nickNames));
         modelFields.addField(stallInviteShopList = new SelectModelField("stallInviteShopList", "邀请摆摊 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(stallAllowOpenReject = new BooleanModelField("stallAllowOpenReject", "请走小摊 | 开启", false));
         modelFields.addField(stallAllowOpenTime = new IntegerModelField("stallAllowOpenTime", "请走小摊 | 允许摆摊时长(分钟)", 121));
@@ -145,7 +137,7 @@ public class AntStall extends ModelTask {
                     settleReceivable();
                 }
 
-                if (stallThrowManure.getValue()) {
+                if (stallThrowManureType.getValue() != StallThrowManureType.NONE) {
                     throwManure();
                 }
 
@@ -160,9 +152,8 @@ public class AntStall extends ModelTask {
                     closeShop();
                 }
 
-                if (stallAutoOpen.getValue()) {
-                    openShop();
-                }
+                openShop();
+
                 if (stallAutoTask.getValue()) {
                     taskList();
                     TimeUtil.sleep(500);
@@ -175,7 +166,7 @@ public class AntStall extends ModelTask {
                 if (roadmap.getValue()) {
                     roadmap();
                 }
-                if (stallAutoTicket.getValue()) {
+                if (stallTicketType.getValue() != StallTicketType.NONE) {
                     pasteTicket();
                 }
             } else {
@@ -203,9 +194,7 @@ public class AntStall extends ModelTask {
                 } else {
                     Log.record("sendBack err:" + " " + s);
                 }
-                if (stallInviteShop.getValue()) {
-                    inviteOpen(seatId);
-                }
+                inviteOpen(seatId);
             } else {
                 Log.record("sendBackPre err:" + " " + s);
             }
@@ -216,6 +205,9 @@ public class AntStall extends ModelTask {
     }
 
     private void inviteOpen(String seatId) {
+        if (stallInviteShopType.getValue() == StallInviteShopType.NONE) {
+            return;
+        }
         String s = AntStallRpcCall.rankInviteOpen();
         try {
             JSONObject jo = new JSONObject(s);
@@ -225,7 +217,7 @@ public class AntStall extends ModelTask {
                     JSONObject friend = friendRankList.getJSONObject(i);
                     String friendUserId = friend.getString("userId");
                     boolean isInviteShop = stallInviteShopList.getValue().contains(friendUserId);
-                    if (stallInviteShopType.getValue() == StallInviteShopType.DONT_INVITE) {
+                    if (stallInviteShopType.getValue() != StallInviteShopType.INVITE) {
                         isInviteShop = !isInviteShop;
                     }
                     if (!isInviteShop) {
@@ -254,7 +246,7 @@ public class AntStall extends ModelTask {
             for (int i = 1; i <= 2; i++) {
                 JSONObject seat = seatsMap.getJSONObject("GUEST_0" + i);
                 String seatId = seat.getString("seatId");
-                if ("FREE".equals(seat.getString("status")) && stallInviteShop.getValue()) {
+                if ("FREE".equals(seat.getString("status"))) {
                     inviteOpen(seatId);
                     continue;
                 }
@@ -356,9 +348,7 @@ public class AntStall extends ModelTask {
                                         shopClose(shopId, rentLastBill, rentLastUser);
                                     }
                                     TimeUtil.sleep(300L);
-                                    if (stallAutoOpen.getValue()) {
-                                        openShop();
-                                    }
+                                    openShop();
                                 }, shopTime));
                                 Log.record("添加蹲点收摊⛪在[" + TimeUtil.getCommonDate(shopTime) + "]执行");
                             } /*else {
@@ -381,6 +371,9 @@ public class AntStall extends ModelTask {
     }
 
     private void openShop() {
+        if (stallOpenType.getValue() == StallOpenType.NONE) {
+            return;
+        }
         String s = AntStallRpcCall.shopList();
         try {
             JSONObject jo = new JSONObject(s);
@@ -415,7 +408,7 @@ public class AntStall extends ModelTask {
                     if (friendRank.getBoolean("canOpenShop")) {
                         String userId = friendRank.getString("userId");
                         boolean isStallOpen = stallOpenList.getValue().contains(userId);
-                        if (stallOpenType.getValue() == StallOpenType.CLOSE) {
+                        if (stallOpenType.getValue() != StallOpenType.OPEN) {
                             isStallOpen = !isStallOpen;
                         }
                         if (!isStallOpen) {
@@ -736,7 +729,7 @@ public class AntStall extends ModelTask {
                 String shareId = Base64.encodeToString((uid + "-" + RandomUtil.getRandom(5) + "ANUTSALTML_2PA_SHARE").getBytes(), Base64.NO_WRAP);
                 String str = AntStallRpcCall.achieveBeShareP2P(shareId);
                 JSONObject jsonObject = new JSONObject(str);
-                Thread.sleep(5000);
+                TimeUtil.sleep(5000);
                 String name = UserIdMap.getMaskName(uid);
                 if (!jsonObject.optBoolean("success")) {
                     String code = jsonObject.getString("code");
@@ -886,11 +879,7 @@ public class AntStall extends ModelTask {
             Log.i(TAG, "throwManure err:");
             Log.printStackTrace(TAG, th);
         } finally {
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                Log.printStackTrace(e);
-            }
+            TimeUtil.sleep(1000);
         }
     }
 
@@ -908,7 +897,7 @@ public class AntStall extends ModelTask {
                     }
                     String objectId = lossDynamic.getString("objectId");
                     boolean isThrowManure = stallThrowManureList.getValue().contains(objectId);
-                    if (stallThrowManureType.getValue() == StallThrowManureType.DONT_THROW) {
+                    if (stallThrowManureType.getValue() != StallThrowManureType.THROW) {
                         isThrowManure = !isThrowManure;
                     }
                     if (!isThrowManure) {
@@ -974,7 +963,7 @@ public class AntStall extends ModelTask {
                         return;
                     }
                     boolean isStallTicket = stallTicketList.getValue().contains(friendId);
-                    if (stallTicketType.getValue() == StallTicketType.DONT_TICKET) {
+                    if (stallTicketType.getValue() != StallTicketType.TICKET) {
                         isStallTicket = !isStallTicket;
                     }
                     if (!isStallTicket) {
@@ -1016,19 +1005,11 @@ public class AntStall extends ModelTask {
                             }
                             Log.farm("蚂蚁新村🚫在[" + UserIdMap.getMaskName(friendId) + "]贴罚单");
                         } finally {
-                            try {
-                                Thread.sleep(1000);
-                            } catch (Exception e) {
-                                Log.printStackTrace(e);
-                            }
+                            TimeUtil.sleep(1000);
                         }
                     }
                 } finally {
-                    try {
-                        Thread.sleep(1500);
-                    } catch (Exception e) {
-                        Log.printStackTrace(e);
-                    }
+                    TimeUtil.sleep(1000);
                 }
             }
         } catch (Throwable th) {
@@ -1039,37 +1020,41 @@ public class AntStall extends ModelTask {
 
     public interface StallOpenType {
 
-        int OPEN = 0;
-        int CLOSE = 1;
+        int NONE = 0;
+        int OPEN = 1;
+        int NOT_OPEN = 2;
 
-        String[] nickNames = {"选中摆摊", "选中不摆摊"};
+        String[] nickNames = {"不摆摊", "摆摊已选好友", "摆摊未选好友"};
 
     }
 
     public interface StallTicketType {
 
-        int TICKET = 0;
-        int DONT_TICKET = 1;
+        int NONE = 0;
+        int TICKET = 1;
+        int NOT_TICKET = 2;
 
-        String[] nickNames = {"选中贴罚单", "选中不贴罚单"};
+        String[] nickNames = {"不贴罚单", "贴已选好友", "贴未选好友"};
 
     }
 
     public interface StallThrowManureType {
 
-        int THROW = 0;
-        int DONT_THROW = 1;
+        int NONE = 0;
+        int THROW = 1;
+        int NOT_THROW = 2;
 
-        String[] nickNames = {"选中丢肥料", "选中不丢肥料"};
+        String[] nickNames = {"不丢肥料", "丢已选好友", "丢未选好友"};
 
     }
 
     public interface StallInviteShopType {
 
-        int INVITE = 0;
-        int DONT_INVITE = 1;
+        int NONE = 0;
+        int INVITE = 1;
+        int NOT_INVITE = 2;
 
-        String[] nickNames = {"选中邀请", "选中不邀请"};
+        String[] nickNames = {"不邀请摆摊", "邀请已选好友", "邀请未选好友"};
     }
 
 }
