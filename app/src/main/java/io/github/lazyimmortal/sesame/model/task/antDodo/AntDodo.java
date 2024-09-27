@@ -42,7 +42,6 @@ public class AntDodo extends ModelTask {
     private ChoiceModelField useUniversalCardMedalGenerationStatusType;
     private ChoiceModelField useUniversalCardFantasticLevelType;
     private BooleanModelField generateBookMedal;
-    private BooleanModelField collectToFriend;
     private ChoiceModelField collectToFriendType;
     private SelectModelField collectToFriendList;
     private BooleanModelField giftToFriend;
@@ -63,8 +62,7 @@ public class AntDodo extends ModelTask {
         modelFields.addField(useUniversalCardMedalGenerationStatusType = new ChoiceModelField("useUniversalCardMedalGenerationStatusType", "万能卡片 | 勋章合成状态", MedalGenerationStatusType.ALL, MedalGenerationStatusType.nickNames));
         modelFields.addField(useUniversalCardFantasticLevelType = new ChoiceModelField("useUniversalCardFantasticLevelType", "万能卡片 | 最低等级", FantasticLevelType.MAGIC, FantasticLevelType.nickNames));
         modelFields.addField(generateBookMedal = new BooleanModelField("generateBookMedal", "合成勋章", false));
-        modelFields.addField(collectToFriend = new BooleanModelField("collectToFriend", "帮抽卡片 | 开启", false));
-        modelFields.addField(collectToFriendType = new ChoiceModelField("collectToFriendType", "帮抽卡片 | 动作", CollectToFriendType.COLLECT, CollectToFriendType.nickNames));
+        modelFields.addField(collectToFriendType = new ChoiceModelField("collectToFriendType", "帮抽卡片 | 动作", CollectToFriendType.NONE, CollectToFriendType.nickNames));
         modelFields.addField(collectToFriendList = new SelectModelField("collectToFriendList", "帮抽卡片 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(giftToFriend = new BooleanModelField("giftToFriend", "赠送卡片 | 开启", false));
         modelFields.addField(giftToFriendBookStatusType = new ChoiceModelField("giftToFriendBookStatusType", "赠送卡片 | 图鉴状态类型", BookStatusType.ALL, BookStatusType.nickNames));
@@ -88,7 +86,7 @@ public class AntDodo extends ModelTask {
             if (useProp.getValue()) {
                 propList();
             }
-            if (collectToFriend.getValue()) {
+            if (collectToFriendType.getValue() != CollectToFriendType.NONE) {
                 collectToFriend();
             }
             if (generateBookMedal.getValue()) {
@@ -454,7 +452,7 @@ public class AntDodo extends ModelTask {
                     }
                     String useId = friend.getString("userId");
                     boolean isCollectToFriend = collectToFriendList.getValue().contains(useId);
-                    if (collectToFriendType.getValue() == CollectToFriendType.DONT_COLLECT) {
+                    if (collectToFriendType.getValue() != CollectToFriendType.COLLECT) {
                         isCollectToFriend = !isCollectToFriend;
                     }
                     if (!isCollectToFriend) {
@@ -723,10 +721,11 @@ public class AntDodo extends ModelTask {
 
     public interface CollectToFriendType {
 
-        int COLLECT = 0;
-        int DONT_COLLECT = 1;
+        int NONE = 0;
+        int COLLECT = 1;
+        int NOT_COLLECT = 2;
 
-        String[] nickNames = {"选中帮抽卡", "选中不帮抽卡"};
+        String[] nickNames = {"不帮抽", "帮抽已选好友", "帮抽未选好友"};
 
     }
 
