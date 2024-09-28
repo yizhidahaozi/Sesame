@@ -26,7 +26,6 @@ public class Status {
     private int doubleTimes = 0;
 
     // farm
-    private Boolean answerQuestion = false;
     private Map<String, Integer> feedFriendLogList = new HashMap<>();
     private Map<String, Integer> visitFriendLogList = new HashMap<>();
     private int useAccelerateToolCount = 0;
@@ -148,18 +147,6 @@ public class Status {
         Status stat = INSTANCE;
         if (!stat.ancientTreeCityCodeList.contains(cityCode)) {
             stat.ancientTreeCityCodeList.add(cityCode);
-            save();
-        }
-    }
-
-    public static boolean canAnswerQuestionToday() {
-        return !INSTANCE.answerQuestion;
-    }
-
-    public static void answerQuestionToday() {
-        Status stat = INSTANCE;
-        if (!stat.answerQuestion) {
-            stat.answerQuestion = true;
             save();
         }
     }

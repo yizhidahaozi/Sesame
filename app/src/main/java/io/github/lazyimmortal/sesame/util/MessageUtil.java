@@ -6,6 +6,16 @@ public class MessageUtil {
     private static final String TAG = MessageUtil.class.getSimpleName();
     private static final String UNKNOWN_TAG = "Unknown TAG";
 
+    public static JSONObject newJSONObject(String str) {
+        try {
+            return new JSONObject(str);
+        } catch (Throwable t) {
+            Log.i(TAG, "newJSONObject err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return null;
+    }
+
     public static Boolean checkMemo(JSONObject jo) {
         return checkMemo(UNKNOWN_TAG, jo);
     }
