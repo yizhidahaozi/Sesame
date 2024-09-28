@@ -105,7 +105,6 @@ public class AntForestV2 extends ModelTask {
     private BooleanModelField doubleCardOnlyLimitTime;
     private BooleanModelField stealthCard;
     private BooleanModelField stealthCardConstant;
-    private BooleanModelField helpFriendCollect;
     private ChoiceModelField helpFriendCollectType;
     private SelectModelField helpFriendCollectList;
     private IntegerModelField returnWater33;
@@ -173,8 +172,7 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(returnWater33 = new IntegerModelField("returnWater33", "返水 | 33克需收能量(关闭:0)", 0));
         modelFields.addField(waterFriendType = new ChoiceModelField("waterFriendType", "浇水 | 动作", WaterFriendType.WATER_00, WaterFriendType.nickNames));
         modelFields.addField(waterFriendList = new SelectAndCountModelField("waterFriendList", "浇水 | 好友列表", new LinkedHashMap<>(), AlipayUser::getList));
-        modelFields.addField(helpFriendCollect = new BooleanModelField("helpFriendCollect", "复活能量 | 开启", false));
-        modelFields.addField(helpFriendCollectType = new ChoiceModelField("helpFriendCollectType", "复活能量 | 动作", HelpFriendCollectType.HELP, HelpFriendCollectType.nickNames));
+        modelFields.addField(helpFriendCollectType = new ChoiceModelField("helpFriendCollectType", "复活能量 | 动作", HelpFriendCollectType.NONE, HelpFriendCollectType.nickNames));
         modelFields.addField(helpFriendCollectList = new SelectModelField("helpFriendCollectList", "复活能量 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(vitalityExchangeBenefit = new BooleanModelField("vitalityExchangeBenefit", "活力值 | 兑换权益", false));
         modelFields.addField(vitalityExchangeBenefitList = new SelectAndCountModelField("vitalityExchangeBenefitList", "活力值 | 权益列表", new LinkedHashMap<>(), VitalityBenefit::getList));
@@ -699,9 +697,11 @@ public class AntForestV2 extends ModelTask {
                             Log.i("不收取[" + UserIdMap.getNameById(userId) + "], userId=" + userId);
                         }*/
                     }
-                    if (helpFriendCollect.getValue() && friendObject.optBoolean("canProtectBubble") && Status.canProtectBubbleToday()) {
+                    if (helpFriendCollectType.getValue() != HelpFriendCollectType.NONE
+                            && friendObject.optBoolean("canProtectBubble")
+                            && Status.canProtectBubbleToday()) {
                         boolean isHelpCollect = helpFriendCollectList.getValue().contains(userId);
-                        if (helpFriendCollectType.getValue() == HelpFriendCollectType.DONT_HELP) {
+                        if (helpFriendCollectType.getValue() != HelpFriendCollectType.HELP) {
                             isHelpCollect = !isHelpCollect;
                         }
                         if (isHelpCollect) {
@@ -1432,7 +1432,7 @@ public class AntForestV2 extends ModelTask {
             TimeUtil.sleep(500);
             if (MessageUtil.checkSuccess(TAG, jo)) {
                 int incAwardCount = jo.optInt("incAwardCount", 1);
-                Log.forest("森林任务🎖️领取[" + taskTitle + "]奖励" + incAwardCount + "个");
+                Log.forest("森林任务🎖️领取[" + taskTitle + "]奖励[" + incAwardCount + "活力值]");
                 return true;
             }
         } catch (Throwable t) {
@@ -2661,10 +2661,11 @@ public class AntForestV2 extends ModelTask {
 
     public interface HelpFriendCollectType {
 
-        int HELP = 0;
-        int DONT_HELP = 1;
+        int NONE = 0;
+        int HELP = 1;
+        int NOT_HELP = 2;
 
-        String[] nickNames = {"选中复活", "选中不复活"};
+        String[] nickNames = {"不复活能量", "复活已选好友", "复活未选好友"};
 
     }
 }
