@@ -106,7 +106,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        if ("io.github.lazyimmortal.sesame".equals(lpparam.packageName)) {
+        if (Objects.equals(BuildConfig.APPLICATION_ID, lpparam.packageName)) {
             try {
                 XposedHelpers.callStaticMethod(lpparam.classLoader.loadClass(ViewAppInfo.class.getName()), "setRunTypeByCode", RunType.MODEL.getCode());
             } catch (ClassNotFoundException e) {
@@ -190,15 +190,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                                 }
                                 Log.i(TAG, "Service onCreate");
                                 context = appService.getApplicationContext();
-                                String libSesamePath = null;
-                                try {
-                                    libSesamePath = context.getPackageManager()
-                                            .getApplicationInfo("io.github.lazyimmortal.sesame", 0)
-                                            .nativeLibraryDir + "/" + System.mapLibraryName("sesame");
-                                } catch (Throwable t) {
-                                    Log.printStackTrace(TAG, t);
-                                }
-                                System.load(libSesamePath);
+                                System.load(LibraryUtil.getLibSesamePath(context));
                                 service = appService;
                                 mainHandler = new Handler();
                                 mainTask = BaseTask.newInstance("MAIN_TASK", new Runnable() {
