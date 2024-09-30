@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
+import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.*;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
@@ -1036,12 +1037,36 @@ public class AntFarm extends ModelTask {
             boolean correct = jo.getBoolean("correct");
             String award = extInfo.getString("award");
             Log.record("庄园答题📝回答" + (correct ? "正确" : "错误") + ",获得[" + award + "g饲料]");
+            JSONArray operationConfigList = jo.getJSONArray("operationConfigList");
+            savePreviewQuestion(operationConfigList);
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "doAnswerTask err:");
             Log.printStackTrace(TAG, t);
         }
         return false;
+    }
+
+    private void savePreviewQuestion(JSONArray operationConfigList) {
+        try {
+            for (int i = 0; i < operationConfigList.length(); i++) {
+                JSONObject jo = operationConfigList.getJSONObject(i);
+                String type = jo.getString("type");
+                if (Objects.equals(type, "PREVIEW_QUESTION")) {
+                    String question = jo.getString("title");
+                    JSONArray ja = new JSONArray(jo.getString("actionTitle"));
+                    for (int j = 0; j < ja.length(); j++) {
+                        jo = ja.getJSONObject(j);
+                        if (jo.getBoolean("correct")) {
+                            TokenConfig.saveAnswer(question, jo.getString("title"));
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "saveAnswerList err:");
+            Log.printStackTrace(TAG, t);
+        }
     }
 
     private Boolean doFarmTask(JSONObject task) {

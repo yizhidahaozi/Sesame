@@ -1,21 +1,28 @@
 package io.github.lazyimmortal.sesame.data;
 
+import android.os.Build;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import io.github.lazyimmortal.sesame.util.FileUtil;
 import io.github.lazyimmortal.sesame.util.JsonUtil;
 import io.github.lazyimmortal.sesame.util.Log;
 import io.github.lazyimmortal.sesame.util.RandomUtil;
 import io.github.lazyimmortal.sesame.util.StringUtil;
+import io.github.lazyimmortal.sesame.util.TimeUtil;
 import lombok.Data;
 
 @Data
@@ -30,7 +37,42 @@ public class TokenConfig {
 
     private Boolean newUI = true;
 
+    private Map<String, String> answerList = new HashMap<>();
     private Set<Map<String, String> > dishImageList = new HashSet<>();
+
+    public static String getAnswer(String question) {
+        Calendar calendar = TimeUtil.getToday();
+        long timeMillis = calendar.getTimeInMillis();
+        return  INSTANCE.answerList.get(timeMillis + "::" + question);
+    }
+
+    public static void saveAnswer(String question, String answer) {
+        Calendar todayCalendar = TimeUtil.getToday();
+        long todayTimeMillis = todayCalendar.getTimeInMillis();
+        long tomorrowTimeMillis = todayTimeMillis + TimeUnit.DAYS.toMillis(1);
+        String todayTimeMillisStr = String.valueOf(todayTimeMillis);
+        String tomorrowTimeMillisStr = String.valueOf(tomorrowTimeMillis);
+
+        question = tomorrowTimeMillis + "::" + question;
+        TokenConfig tokenConfig = INSTANCE;
+        tokenConfig.answerList.put(question, answer);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            tokenConfig.answerList.entrySet().removeIf(
+                    entry -> !entry.getKey().startsWith(todayTimeMillisStr)
+                            && !entry.getKey().startsWith(tomorrowTimeMillisStr));
+        } else {
+            Iterator<Map.Entry<String, String>> iterator = tokenConfig.answerList.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, String> entry = iterator.next();
+                if (!entry.getKey().startsWith(todayTimeMillisStr)
+                        && !entry.getKey().startsWith(tomorrowTimeMillisStr)) {
+                    iterator.remove();
+                }
+            }
+        }
+        save();
+    }
 
     public static Map<String, String> getRandomDishImage() {
         List<Map<String, String> > list = new ArrayList<>(INSTANCE.dishImageList);

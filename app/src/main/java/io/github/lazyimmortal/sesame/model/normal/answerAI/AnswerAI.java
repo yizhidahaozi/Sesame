@@ -3,12 +3,14 @@ package io.github.lazyimmortal.sesame.model.normal.answerAI;
 import io.github.lazyimmortal.sesame.data.Model;
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
+import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.ChoiceModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.StringModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.TextModelField;
 import io.github.lazyimmortal.sesame.util.Log;
 
 import java.util.List;
+import java.util.Objects;
 
 public class AnswerAI extends Model {
 
@@ -90,27 +92,31 @@ public class AnswerAI extends Model {
      * @return 空没有获取到
      */
     public static String getAnswer(String text, List<String> answerList) {
+        String answerStr = "";
         try {
             if (enable) {
                 Log.record("AI🧠答题，题目：[" + text + "]选项：" + answerList);
                 Integer answer = answerAIInterface.getAnswer(text, answerList);
                 if (answer != null && answer >= 0 && answer < answerList.size()) {
-                    String answerStr = answerList.get(answer);
+                    answerStr = answerList.get(answer);
                     Log.record("AI🧠回答：" + answerStr);
-                    return answerStr;
                 }
             } else {
                 Log.record("普通答题，题目：[" + text + "]选项：" + answerList);
                 if (!answerList.isEmpty()) {
-                    String answerStr = answerList.get(0);
+                    answerStr = answerList.get(0);
                     Log.record("普通回答：" + answerStr);
-                    return answerStr;
                 }
             }
         } catch (Throwable t) {
             Log.printStackTrace(TAG, t);
         }
-        return "";
+        String doubleCheckAnswer = TokenConfig.getAnswer(text);
+        if (doubleCheckAnswer != null && !Objects.equals(answerStr, doubleCheckAnswer)) {
+            answerStr = doubleCheckAnswer;
+            Log.record("检测即将提交错误的回答，已自动纠正!新回答:" + answerStr);
+        }
+        return answerStr;
     }
 
     public interface AIType {
