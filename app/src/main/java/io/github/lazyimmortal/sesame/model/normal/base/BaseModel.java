@@ -10,8 +10,8 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.ChoiceModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.IntegerModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.ListModelField;
-import io.github.lazyimmortal.sesame.model.task.antOcean.AntOceanRpcCall;
-import io.github.lazyimmortal.sesame.model.task.reserve.ReserveRpcCall;
+import io.github.lazyimmortal.sesame.model.task.protectEcology.BeachRpcCall;
+import io.github.lazyimmortal.sesame.model.task.protectEcology.ReserveRpcCall;
 import io.github.lazyimmortal.sesame.util.*;
 
 /**
@@ -144,7 +144,7 @@ public class BaseModel extends Model {
     private static void initBeach() {
         try {
             BeachIdMap.load();
-            String s = AntOceanRpcCall.queryCultivationList();
+            String s = BeachRpcCall.queryCultivationList();
             JSONObject jo = new JSONObject(s);
             if ("SUCCESS".equals(jo.getString("resultCode"))) {
                 JSONArray ja = jo.getJSONArray("cultivationItemVOList");

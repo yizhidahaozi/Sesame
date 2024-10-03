@@ -47,8 +47,6 @@ public class AntOcean extends ModelTask {
     private BooleanModelField exchangeUniversalPiece;
     private BooleanModelField useUniversalPiece;
     private BooleanModelField replica;
-    private BooleanModelField protectOcean;
-    private SelectAndCountModelField protectOceanList;
 
     @Override
     public ModelFields getFields() {
@@ -60,8 +58,6 @@ public class AntOcean extends ModelTask {
         modelFields.addField(exchangeUniversalPiece = new BooleanModelField("exchangeUniversalPiece", "万能拼图 | 制作", false));
         modelFields.addField(useUniversalPiece = new BooleanModelField("useUniversalPiece", "万能拼图 | 使用", false));
         modelFields.addField(replica = new BooleanModelField("replica", "潘多拉海域", false));
-        modelFields.addField(protectOcean = new BooleanModelField("protectOcean", "保护海洋 | 开启", false));
-        modelFields.addField(protectOceanList = new SelectAndCountModelField("protectOceanList", "保护海洋 | 海洋列表", new LinkedHashMap<>(), AlipayBeach::getList));
         return modelFields;
     }
 
@@ -94,9 +90,6 @@ public class AntOcean extends ModelTask {
             }
             if (replica.getValue()) {
                 queryReplicaHome();
-            }
-            if (protectOcean.getValue()) {
-                protectOcean();
             }
         } catch (Throwable t) {
             Log.i(TAG, "start.run err:");
@@ -617,108 +610,6 @@ public class AntOcean extends ModelTask {
             Log.printStackTrace(TAG, t);
         }
         return false;
-    }
-
-    private void protectOcean() {
-        try {
-            JSONObject jo = new JSONObject(AntOceanRpcCall.queryCultivationList());
-            if (!MessageUtil.checkResultCode(TAG, jo)) {
-                return;
-            }
-            JSONArray ja = jo.getJSONArray("cultivationItemVOList");
-            for (int i = 0; i < ja.length(); i++) {
-                jo = ja.getJSONObject(i);
-                if (!jo.has("templateSubType")) {
-                    continue;
-                }
-                if (!"BEACH".equals(jo.getString("templateSubType"))
-                        && !"COOPERATE_SEA_TREE".equals(jo.getString("templateSubType")) && !"SEA_ANIMAL".equals(jo.getString("templateSubType"))) {
-                    continue;
-                }
-                if (!"AVAILABLE".equals(jo.getString("applyAction"))) {
-                    continue;
-                }
-                String cultivationName = jo.getString("cultivationName");
-                String templateCode = jo.getString("templateCode");
-                JSONObject projectConfig = jo.getJSONObject("projectConfigVO");
-                String projectCode = projectConfig.getString("code");
-                Map<String, Integer> map = protectOceanList.getValue();
-                for (Map.Entry<String, Integer> entry : map.entrySet()) {
-                    if (Objects.equals(entry.getKey(), templateCode)) {
-                        Integer count = entry.getValue();
-                        if (count != null && count > 0) {
-                            oceanExchangeTree(templateCode, projectCode, cultivationName, count);
-                        }
-                        break;
-                    }
-                }
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "protectOcean err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    private static void oceanExchangeTree(String cultivationCode, String projectCode, String itemName, int count) {
-        try {
-            JSONObject jo;
-            int appliedTimes = queryCultivationDetail(cultivationCode, projectCode, count);
-            if (appliedTimes < 0)
-                return;
-            for (int applyCount = 1; applyCount <= count; applyCount++) {
-                jo = new JSONObject(AntOceanRpcCall.oceanExchangeTree(cultivationCode, projectCode));
-                if (!MessageUtil.checkResultCode(TAG, jo)) {
-                    Log.forest("保护海洋🏖️[" + itemName + "]#发生未知错误，停止申请");
-                    break;
-                }
-                JSONArray awardInfos = jo.getJSONArray("rewardItemVOs");
-                StringBuilder award = new StringBuilder();
-                for (int i = 0; i < awardInfos.length(); i++) {
-                    jo = awardInfos.getJSONObject(i);
-                    award.append(jo.getString("name")).append("*").append(jo.getInt("num"));
-                }
-                Log.forest("保护海洋🏖️[" + itemName + "]#第" + appliedTimes + "次-获得奖励" + award);
-                TimeUtil.sleep(300);
-                appliedTimes = queryCultivationDetail(cultivationCode, projectCode, count);
-                if (appliedTimes < 0) {
-                    break;
-                } else {
-                    TimeUtil.sleep(300);
-                }
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "oceanExchangeTree err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    private static int queryCultivationDetail(String cultivationCode, String projectCode, int count) {
-        int appliedTimes = -1;
-        try {
-            JSONObject jo = new JSONObject(AntOceanRpcCall.queryCultivationDetail(cultivationCode, projectCode));
-            if (MessageUtil.checkResultCode(TAG, jo)) {
-                JSONObject userInfo = jo.getJSONObject("userInfoVO");
-                int currentEnergy = userInfo.getInt("currentEnergy");
-                jo = jo.getJSONObject("cultivationDetailVO");
-                String applyAction = jo.getString("applyAction");
-                int certNum = jo.getInt("certNum");
-                if ("AVAILABLE".equals(applyAction)) {
-                    if (currentEnergy >= jo.getInt("energy")) {
-                        if (certNum < count) {
-                            appliedTimes = certNum + 1;
-                        }
-                    } else {
-                        Log.forest("保护海洋🏖️[" + jo.getString("cultivationName") + "]#能量不足停止申请");
-                    }
-                } else {
-                    Log.forest("保护海洋🏖️[" + jo.getString("cultivationName") + "]#似乎没有了");
-                }
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "queryCultivationDetail err:");
-            Log.printStackTrace(TAG, t);
-        }
-        return appliedTimes;
     }
 
     // 制作万能拼图

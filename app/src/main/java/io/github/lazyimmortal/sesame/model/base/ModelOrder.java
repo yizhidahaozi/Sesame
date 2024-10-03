@@ -4,7 +4,6 @@ import io.github.lazyimmortal.sesame.data.Model;
 import io.github.lazyimmortal.sesame.model.normal.answerAI.AnswerAI;
 import io.github.lazyimmortal.sesame.model.normal.base.BaseModel;
 import io.github.lazyimmortal.sesame.model.task.ancientTree.AncientTree;
-import io.github.lazyimmortal.sesame.model.task.antCooperate.AntCooperate;
 import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm;
 import io.github.lazyimmortal.sesame.model.task.antForest.AntForestV2;
 import io.github.lazyimmortal.sesame.model.task.antMember.AntMember;
@@ -13,7 +12,7 @@ import io.github.lazyimmortal.sesame.model.task.antOrchard.AntOrchard;
 import io.github.lazyimmortal.sesame.model.task.antSports.AntSports;
 import io.github.lazyimmortal.sesame.model.task.antStall.AntStall;
 import io.github.lazyimmortal.sesame.model.task.greenFinance.GreenFinance;
-import io.github.lazyimmortal.sesame.model.task.reserve.Reserve;
+import io.github.lazyimmortal.sesame.model.task.protectEcology.ProtectEcology;
 import io.github.lazyimmortal.sesame.model.task.antDodo.AntDodo;
 
 import java.util.Arrays;
@@ -28,11 +27,9 @@ public class ModelOrder {
             , AntFarm.class
             , AntStall.class
             , AntOrchard.class
-            , Reserve.class
+            , ProtectEcology.class
             , AntDodo.class
             , AntOcean.class
-            , AntCooperate.class
-            , AncientTree.class
             , AntSports.class
             , AntMember.class
             , GreenFinance.class

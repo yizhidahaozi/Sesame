@@ -20,7 +20,7 @@ public class Status {
     // forest
     private Map<String, Integer> waterFriendLogList = new HashMap<>();
     private Map<String, Integer> vitalityExchangeBenefitList = new HashMap<>();
-    private Map<String, Integer> reserveLogList = new HashMap<>();
+    private Map<Integer, Integer> exchangeReserveList = new HashMap<>();
     private Set<String> ancientTreeCityCodeList = new HashSet<>();
     private boolean protectBubble = false;
     private int doubleTimes = 0;
@@ -106,24 +106,18 @@ public class Status {
         save();
     }
 
-    public static int getReserveTimes(String id) {
-        Integer count = INSTANCE.reserveLogList.get(id);
-        if (count == null) {
-            return 0;
-        }
-        return count;
+    public static int getExchangeReserveCountToday(int id) {
+        Integer count = INSTANCE.exchangeReserveList.get(id);
+        return count == null ? 0 : count;
     }
 
-    public static boolean canReserveToday(String id, int count) {
-        return getReserveTimes(id) < count;
+    public static Boolean canExchangeReserveToday(int id, int count) {
+        return getExchangeReserveCountToday(id) < count;
     }
 
-    public static void reserveToday(String id, int newCount) {
-        Integer count = INSTANCE.reserveLogList.get(id);
-        if (count == null) {
-            count = 0;
-        }
-        INSTANCE.reserveLogList.put(id, count + newCount);
+    public static void exchangeReserveToday(int id) {
+        int count = getExchangeReserveCountToday(id) + 1;
+        INSTANCE.exchangeReserveList.put(id, count);
         save();
     }
 

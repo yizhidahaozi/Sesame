@@ -45,7 +45,7 @@ public class MessageUtil {
 
     public static Boolean checkResultCode(String tag, JSONObject jo) {
         try {
-            Object resultCode = jo.get("resultCode");
+            Object resultCode = jo.opt("resultCode");
             if (resultCode instanceof Integer) {
                 return checkResultCodeInteger(tag, jo);
             } else if (resultCode instanceof String) {

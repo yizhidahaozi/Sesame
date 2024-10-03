@@ -155,24 +155,6 @@ public class AntOceanRpcCall {
                 "[{\"source\":\"ANT_FOREST\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
     }
 
-    /* 保护海洋净滩行动 */
-    public static String queryCultivationList() {
-        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryCultivationList",
-                "[{\"source\":\"ANT_FOREST\",\"version\":\"20231031\"}]");
-    }
-
-    public static String queryCultivationDetail(String cultivationCode, String projectCode) {
-        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryCultivationDetail",
-                "[{\"cultivationCode\":\"" + cultivationCode + "\",\"projectCode\":\"" + projectCode
-                        + "\",\"source\":\"ANT_FOREST\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
-    }
-
-    public static String oceanExchangeTree(String cultivationCode, String projectCode) {
-        return ApplicationHook.requestString("alipay.antocean.ocean.h5.exchangeTree",
-                "[{\"cultivationCode\":\"" + cultivationCode + "\",\"projectCode\":\"" + projectCode
-                        + "\",\"source\":\"ANT_FOREST\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
-    }
-
     // 答题
     public static String getQuestion() {
         return ApplicationHook.requestString("com.alipay.reading.game.dada.openDailyAnswer.getQuestion",

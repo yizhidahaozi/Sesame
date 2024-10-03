@@ -1,8 +1,8 @@
-package io.github.lazyimmortal.sesame.model.task.antCooperate;
+package io.github.lazyimmortal.sesame.model.task.protectEcology;
 
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 
-public class AntCooperateRpcCall {
+public class CooperateRpcCall {
     private static final String VERSION = "20230501";
 
     public static String queryUserCooperatePlantList() {
@@ -10,22 +10,21 @@ public class AntCooperateRpcCall {
     }
 
     public static String queryCooperatePlant(String cooperationId) {
-        String args1 = "[{\"cooperationId\":\"" + cooperationId + "\"}]";
-        return ApplicationHook.requestString("alipay.antmember.forest.h5.queryCooperatePlant", args1);
+        String args = "[{\"cooperationId\":\"" + cooperationId + "\"}]";
+        return ApplicationHook.requestString("alipay.antmember.forest.h5.queryCooperatePlant", args);
     }
 
-    public static String cooperateWater(String uid, String cooperationId, int energyCount) {
-        return ApplicationHook.requestString("alipay.antmember.forest.h5.cooperateWater",
-                "[{\"bizNo\":\"" + uid + "_" + cooperationId + "_" + System.currentTimeMillis() + "\",\"cooperationId\":\""
-                        + cooperationId + "\",\"energyCount\":" + energyCount + ",\"source\":\"\",\"version\":\"" + VERSION
-                        + "\"}]");
+    public static String cooperateWater(String userId, String cooperationId, int energyCount) {
+        String bizNo = userId + "_" + cooperationId + "_" + System.currentTimeMillis();
+        String args = "[{\"bizNo\":\"" + bizNo + "\",\"cooperationId\":\"" + cooperationId + "\",\"energyCount\":" + energyCount + "}]";
+        return ApplicationHook.requestString("alipay.antmember.forest.h5.cooperateWater", args);
     }
 
     /**
      * 获取合种浇水量排行
      * @param bizType 参数：D/A,“D”为查询当天，“A”为查询所有
      * @param cooperationId 合种ID
-     * @return
+     * @return requestString
      */
     public static String queryCooperateRank(String bizType, String cooperationId) {
         return  ApplicationHook.requestString("alipay.antmember.forest.h5.queryCooperateRank",
