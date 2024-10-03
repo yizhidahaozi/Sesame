@@ -547,7 +547,8 @@ public class AntOcean extends ModelTask {
                     }
                     continue;
                 }
-                if (taskTitle.startsWith("随机任务：")) {
+                if (taskTitle.startsWith("随机任务：")
+                        || taskTitle.startsWith("绿色任务：")) {
                     String sceneCode = jo.getString("sceneCode");
                     String taskType = jo.getString("taskType");
                     jo = new JSONObject(AntOceanRpcCall.finishTask(sceneCode, taskType));
