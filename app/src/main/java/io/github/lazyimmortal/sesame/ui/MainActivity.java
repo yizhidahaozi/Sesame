@@ -24,6 +24,7 @@ import io.github.lazyimmortal.sesame.entity.FriendWatch;
 import io.github.lazyimmortal.sesame.entity.UserEntity;
 import io.github.lazyimmortal.sesame.model.normal.base.BaseModel;
 import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 import java.io.File;
 import java.util.ArrayList;

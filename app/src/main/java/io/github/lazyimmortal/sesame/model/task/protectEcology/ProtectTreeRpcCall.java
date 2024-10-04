@@ -2,7 +2,7 @@ package io.github.lazyimmortal.sesame.model.task.protectEcology;
 
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 
-public class ReserveRpcCall {
+public class ProtectTreeRpcCall {
     private static final String VERSION = "20230501";
     private static final String VERSION2 = "20230522";
 

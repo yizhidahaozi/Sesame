@@ -1,26 +1,26 @@
 package io.github.lazyimmortal.sesame.entity;
 
-import io.github.lazyimmortal.sesame.util.idMap.ReserveIdMap;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class AlipayReserve extends IdAndName {
-    private static List<AlipayReserve> list;
+import io.github.lazyimmortal.sesame.util.idMap.TreeIdMap;
 
-    public AlipayReserve(String i, String n) {
+public class AlipayTree extends IdAndName {
+    private static List<AlipayTree> list;
+
+    public AlipayTree(String i, String n) {
         id = i;
         name = n;
     }
 
-    public static List<AlipayReserve> getList() {
+    public static List<AlipayTree> getList() {
         if (list == null) {
             list = new ArrayList<>();
-            Set<Map.Entry<String, String>> idSet = ReserveIdMap.getMap().entrySet();
+            Set<Map.Entry<String, String>> idSet = TreeIdMap.getMap().entrySet();
             for (Map.Entry<String, String> entry : idSet) {
-                list.add(new AlipayReserve(entry.getKey(), entry.getValue()));
+                list.add(new AlipayTree(entry.getKey(), entry.getValue()));
             }
         }
         return list;
@@ -35,5 +35,4 @@ public class AlipayReserve extends IdAndName {
             }
         }
     }
-
 }

@@ -1,5 +1,7 @@
 package io.github.lazyimmortal.sesame.model.task.antFarm;
 
+import lombok.Getter;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,7 +17,8 @@ import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.normal.answerAI.AnswerAI;
 import io.github.lazyimmortal.sesame.rpc.intervallimit.RpcIntervalLimit;
 import io.github.lazyimmortal.sesame.util.*;
-import lombok.Getter;
+import io.github.lazyimmortal.sesame.util.idMap.FarmOrnamentsIdMap;
+import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;

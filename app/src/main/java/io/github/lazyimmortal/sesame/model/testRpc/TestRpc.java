@@ -10,8 +10,8 @@ import java.util.List;
 import io.github.lazyimmortal.sesame.model.task.antForest.AntForestRpcCall;
 import io.github.lazyimmortal.sesame.model.task.antDodo.AntDodoRpcCall;
 import io.github.lazyimmortal.sesame.model.task.antOrchard.AntOrchardRpcCall;
-import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 public class TestRpc {
     private static final String TAG = "TestRpc";

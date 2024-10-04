@@ -19,13 +19,12 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectOneModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
 import io.github.lazyimmortal.sesame.entity.AlipayBeach;
 import io.github.lazyimmortal.sesame.entity.AlipayReserve;
+import io.github.lazyimmortal.sesame.entity.AlipayTree;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
 import io.github.lazyimmortal.sesame.entity.CooperateUser;
 import io.github.lazyimmortal.sesame.entity.FriendWatch;
 import io.github.lazyimmortal.sesame.entity.IdAndName;
-import io.github.lazyimmortal.sesame.util.BeachIdMap;
-import io.github.lazyimmortal.sesame.util.ReserveIdMap;
-import io.github.lazyimmortal.sesame.util.UserIdMap;
+import io.github.lazyimmortal.sesame.util.idMap.*;
 
 import java.util.List;
 
@@ -235,13 +234,19 @@ public class ListDialog {
         lv_list.setOnItemLongClickListener(
                 (p1, p2, p3, p4) -> {
                     IdAndName curIdAndName = (IdAndName) p1.getAdapter().getItem(p3);
-                    if ((curIdAndName instanceof AlipayReserve) || (curIdAndName instanceof AlipayBeach)) {
+                    if ((curIdAndName instanceof AlipayTree)
+                            || (curIdAndName instanceof AlipayReserve)
+                            || (curIdAndName instanceof AlipayBeach)) {
                         try {
                             new AlertDialog.Builder(c)
                                     .setTitle("删除 " + curIdAndName.name)
                                     .setPositiveButton(c.getString(R.string.ok), (dialog, which) -> {
                                         if (which == DialogInterface.BUTTON_POSITIVE) {
-                                            if (curIdAndName instanceof AlipayReserve) {
+                                            if (curIdAndName instanceof AlipayTree) {
+                                                AlipayTree.remove(curIdAndName.id);
+                                                TreeIdMap.remove(curIdAndName.id);
+                                                TreeIdMap.save();
+                                            } else if (curIdAndName instanceof AlipayReserve) {
                                                 AlipayReserve.remove(curIdAndName.id);
                                                 ReserveIdMap.remove(curIdAndName.id);
                                                 ReserveIdMap.save();

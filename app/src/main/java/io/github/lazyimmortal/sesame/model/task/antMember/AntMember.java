@@ -12,6 +12,9 @@ import io.github.lazyimmortal.sesame.entity.MemberBenefit;
 import io.github.lazyimmortal.sesame.entity.PromiseSimpleTemplate;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.idMap.MemberBenefitIdMap;
+import io.github.lazyimmortal.sesame.util.idMap.PromiseSimpleTemplateIdMap;
+import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;

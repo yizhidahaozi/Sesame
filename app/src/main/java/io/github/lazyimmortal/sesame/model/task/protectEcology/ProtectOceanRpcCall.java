@@ -3,7 +3,7 @@ package io.github.lazyimmortal.sesame.model.task.protectEcology;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.util.RandomUtil;
 
-public class BeachRpcCall {
+public class ProtectOceanRpcCall {
 
     private static String getUniqueId() {
         return String.valueOf(System.currentTimeMillis()) + RandomUtil.nextLong();

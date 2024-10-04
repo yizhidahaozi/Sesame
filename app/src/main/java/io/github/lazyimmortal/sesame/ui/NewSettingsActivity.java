@@ -22,6 +22,7 @@ import io.github.lazyimmortal.sesame.ui.dto.ModelFieldInfoDto;
 import io.github.lazyimmortal.sesame.ui.dto.ModelFieldShowDto;
 import io.github.lazyimmortal.sesame.ui.dto.ModelGroupDto;
 import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.idMap.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -74,6 +75,7 @@ public class NewSettingsActivity extends BaseActivity {
         FarmOrnamentsIdMap.load(userId);
         MemberBenefitIdMap.load(userId);
         PromiseSimpleTemplateIdMap.load(userId);
+        TreeIdMap.load();
         ReserveIdMap.load();
         BeachIdMap.load();
         ConfigV2.load(userId);

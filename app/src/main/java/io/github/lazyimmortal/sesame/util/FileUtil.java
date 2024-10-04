@@ -214,6 +214,14 @@ public class FileUtil {
         return statisticsFile;
     }
 
+    public static File getTreeIdMapFile() {
+        File file = new File(MAIN_DIRECTORY_FILE, "tree.json");
+        if (file.exists() && file.isDirectory()) {
+            file.delete();
+        }
+        return file;
+    }
+
     public static File getReserveIdMapFile() {
         File file = new File(MAIN_DIRECTORY_FILE, "reserve.json");
         if (file.exists() && file.isDirectory()) {

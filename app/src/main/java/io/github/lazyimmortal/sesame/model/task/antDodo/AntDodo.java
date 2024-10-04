@@ -2,6 +2,7 @@ package io.github.lazyimmortal.sesame.model.task.antDodo;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
@@ -15,7 +16,7 @@ import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm.TaskStatus;
 import io.github.lazyimmortal.sesame.util.Log;
 import io.github.lazyimmortal.sesame.util.MessageUtil;
 import io.github.lazyimmortal.sesame.util.TimeUtil;
-import io.github.lazyimmortal.sesame.util.UserIdMap;
+import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

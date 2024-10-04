@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.lazyimmortal.sesame.util.MemberBenefitIdMap;
+import io.github.lazyimmortal.sesame.util.idMap.MemberBenefitIdMap;
 
 public class MemberBenefit extends IdAndName {
 

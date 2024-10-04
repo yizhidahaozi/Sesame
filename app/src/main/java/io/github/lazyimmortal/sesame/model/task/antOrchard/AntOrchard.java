@@ -2,6 +2,7 @@ package io.github.lazyimmortal.sesame.model.task.antOrchard;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
@@ -11,6 +12,7 @@ import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 import android.util.Base64;
 import java.util.*;

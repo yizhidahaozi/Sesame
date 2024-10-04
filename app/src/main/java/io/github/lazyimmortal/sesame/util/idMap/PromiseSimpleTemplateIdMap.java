@@ -1,10 +1,14 @@
-package io.github.lazyimmortal.sesame.util;
+package io.github.lazyimmortal.sesame.util.idMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import io.github.lazyimmortal.sesame.util.FileUtil;
+import io.github.lazyimmortal.sesame.util.JsonUtil;
+import io.github.lazyimmortal.sesame.util.Log;
 
 public class PromiseSimpleTemplateIdMap {
     private static final Map<String, String> idMap = new ConcurrentHashMap<>();

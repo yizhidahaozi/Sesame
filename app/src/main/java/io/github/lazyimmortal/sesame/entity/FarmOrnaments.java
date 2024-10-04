@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.lazyimmortal.sesame.util.FarmOrnamentsIdMap;
+import io.github.lazyimmortal.sesame.util.idMap.FarmOrnamentsIdMap;
 
 public class FarmOrnaments extends IdAndName{
 

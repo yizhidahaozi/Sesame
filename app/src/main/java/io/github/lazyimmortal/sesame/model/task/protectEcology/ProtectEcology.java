@@ -14,14 +14,11 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectAndCountModelField
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayBeach;
 import io.github.lazyimmortal.sesame.entity.AlipayReserve;
+import io.github.lazyimmortal.sesame.entity.AlipayTree;
 import io.github.lazyimmortal.sesame.entity.CooperateUser;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
-import io.github.lazyimmortal.sesame.util.CooperationIdMap;
-import io.github.lazyimmortal.sesame.util.Log;
-import io.github.lazyimmortal.sesame.util.MessageUtil;
-import io.github.lazyimmortal.sesame.util.Status;
-import io.github.lazyimmortal.sesame.util.TimeUtil;
-import io.github.lazyimmortal.sesame.util.UserIdMap;
+import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.idMap.*;
 
 public class ProtectEcology extends ModelTask {
     private static final String TAG = ProtectEcology.class.getSimpleName();
@@ -36,17 +33,18 @@ public class ProtectEcology extends ModelTask {
         return ModelGroup.FOREST;
     }
 
-    private BooleanModelField cooperateWater;
-    private SelectAndCountModelField cooperateWaterList;
-    private SelectAndCountModelField cooperateWaterTotalLimitList;
-    private BooleanModelField protectTree;
-    private BooleanModelField protectReserve;
-    private SelectAndCountModelField protectReserveList;
-    private BooleanModelField protectBeach;
-    private SelectAndCountModelField protectBeachList;
-    private BooleanModelField protectAnimal;
-    private BooleanModelField protectMarathon;
-    private BooleanModelField protectAncientTree;
+    private static BooleanModelField cooperateWater;
+    private static SelectAndCountModelField cooperateWaterList;
+    private static SelectAndCountModelField cooperateWaterTotalLimitList;
+    private static BooleanModelField protectTree;
+    private static SelectAndCountModelField protectTreeList;
+    private static BooleanModelField protectReserve;
+    private static SelectAndCountModelField protectReserveList;
+    private static BooleanModelField protectBeach;
+    private static SelectAndCountModelField protectBeachList;
+    private static BooleanModelField protectAnimal;
+    private static BooleanModelField protectMarathon;
+    private static BooleanModelField protectAncientTree;
 
     @Override
     public ModelFields getFields() {
@@ -54,9 +52,11 @@ public class ProtectEcology extends ModelTask {
         modelFields.addField(cooperateWater = new BooleanModelField("cooperateWater", "合种 | 浇水", false));
         modelFields.addField(cooperateWaterList = new SelectAndCountModelField("cooperateWaterList", "合种 | 日浇水量列表", new LinkedHashMap<>(), CooperateUser::getList));
         modelFields.addField(cooperateWaterTotalLimitList = new SelectAndCountModelField("cooperateWaterTotalLimitList", "合种 | 总浇水量列表", new LinkedHashMap<>(), CooperateUser::getList));
-        modelFields.addField(protectReserve = new BooleanModelField("protectReserve", "保护动物 | 保护地", false));
+        modelFields.addField(protectTree = new BooleanModelField("protectTree", "保护森林 | 植树(总数)", false));
+        modelFields.addField(protectTreeList = new SelectAndCountModelField("protectTreeList", "保护森林 | 植树列表", new LinkedHashMap<>(), AlipayTree::getList));
+        modelFields.addField(protectReserve = new BooleanModelField("protectReserve", "保护动物 | 保护地(每天)", false));
         modelFields.addField(protectReserveList = new SelectAndCountModelField("reserveList", "保护动物 | 保护地列表", new LinkedHashMap<>(), AlipayReserve::getList));
-        modelFields.addField(protectBeach = new BooleanModelField("protectBeach", "保护海洋 | 海滩", false));
+        modelFields.addField(protectBeach = new BooleanModelField("protectBeach", "保护海洋 | 海滩(总数)", false));
         modelFields.addField(protectBeachList = new SelectAndCountModelField("protectOceanList", "保护海洋 | 海滩列表", new LinkedHashMap<>(), AlipayBeach::getList));
         return modelFields;
     }
@@ -71,15 +71,72 @@ public class ProtectEcology extends ModelTask {
         if (cooperateWater.getValue()) {
             cooperateWater();
         }
+        if (protectTree.getValue()) {
+            protectTree();
+        }
         if (protectReserve.getValue()) {
             protectReserve();
         }
         if (protectBeach.getValue()) {
-            queryCultivationList();
+            protectBeach();
         }
     }
 
-    private void cooperateWater() {
+    public static void initForest() {
+        try {
+            JSONArray treeItems = queryTreeItemsForExchange("AVAILABLE", "project");
+            if (treeItems == null) {
+                return;
+            }
+            ReserveIdMap.load();
+            for (int i = 0; i < treeItems.length(); i++) {
+                JSONObject jo = treeItems.getJSONObject(i);
+                String itemId = jo.getString("itemId");
+                String itemName = jo.getString("itemName");
+                if (Objects.equals("TREE", jo.getString("projectType"))) {
+                    String organization = jo.getString("organization");
+                    String region = jo.getString("region");
+                    itemName = itemName + "[" + region + "|" + organization + "]";
+                    TreeIdMap.add(itemId, itemName + "(" + jo.getInt("energy") + "g)");
+                } else if (Objects.equals("RESERVE", jo.getString("projectType"))) {
+                    ReserveIdMap.add(itemId, itemName + "(" + jo.getInt("energy") + "g)");
+                }
+            }
+            TreeIdMap.save();
+            ReserveIdMap.save();
+        } catch (Throwable t) {
+            Log.i(TAG, "initForest err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    public static void initOcean() {
+        try {
+            JSONArray cultivationList = queryCultivationList();
+            if (cultivationList == null) {
+                return;
+            }
+            for (int i = 0; i < cultivationList.length(); i++) {
+                JSONObject jo = cultivationList.getJSONObject(i);
+                if (Objects.equals("AVAILABLE", jo.getString("applyAction"))) {
+                    continue;
+                }
+                if (Objects.equals("BEACH", jo.optString("templateSubType"))) {
+                    BeachIdMap.add(jo.getString("templateCode"), jo.getString("cultivationName") + "(" + jo.getInt("energy") + "g)");
+                } else if (Objects.equals("COOPERATE_PLANT", jo.getString("templateType"))) {
+                    BeachIdMap.add(jo.getString("templateCode"), jo.getString("cultivationName") + "(" + jo.getInt("energy") + "g)");
+                } else if (Objects.equals("PROTECT", jo.getString("templateType"))) {
+                    BeachIdMap.add(jo.getString("templateCode"), jo.getString("cultivationName") + "(" + jo.getInt("energy") + "g)");
+                }
+            }
+            BeachIdMap.load();
+        } catch (Throwable t) {
+            Log.i(TAG, "initOcean err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private static void cooperateWater() {
         try {
             JSONObject jo = new JSONObject(CooperateRpcCall.queryUserCooperatePlantList());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -99,7 +156,7 @@ public class ProtectEcology extends ModelTask {
         }
     }
 
-    private void queryCooperatePlant(String userId, String cooperationId) {
+    private static void queryCooperatePlant(String userId, String cooperationId) {
         try {
             JSONObject jo = new JSONObject(CooperateRpcCall.queryCooperatePlant(cooperationId));
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -136,7 +193,7 @@ public class ProtectEcology extends ModelTask {
         return false;
     }
 
-    private int getEnergyCount(String userId, String cooperationId, int waterDayLimit) {
+    private static int getEnergyCount(String userId, String cooperationId, int waterDayLimit) {
         Integer waterNum = cooperateWaterList.getValue().get(cooperationId);
         if (waterNum == null) {
             return 0;
@@ -170,7 +227,48 @@ public class ProtectEcology extends ModelTask {
         return 0;
     }
 
-    private static JSONArray queryTreeItemsForExchange(String applyActions, String itemTypes) {
+    private static void protectTree() {
+        Map<String, Integer> map = protectTreeList.getValue();
+        try {
+            JSONArray treeItems = queryTreeItemsForExchange("AVAILABLE", "project");
+            if (treeItems == null) {
+                return;
+            }
+            for (int i = 0; i < treeItems.length(); i++) {
+                JSONObject jo = treeItems.getJSONObject(i);
+                int projectId = jo.getInt("projectId");
+                int certCountForAlias = jo.getInt("certCountForAlias");
+                Integer count = map.get(String.valueOf(projectId));
+                if (count == null) {
+                    continue;
+                }
+                while (count > certCountForAlias && queryTreeForExchange(projectId)) {
+                    certCountForAlias++;
+                    TimeUtil.sleep(300);
+                }
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "protectTree err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private static void protectReserve() {
+        Map<String, Integer> map = protectReserveList.getValue();
+        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+            Integer count = entry.getValue();
+            if (count == null || count < 0) {
+                continue;
+            }
+            int projectId = Integer.parseInt(entry.getKey());
+            while (Status.canExchangeReserveToday(projectId, count) && queryTreeForExchange(projectId)) {
+                Status.exchangeReserveToday(projectId);
+                TimeUtil.sleep(300);
+            }
+        }
+    }
+
+    public static JSONArray queryTreeItemsForExchange(String applyActions, String itemTypes) {
         try {
             JSONObject jo = new JSONObject(ProtectEcologyRpcCall.queryTreeItemsForExchange(applyActions, itemTypes));
             if (MessageUtil.checkResultCode(TAG, jo)) {
@@ -183,38 +281,28 @@ public class ProtectEcology extends ModelTask {
         return null;
     }
 
-    private void protectReserve() {
-        Map<String, Integer> map = protectReserveList.getValue();
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
-            Integer count = entry.getValue();
-            if (count == null || count < 0) {
-                continue;
-            }
-            int projectId = Integer.parseInt(entry.getKey());
-            while (Status.canExchangeReserveToday(projectId, count) && queryTreeForExchange(projectId)) {
-                TimeUtil.sleep(300);
-            }
-        }
-    }
-
     private static Boolean queryTreeForExchange(int projectId) {
         try {
-            JSONObject jo = new JSONObject(ReserveRpcCall.queryTreeForExchange(projectId));
+            JSONObject jo = new JSONObject(ProtectTreeRpcCall.queryTreeForExchange(projectId));
             if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return false;
             }
             int currentEnergy = jo.getInt("currentEnergy");
             jo = jo.getJSONObject("exchangeableTree");
+            int count = jo.getInt("certCountForAlias");
             String projectName = jo.getString("projectName");
             if (!Objects.equals("AVAILABLE", jo.getString("applyAction"))) {
-                Log.record("保护动物🏕️保护[" + projectName + "]停止:数量不足");
-                if (currentEnergy >= jo.getInt("energy")) {
-                    return true;
-                }
+                Log.record("生态保护🏕️保护[" + projectName + "]停止:数量不足");
+                return false;
             }
             if (currentEnergy < jo.getInt("energy")) {
-                Log.record("保护动物🏕️保护[" + projectName + "]停止:能量不足");
+                Log.record("生态保护🏕️保护[" + projectName + "]停止:能量不足");
+                return false;
             }
+            if (Objects.equals("RESERVE", jo.getString("projectType"))) {
+                count = Status.getExchangeReserveCountToday(projectId);
+            }
+            Log.forest("生态保护🏕️申请[" + projectName + "]第" + (count + 1) + "次");
             return exchangeTree(projectId, projectName);
         } catch (Throwable t) {
             Log.i(TAG, "queryTreeForExchange err:");
@@ -223,13 +311,12 @@ public class ProtectEcology extends ModelTask {
         return false;
     }
 
-    private static Boolean exchangeTree(int projectId, String itemName) {
+    private static Boolean exchangeTree(int projectId, String projectName) {
         try {
-            JSONObject jo = new JSONObject(ReserveRpcCall.exchangeTree(projectId));
+            JSONObject jo = new JSONObject(ProtectTreeRpcCall.exchangeTree(projectId));
             if (MessageUtil.checkResultCode(TAG, jo)) {
-                Status.exchangeReserveToday(projectId);
                 int vitalityAmount = jo.optInt("vitalityAmount", 0);
-                Log.forest("保护动物🏕️保护[" + itemName + "]第" + Status.getExchangeReserveCountToday(projectId) + "次"
+                Log.forest("生态保护🏕️保护[" + projectName + "]"
                         + (vitalityAmount > 0 ? "奖励[" + vitalityAmount + "活力值]" : ""));
                 return true;
             }
@@ -240,63 +327,79 @@ public class ProtectEcology extends ModelTask {
         return false;
     }
 
-    private void queryCultivationList() {
-        Map<String, Integer> map = protectBeachList.getValue();
+    private static JSONArray queryCultivationList() {
         try {
-            JSONObject jo = new JSONObject(BeachRpcCall.queryCultivationList());
-            if (!MessageUtil.checkResultCode(TAG, jo)) {
-                return;
-            }
-            int currentEnergy = jo.getJSONObject("userInfoVO").getInt("currentEnergy");
-            JSONArray ja = jo.getJSONArray("cultivationItemVOList");
-            for (int i = 0; i < ja.length(); i++) {
-                jo = ja.getJSONObject(i);
-                if (!Objects.equals("AVAILABLE", jo.getString("applyAction"))) {
-                    continue;
-                }
-                String cultivationName = jo.getString("cultivationName");
-                String cultivationCode = jo.getString("cultivationCode");
-                String projectCode = jo.getJSONObject("projectConfigVO").getString("code");
-                int certNum = jo.getInt("certNum");
-                Integer count = map.get(cultivationCode);
-                if (count == null || count <= certNum) {
-                    continue;
-                }
-                int energy = jo.getInt("energy");
-                if (currentEnergy < energy) {
-                    continue;
-                }
-                count = certNum + Math.min(currentEnergy / energy, count - certNum);
-                count = oceanExchangeTree(cultivationCode, projectCode, cultivationName, certNum, count);
-                currentEnergy -= energy * count;
+            JSONObject jo = new JSONObject(ProtectOceanRpcCall.queryCultivationList());
+            if (MessageUtil.checkResultCode(TAG, jo)) {
+                return jo.getJSONArray("cultivationItemVOList");
             }
         } catch (Throwable t) {
             Log.i(TAG, "queryCultivationList err:");
             Log.printStackTrace(TAG, t);
         }
+        return null;
     }
 
-    private static int oceanExchangeTree(String cultivationCode, String projectCode, String cultivationName, int certNum, int protectNum) {
-        int count = 0;
+    private static void protectBeach() {
+        Map<String, Integer> map = protectBeachList.getValue();
         try {
-            for (int i = certNum + 1; i <= protectNum; i++) {
-                Log.forest("保护海洋🏖️支持[" + cultivationName + "]第" + i + "次");
-                if (!oceanExchangeTree(cultivationCode, projectCode, cultivationName)) {
-                    break;
+            JSONArray cultivationList = queryCultivationList();
+            if (cultivationList == null) {
+                return;
+            }
+            for (int i = 0; i < cultivationList.length(); i++) {
+                JSONObject jo = cultivationList.getJSONObject(i);
+                if (!Objects.equals("AVAILABLE", jo.getString("applyAction"))) {
+                    continue;
                 }
-                count++;
-                TimeUtil.sleep(300);
+                String cultivationCode = jo.getString("cultivationCode");
+                String projectCode = jo.getJSONObject("projectConfigVO").getString("code");
+                int certNum = jo.getInt("certNum");
+                Integer count = map.get(cultivationCode);
+                if (count == null) {
+                    continue;
+                }
+                while (count > certNum && queryCultivationDetail(cultivationCode, projectCode)) {
+                    certNum++;
+                    TimeUtil.sleep(300);
+                }
             }
         } catch (Throwable t) {
-            Log.i(TAG, "oceanExchangeTree err:");
+            Log.i(TAG, "protectBeach err:");
             Log.printStackTrace(TAG, t);
         }
-        return count;
+    }
+
+    private static Boolean queryCultivationDetail(String cultivationCode, String projectCode) {
+        try {
+            JSONObject jo = new JSONObject(ProtectOceanRpcCall.queryCultivationDetail(cultivationCode, projectCode));
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
+            }
+            int currentEnergy = jo.getJSONObject("userInfoVO").getInt("currentEnergy");
+            jo = jo.getJSONObject("cultivationDetailVO");
+            String cultivationName = jo.getString("cultivationName");
+            if (!Objects.equals("AVAILABLE", jo.getString("applyAction"))) {
+                Log.record("保护海洋🏖️保护[" + cultivationName + "]停止:数量不足");
+                return false;
+            }
+            if (currentEnergy < jo.getInt("energy")) {
+                Log.record("保护海洋🏖️保护[" + cultivationName + "]停止:能量不足");
+                return false;
+            }
+            int count = jo.getInt("certNum") + 1;
+            Log.forest("保护海洋🏖️申请[" + cultivationName + "]第" + count + "次");
+            return oceanExchangeTree(cultivationCode, projectCode, cultivationName);
+        } catch (Throwable t) {
+            Log.i(TAG, "queryCultivationDetail err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
     }
 
     private static Boolean oceanExchangeTree(String cultivationCode, String projectCode, String cultivationName) {
         try {
-            JSONObject jo = new JSONObject(BeachRpcCall.oceanExchangeTree(cultivationCode, projectCode));
+            JSONObject jo = new JSONObject(ProtectOceanRpcCall.oceanExchangeTree(cultivationCode, projectCode));
             if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return false;
             }
@@ -307,7 +410,7 @@ public class ProtectEcology extends ModelTask {
                 if (i > 0) award.append(";");
                 award.append(jo.getString("name")).append("*").append(jo.getInt("num"));
             }
-            Log.forest("保护海洋🏖️保护[" + cultivationName + "]获得奖励[" + award + "]");
+            Log.forest("保护海洋🏖️保护[" + cultivationName + "]奖励[" + award + "]");
             return true;
         } catch (Throwable t) {
             Log.i(TAG, "oceanExchangeTree err:");

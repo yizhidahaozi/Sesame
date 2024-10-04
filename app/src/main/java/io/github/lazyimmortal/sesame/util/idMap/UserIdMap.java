@@ -1,10 +1,14 @@
-package io.github.lazyimmortal.sesame.util;
+package io.github.lazyimmortal.sesame.util.idMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import de.robv.android.xposed.XposedHelpers;
 import lombok.Getter;
+
 import io.github.lazyimmortal.sesame.entity.UserEntity;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
+import io.github.lazyimmortal.sesame.util.FileUtil;
+import io.github.lazyimmortal.sesame.util.JsonUtil;
+import io.github.lazyimmortal.sesame.util.Log;
 
 import java.lang.reflect.Field;
 import java.util.*;

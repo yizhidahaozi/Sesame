@@ -8,12 +8,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.*;
+
 import io.github.lazyimmortal.sesame.R;
 import io.github.lazyimmortal.sesame.data.*;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
 import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.idMap.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,6 +61,7 @@ public class SettingsActivity extends BaseActivity {
         FarmOrnamentsIdMap.load(userId);
         MemberBenefitIdMap.load(userId);
         PromiseSimpleTemplateIdMap.load(userId);
+        TreeIdMap.load();
         ReserveIdMap.load();
         BeachIdMap.load();
         ConfigV2.load(userId);
