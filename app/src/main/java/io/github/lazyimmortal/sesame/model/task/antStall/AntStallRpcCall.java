@@ -168,6 +168,12 @@ public class AntStallRpcCall {
                         VERSION + "\"}]");
     }
 
+    public static String letterList() {
+        String args = "[{\"source\":\"ANTFARM\"}]";
+        // [{"nextStart":"","pageSize":15,"source":"ch_appcollect__chsub_my-recentlyUsed","systemType":"android","version":"0.1.2409191354.26"}]
+        return ApplicationHook.requestString("com.alipay.antstall.letter.list", args);
+    }
+
     public static String projectList() {
         return ApplicationHook.requestString("com.alipay.antstall.project.list",
                 "[{\"source\":\"ch_appcenter__chsub_9patch\",\"systemType\":\"android\",\"version\":\"" + VERSION + "\"}]");

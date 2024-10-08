@@ -119,9 +119,11 @@ public class AntStall extends ModelTask {
     @Override
     public void run() {
         try {
-            if (querySelfHome() == null) {
+            JSONObject selfHome = querySelfHome();
+            if (selfHome == null) {
                 return;
             }
+            selfHomeHandler(selfHome);
 
             if (throwManureType.getValue() != ThrowManureType.NONE) {
                 throwManure();
@@ -138,9 +140,6 @@ public class AntStall extends ModelTask {
             }
             assistFriend();
 
-            if (donate.getValue()) {
-                projectList();
-            }
             if (pasteTicketType.getValue() != PasteTicketType.NONE) {
                 pasteTicket();
             }
@@ -150,7 +149,7 @@ public class AntStall extends ModelTask {
         }
     }
 
-    private JSONObject querySelfHome() {
+    private static JSONObject querySelfHome() {
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.selfHome(""));
             if (!MessageUtil.checkSuccess(TAG, jo)) {
@@ -169,21 +168,38 @@ public class AntStall extends ModelTask {
                     return null;
                 }
             }
-
-            unlockNewVillage(jo.getJSONObject("currentVillage"));
-
-            JSONObject astReceivableCoinVO = jo.getJSONObject("astReceivableCoinVO");
-            settleReceivable(astReceivableCoinVO);
-
-            JSONObject seatsMap = jo.getJSONObject("seatsMap");
-            settle(seatsMap);
-            sendBack(seatsMap);
             return jo;
         } catch (Throwable t) {
             Log.i(TAG, "querySelfHome err:");
             Log.printStackTrace(TAG, t);
         }
         return null;
+    }
+
+
+    private void selfHomeHandler(JSONObject selfHome) {
+        try {
+            JSONObject currentVillage = selfHome.getJSONObject("currentVillage");
+            if (!canUnlockNewVillage(currentVillage)) {
+                if (donate.getValue()) {
+                    projectList();
+                }
+            } else {
+                if (nextVillage.getValue()) {
+                    unlockNewVillage();
+                }
+            }
+
+            JSONObject astReceivableCoinVO = selfHome.getJSONObject("astReceivableCoinVO");
+            settleReceivable(astReceivableCoinVO);
+
+            JSONObject seatsMap = selfHome.getJSONObject("seatsMap");
+            settle(seatsMap);
+            sendBack(seatsMap);
+        } catch (Throwable t) {
+            Log.i(TAG, "selfHomeHandler err:");
+            Log.printStackTrace(TAG, t);
+        }
     }
 
     private void settleReceivable(JSONObject astReceivableCoinVO) {
@@ -210,7 +226,7 @@ public class AntStall extends ModelTask {
             }
             JSONObject astPreviewShopSettleVO = jo.getJSONObject("astPreviewShopSettleVO");
             JSONObject income = astPreviewShopSettleVO.getJSONObject("income");
-            int amount = (int) income.getDouble("amount");
+            double amount = income.getDouble("amount");
             jo = new JSONObject(AntStallRpcCall.shopSendBack(seatId));
             if (MessageUtil.checkResultCode(TAG, jo)) {
                 Log.farm("蚂蚁新村⛪请走[" + UserIdMap.getMaskName(shopUserId) + "]的小摊"
@@ -349,7 +365,7 @@ public class AntStall extends ModelTask {
                 if ("OPEN".equals(shop.getString("status"))) {
                     JSONObject rentLastEnv = shop.getJSONObject("rentLastEnv");
                     long gmtLastRent = rentLastEnv.getLong("gmtLastRent");
-                    long shopTime = gmtLastRent + shopCloseTime.getValue() * 60 * 1000;
+                    long shopTime = gmtLastRent + TimeUnit.MINUTES.toMillis(shopCloseTime.getValue());
                     String shopId = shop.getString("shopId");
                     String rentLastBill = shop.getString("rentLastBill");
                     String rentLastUser = shop.getString("rentLastUser");
@@ -486,7 +502,8 @@ public class AntStall extends ModelTask {
             JSONObject income = jo.getJSONObject("astPreviewShopSettleVO").getJSONObject("income");
             jo = new JSONObject(AntStallRpcCall.shopClose(shopId));
             if (MessageUtil.checkResultCode(TAG, jo)) {
-                Log.farm("蚂蚁新村⛪在[" + UserIdMap.getMaskName(userId) + "]的新村收摊#获得[" + income.getString("amount") + "木兰币]");
+                double amount = income.getDouble("amount");
+                Log.farm("蚂蚁新村⛪在[" + UserIdMap.getMaskName(userId) + "]的新村收摊#获得[" + amount + "木兰币]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "shopClose err:");
@@ -750,6 +767,9 @@ public class AntStall extends ModelTask {
 
     // 捐赠项目
     private void projectList() {
+        if (!canDonateToday()) {
+            return;
+        }
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.projectList());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -768,7 +788,7 @@ public class AntStall extends ModelTask {
                 }
             }
         } catch (Throwable t) {
-            Log.i(TAG, "donate err:");
+            Log.i(TAG, "projectList err:");
             Log.printStackTrace(TAG, t);
         }
     }
@@ -803,7 +823,12 @@ public class AntStall extends ModelTask {
                 int donateAmount = donateBillVO.getInt("donateAmount");
                 Log.farm("公益捐赠❤️[捐木兰币:" + projectTitle + "]#捐赠[" + (donateAmount / 100) + "木兰币]");
                 JSONObject astUserVillageVO = jo.getJSONObject("astUserVillageVO");
-                unlockNewVillage(astUserVillageVO);
+                if (canUnlockNewVillage(astUserVillageVO)) {
+                    if (nextVillage.getValue()) {
+                        return unlockNewVillage();
+                    }
+                    return false;
+                }
                 return true;
             }
         } catch (Throwable t) {
@@ -813,35 +838,61 @@ public class AntStall extends ModelTask {
         return false;
     }
 
-    // 进入下一村
-    private void unlockNewVillage(JSONObject currentVillage) {
-        if (!nextVillage.getValue()) {
-            return;
-        }
+    private static Boolean canDonateToday() {
         try {
-            int donateCount = currentVillage.getInt("donateCount");
-            int donateLimit = currentVillage.getInt("donateLimit");
-            if (donateCount < donateLimit) {
-                return;
+            JSONObject jo = new JSONObject(AntStallRpcCall.letterList());
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
             }
+            JSONArray ja = jo.getJSONArray("letterList");
+            if (ja.length() == 0) {
+                return true;
+            }
+            jo = ja.getJSONObject(0);
+            long gmtBiz = jo.getLong("gmtBiz");
+            return TimeUtil.isLessThanNowOfDays(gmtBiz);
+        } catch (Throwable t) {
+            Log.i(TAG, "canDonateToday err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    // 进入下一村
+    private Boolean unlockNewVillage() {
+        try {
             if (!nextVillage()) {
-                return;
+                return false;
             }
             JSONObject jo = querySelfHome();
             if (jo == null) {
-                return;
+                return false;
             }
             jo = jo.getJSONObject("currentVillage");
             String villageName = jo.getString("villageName");
             String villageDesc = jo.getJSONObject("properties").getString("villageDesc");
             Log.farm("蚂蚁新村⛪解锁[" + villageName + "]#" + villageDesc);
+            return true;
         } catch (Throwable t) {
             Log.i(TAG, "unlockNewVillage err:");
             Log.printStackTrace(TAG, t);
         }
+        return false;
     }
 
-    private Boolean nextVillage() {
+    private Boolean canUnlockNewVillage(JSONObject currentVillage) {
+        try {
+            int donateCount = currentVillage.getInt("donateCount");
+            int donateLimit = currentVillage.getInt("donateLimit");
+            return donateCount >= donateLimit;
+        } catch (Throwable t) {
+            Log.i(TAG, "canUnlockNewVillage err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private static Boolean nextVillage() {
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.nextVillage());
             return MessageUtil.checkResultCode(TAG, jo);
@@ -990,7 +1041,7 @@ public class AntStall extends ModelTask {
                         )
                 );
                 if (MessageUtil.checkResultCode(TAG, jo)) {
-                    int amount = jo.getJSONObject("pasteIncome").getInt("amount");
+                    double amount = jo.getJSONObject("pasteIncome").getDouble("amount");
                     Log.farm("蚂蚁新村🚫在[" + UserIdMap.getMaskName(friendUserId) + "]的新村贴罚单#获得[" + amount + "木兰币]");
                 }
                 TimeUtil.sleep(1000);
