@@ -64,6 +64,7 @@ public class MessageUtil {
         try {
             String resultCode = jo.optString("resultCode");
             if (!resultCode.equalsIgnoreCase("SUCCESS") && !resultCode.equals("100")) {
+                Log.record(tag + " error:");
                 if (jo.has("resultDesc")) {
                     Log.record(jo.getString("resultDesc"));
                     Log.i(jo.getString("resultDesc"), jo.toString());

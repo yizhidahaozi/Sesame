@@ -11,13 +11,21 @@ import java.util.UUID;
  * @since 2023/08/22
  */
 public class AntStallRpcCall {
-    //0.1.2406171355.5
-    private static final String VERSION = "0.1.2312271038.27";
+//    private static final String VERSION = "0.1.2312271038.27";
+    private static final String VERSION = "0.1.2409191354.26";
 
     public static String home() {
         return ApplicationHook.requestString("com.alipay.antstall.self.home",
                 "[{\"arouseAppParams\":{},\"source\":\"ch_appcenter__chsub_9patch\",\"systemType\":\"android\",\"version\":\"" +
                         VERSION + "\"}]");
+    }
+
+    public static String selfHome(String villageType) {
+        if (villageType.isEmpty()) {
+            return home();
+        }
+        String args = "[{\"source\":\"ANTFARM\",\"villageType\":\"HAIYANG\"}]";
+        return ApplicationHook.requestString("com.alipay.antstall.self.home", args);
     }
 
     public static String settle(String assetId, int settleCoin) {
@@ -92,7 +100,8 @@ public class AntStallRpcCall {
                         VERSION + "\"}]");
     }
 
-    public static String finishTask(String outBizNo, String taskType) {
+    public static String finishTask(String taskType) {
+        String outBizNo = taskType + "_" + System.currentTimeMillis();
         return ApplicationHook.requestString("com.alipay.antiep.finishTask",
                 "[{\"outBizNo\":\"" + outBizNo +
                         "\",\"requestType\":\"RPC\",\"sceneCode\":\"ANTSTALL_TASK\",\"source\":\"AST\",\"systemType\":\"android\",\"taskType\":\"" +
@@ -177,13 +186,13 @@ public class AntStallRpcCall {
     }
 
     public static String roadmap() {
-        return ApplicationHook.requestString("com.alipay.antstall.village.roadmap",
-                "[{\"source\":\"ch_appcenter__chsub_9patch\",\"systemType\":\"android\",\"version\":\"" + VERSION + "\"}]");
+        String args = "[{\"source\":\"ANTFARM\",\"systemType\":\"android\",\"version\":\"" + VERSION + "\"}]";
+        return ApplicationHook.requestString("com.alipay.antstall.village.roadmap", args);
     }
 
     public static String nextVillage() {
-        return ApplicationHook.requestString("com.alipay.antstall.user.ast.next.village",
-                "[{\"source\":\"ch_appcenter__chsub_9patch\",\"systemType\":\"android\",\"version\":\"" + VERSION + "\"}]");
+        String args = "[{\"source\":\"ANTFARM\",\"systemType\":\"android\",\"version\":\"" + VERSION + "\"}]";
+        return ApplicationHook.requestString("com.alipay.antstall.user.ast.next.village", args);
     }
 
     public static String rankInviteRegister() {
@@ -276,7 +285,7 @@ public class AntStallRpcCall {
      *
      * @return
      */
-    public static String ticket(String billNo, String seatId, String shopId, String shopUserId, String seatUserId) {
+    public static String pasteTicket(String billNo, String seatId, String shopId, String shopUserId, String seatUserId) {
         return ApplicationHook.requestString("com.alipay.antstall.friend.paste.ticket",
                 "[{\"billNo\":\"" + billNo + "\",\"seatId\":\"" + seatId + "\",\"shopId\":\"" + shopId
                         + "\",\"shopUserId\":\"" + shopUserId + "\",\"seatUserId\": \"" + seatUserId + "\","

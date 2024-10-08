@@ -39,7 +39,6 @@ public class Status {
     private Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
     private boolean spreadManure = false;
     private Set<String> stallP2PHelpedList = new HashSet<>();
-    private Boolean canStallDonate = true;
 
     // sport
     private boolean syncStep = false;
@@ -471,18 +470,6 @@ public class Status {
             return true;
         } else {
             return false;
-        }
-    }
-
-    // 新村捐赠
-    public static boolean canStallDonateToday() {
-        return INSTANCE.canStallDonate;
-    }
-
-    public static void setStallDonateToday() {
-        if (INSTANCE.canStallDonate) {
-            INSTANCE.canStallDonate = false;
-            save();
         }
     }
 
