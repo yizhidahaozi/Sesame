@@ -83,6 +83,7 @@ public class AntStall extends ModelTask {
     private BooleanModelField nextVillage;
     private BooleanModelField inviteRegister;
     private SelectModelField inviteRegisterList;
+    private BooleanModelField assistFriend;
     private SelectModelField assistFriendList;
 
     @Override
@@ -107,7 +108,8 @@ public class AntStall extends ModelTask {
         modelFields.addField(nextVillage = new BooleanModelField("nextVillage", "解锁新村新店", false));
         modelFields.addField(inviteRegister = new BooleanModelField("inviteRegister", "邀请开通 | 开启", false));
         modelFields.addField(inviteRegisterList = new SelectModelField("inviteRegisterList", "邀请开通 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(assistFriendList = new SelectModelField("assistFriendList", "邀请助力 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
+        modelFields.addField(assistFriend = new BooleanModelField("assistFriend", "分享助力 | 开启", false));
+        modelFields.addField(assistFriendList = new SelectModelField("assistFriendList", "分享助力 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         return modelFields;
     }
 
@@ -138,7 +140,9 @@ public class AntStall extends ModelTask {
             if (taskList.getValue()) {
                 taskList();
             }
-            assistFriend();
+            if (assistFriend.getValue()) {
+                assistFriend();
+            }
 
             if (pasteTicketType.getValue() != PasteTicketType.NONE) {
                 pasteTicket();
@@ -979,7 +983,7 @@ public class AntStall extends ModelTask {
      * 贴罚单
      */
     private void pasteTicket() {
-        if (Status.hasTagToday("stall::pasteTicket")) {
+        if (Status.hasTagToday("stall::pasteTicketLimit")) {
             return;
         }
         try {
@@ -990,7 +994,7 @@ public class AntStall extends ModelTask {
                 }
                 if (jo.getInt("canPasteTicketCount") == 0) {
                     Log.record("蚂蚁新村👍今日罚单已贴完");
-                    Status.tagToday("stall::pasteTicket");
+                    Status.tagToday("stall::pasteTicketLimit");
                     return;
                 }
                 if (!jo.has("friendUserId")) {
@@ -1022,7 +1026,7 @@ public class AntStall extends ModelTask {
             while (keys.hasNext()) {
                 String key = keys.next();
                 JSONObject seat = seatsMap.getJSONObject(key);
-                if (Objects.equals("MASTER", jo.getString("seatType"))
+                if (Objects.equals("MASTER", seat.getString("seatType"))
                         || seat.getBoolean("canOpenShop")
                         || !seat.getBoolean("overTicketProtection")) {
                     // seatType: GUEST MASTER

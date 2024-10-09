@@ -27,12 +27,12 @@ public class AntOrchard extends ModelTask {
     private Integer executeIntervalInt;
 
     private IntegerModelField executeInterval;
-    private BooleanModelField receiveOrchardTaskAward;
+    private BooleanModelField orchardTask;
     private IntegerModelField orchardSpreadManureCount;
     private BooleanModelField batchHireAnimal;
     private SelectModelField dontHireList;
     private SelectModelField dontWeedingList;
-    // 助力好友列表
+    private BooleanModelField assistFriend;
     private SelectModelField assistFriendList;
 
     @Override
@@ -49,9 +49,10 @@ public class AntOrchard extends ModelTask {
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(executeInterval = new IntegerModelField("executeInterval", "执行间隔(毫秒)", 500));
-        modelFields.addField(receiveOrchardTaskAward = new BooleanModelField("receiveOrchardTaskAward", "收取农场任务奖励", false));
+        modelFields.addField(orchardTask = new BooleanModelField("orchardTask", "农场任务", false));
         modelFields.addField(orchardSpreadManureCount = new IntegerModelField("orchardSpreadManureCount", "农场每日施肥次数", 0));
-        modelFields.addField(assistFriendList = new SelectModelField("assistFriendList", "助力好友列表", new LinkedHashSet<>(), AlipayUser::getList));
+        modelFields.addField(assistFriend = new BooleanModelField("assistFriend", "分享助力 | 开启", false));
+        modelFields.addField(assistFriendList = new SelectModelField("assistFriendList", "分享助力 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(batchHireAnimal = new BooleanModelField("batchHireAnimal", "一键捉鸡除草", false));
         modelFields.addField(dontHireList = new SelectModelField("dontHireList", "除草 | 不雇佣好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(dontWeedingList = new SelectModelField("dontWeedingList", "除草 | 不除草好友列表", new LinkedHashSet<>(), AlipayUser::getList));
@@ -85,12 +86,12 @@ public class AntOrchard extends ModelTask {
                                     && !joo.optBoolean("hireCountOneDayLimit", true))
                                 batchHireAnimalRecommend();
                         }
-                        if (receiveOrchardTaskAward.getValue()) {
+                        if (orchardTask.getValue()) {
                             doOrchardDailyTask(userId);
                             triggerTbTask();
                         }
                         Integer orchardSpreadManureCountValue = orchardSpreadManureCount.getValue();
-                        if (orchardSpreadManureCountValue > 0 && !Status.hasTagToday("orchard::spreadManure"))
+                        if (orchardSpreadManureCountValue > 0 && !Status.hasTagToday("orchard::spreadManureLimit"))
                             orchardSpreadManure();
 
                         if (orchardSpreadManureCountValue >= 3
@@ -100,7 +101,9 @@ public class AntOrchard extends ModelTask {
                             querySubplotsActivity(10);
                         }
                         // 助力
-                        orchardAssistFriend();
+                        if (assistFriend.getValue()) {
+                            orchardAssistFriend();
+                        }
                     } else {
                         Log.record(jo.getString("resultDesc"));
                         Log.i(jo.toString());
@@ -193,7 +196,7 @@ public class AntOrchard extends ModelTask {
                         String stageText = jo.getJSONObject("currentStage").getString("stageText");
                         Log.farm("农场施肥💩[" + stageText + "]");
                         if (!canSpreadManureContinue(seedStage.getInt("totalValue"), jo.getJSONObject("currentStage").getInt("totalValue"))) {
-                            Status.tagToday("orchard::spreadManure");
+                            Status.tagToday("orchard::spreadManureLimit");
                             return;
                         }
                         continue;
