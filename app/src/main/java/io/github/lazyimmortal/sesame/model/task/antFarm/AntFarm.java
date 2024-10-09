@@ -858,6 +858,9 @@ public class AntFarm extends ModelTask {
     }
 
     private Boolean canDonationToday() {
+        if (Status.hasTagToday("farm::donation")) {
+            return false;
+        }
         try {
             JSONObject jo = new JSONObject(AntFarmRpcCall.getCharityAccount(userId));
             if (!MessageUtil.checkMemo(TAG, jo)) {
@@ -872,6 +875,7 @@ public class AntFarm extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(charityTime)) {
                 return true;
             }
+            Status.tagToday("farm::donation");
         } catch (Throwable t) {
             Log.i(TAG, "canDonationToday err:");
             Log.printStackTrace(TAG, t);
@@ -1197,9 +1201,12 @@ public class AntFarm extends ModelTask {
         // AccelerateTool: -1h = -60m = -3600s
         while (foodInTrough - foodHaveEatten >= consumeSpeed * 3600
                 && useFarmTool(ownerFarmId, ToolType.ACCELERATETOOL)) {
+            TimeUtil.sleep(1000);
             foodHaveEatten += consumeSpeed * 3600;
             Status.useAccelerateToolToday();
-            TimeUtil.sleep(1000);
+            if (!Status.canUseAccelerateToolToday()) {
+                break;
+            }
             if (!useAccelerateToolContinue.getValue()) {
                 break;
             }
@@ -1224,11 +1231,13 @@ public class AntFarm extends ModelTask {
                 }
                 String toolId = jo.optString("toolId");
                 jo = new JSONObject(AntFarmRpcCall.useFarmTool(targetFarmId, toolId, toolType.name()));
-                if (!MessageUtil.checkMemo(TAG, jo)) {
-                    return false;
+                if (MessageUtil.checkMemo(TAG, jo)) {
+                    Log.farm("使用道具🎭[" + toolType.nickName() + "]#剩余" + (toolCount - 1) + "张");
+                    return true;
+                } else if (Objects.equals("3D16", jo.getString("resultCode"))) {
+                    Status.tagToday("farm::useFarmToolLimit::" + toolType);
                 }
-                Log.farm("使用道具🎭[" + toolType.nickName() + "]#剩余" + (toolCount - 1) + "张");
-                return true;
+                break;
             }
         } catch (Throwable t) {
             Log.i(TAG, "useFarmTool err:");

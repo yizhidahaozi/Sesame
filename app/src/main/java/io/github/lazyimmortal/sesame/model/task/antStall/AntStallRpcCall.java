@@ -1,8 +1,12 @@
 package io.github.lazyimmortal.sesame.model.task.antStall;
 
+import android.util.Base64;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
+import io.github.lazyimmortal.sesame.util.RandomUtil;
 
 import java.util.UUID;
 
@@ -221,7 +225,8 @@ public class AntStallRpcCall {
                         + VERSION + "\"}]");
     }
 
-    public static String achieveBeShareP2P(String shareId) {
+    public static String achieveBeShareP2P(String friendUserId) {
+        String shareId = Base64.encodeToString((friendUserId + "-" + RandomUtil.getRandom(5) + "ANUTSALTML_2PA_SHARE").getBytes(), Base64.NO_WRAP);
         return ApplicationHook.requestString("com.alipay.antiep.achieveBeShareP2P",
                 "[{\"requestType\":\"RPC\",\"sceneCode\":\"ANTSTALL_P2P_SHARER\",\"shareId\":\""
                         + shareId
@@ -281,9 +286,8 @@ public class AntStallRpcCall {
      * @return
      */
     public static String nextTicketFriend() {
-        return ApplicationHook.requestString("com.alipay.antstall.friend.nextTicketFriend",
-                "[{\"source\":\"ch_appcenter__chsub_9patch\",\"systemType\":\"android\",\"version\":\""
-                        + VERSION + "\"}]");
+        String args = "[{\"source\":\"ANTFARM\"}]";
+        return ApplicationHook.requestString("com.alipay.antstall.friend.nextTicketFriend", args);
     }
 
     /**

@@ -1,8 +1,11 @@
 package io.github.lazyimmortal.sesame.model.task.antOrchard;
 
+import android.util.Base64;
+
 import java.util.List;
 
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
+import io.github.lazyimmortal.sesame.util.RandomUtil;
 
 public class AntOrchardRpcCall {
     private static final String VERSION = "0.1.2401111000.31";
@@ -165,12 +168,10 @@ public class AntOrchardRpcCall {
 //                "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM_ORCHARD_SHARE_P2P\",\"source\":\"ch_appcenter__chsub_9patch\",\"version\":\""
 //                        + VERSION + "\"}]");
 //    }
-    public static String achieveBeShareP2P(String shareId) {
-        return ApplicationHook.requestString("com.alipay.antiep.achieveBeShareP2P",
-                "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM_ORCHARD_SHARE_P2P\",\"shareId\":\""
-                        + shareId
-                        + "\",\"source\":\"share\",\"version\":\""
-                        + VERSION + "\"}]");
+    public static String achieveBeShareP2P(String friendUserId) {
+        String shareId = Base64.encodeToString((friendUserId + "-" + RandomUtil.getRandom(5) + "ANTFARM_ORCHARD_SHARE_P2P").getBytes(), Base64.NO_WRAP);
+        String args = "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM_ORCHARD_SHARE_P2P\",\"shareId\":\"" + shareId + "\",\"source\":\"share\"}]";
+        return ApplicationHook.requestString("com.alipay.antiep.achieveBeShareP2P", args);
     }
 
 }

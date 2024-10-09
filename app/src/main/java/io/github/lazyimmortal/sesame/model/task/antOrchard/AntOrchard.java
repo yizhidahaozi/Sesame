@@ -14,7 +14,6 @@ import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.util.*;
 import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
-import android.util.Base64;
 import java.util.*;
 
 public class AntOrchard extends ModelTask {
@@ -91,7 +90,7 @@ public class AntOrchard extends ModelTask {
                             triggerTbTask();
                         }
                         Integer orchardSpreadManureCountValue = orchardSpreadManureCount.getValue();
-                        if (orchardSpreadManureCountValue > 0 && Status.canSpreadManureToday())
+                        if (orchardSpreadManureCountValue > 0 && !Status.hasTagToday("orchard::spreadManure"))
                             orchardSpreadManure();
 
                         if (orchardSpreadManureCountValue >= 3
@@ -101,7 +100,7 @@ public class AntOrchard extends ModelTask {
                             querySubplotsActivity(10);
                         }
                         // 助力
-                        orchardassistFriend();
+                        orchardAssistFriend();
                     } else {
                         Log.record(jo.getString("resultDesc"));
                         Log.i(jo.toString());
@@ -194,13 +193,13 @@ public class AntOrchard extends ModelTask {
                         String stageText = jo.getJSONObject("currentStage").getString("stageText");
                         Log.farm("农场施肥💩[" + stageText + "]");
                         if (!canSpreadManureContinue(seedStage.getInt("totalValue"), jo.getJSONObject("currentStage").getInt("totalValue"))) {
-                            Status.spreadManureToday();
+                            Status.tagToday("orchard::spreadManure");
                             return;
                         }
                         continue;
                     }
                 } finally {
-                    Thread.sleep(executeIntervalInt);
+                    TimeUtil.sleep(executeIntervalInt);
                 }
                 break;
             } while (true);
@@ -460,33 +459,24 @@ public class AntOrchard extends ModelTask {
     }
 
     // 助力
-    private void orchardassistFriend() {
+    private void orchardAssistFriend() {
         try {
-            if (!Status.canAntOrchardAssistFriendToday()) {
+            if (Status.hasTagToday("orchard::assistFriend")) {
                 return;
             }
             Set<String> friendSet = assistFriendList.getValue();
-            for (String uid : friendSet) {
-                String shareId = Base64.encodeToString((uid + "-" + RandomUtil.getRandom(5) + "ANTFARM_ORCHARD_SHARE_P2P").getBytes(), Base64.NO_WRAP);
-                String str = AntOrchardRpcCall.achieveBeShareP2P(shareId);
-                JSONObject jsonObject = new JSONObject(str);
-                Thread.sleep(5000);
-                String name = UserIdMap.getMaskName(uid);
-                if (!jsonObject.optBoolean("success")) {
-                    String code = jsonObject.getString("code");
-                    if ("600000027".equals(code)) {
-                        Log.record("农场助力💪今日助力他人次数上限");
-                        Status.antOrchardAssistFriendToday();
-                        return;
-                    }
-                    Log.record("农场助力😔失败[" + name + "]" + jsonObject.optString("desc"));
-                    continue;
+            for (String friendUserId : friendSet) {
+                JSONObject jo = new JSONObject(AntOrchardRpcCall.achieveBeShareP2P(friendUserId));
+                TimeUtil.sleep(5000);
+                if (MessageUtil.checkSuccess(TAG, jo)) {
+                    Log.farm("农场助力🎉助力[" + UserIdMap.getMaskName(friendUserId) + "]成功");
+                } else if (Objects.equals("600000027", jo.getString("code"))) {
+                    break;
                 }
-                Log.farm("农场助力💪[助力:" + name + "]");
             }
-            Status.antOrchardAssistFriendToday();
+            Status.tagToday("orchard::assistFriend");
         } catch (Throwable t) {
-            Log.i(TAG, "orchardassistFriend err:");
+            Log.i(TAG, "orchardAssistFriend err:");
             Log.printStackTrace(TAG, t);
         }
     }

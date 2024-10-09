@@ -113,7 +113,7 @@ public class AntSports extends ModelTask {
     @Override
     public void run() {
         try {
-            if (Status.canSyncStepToday() && TimeUtil.isNowAfterOrCompareTimeStr("0600")) {
+            if (!Status.hasTagToday("sport::syncStep") && TimeUtil.isNowAfterOrCompareTimeStr("0600")) {
                 addChildTask(new ChildModelTask("syncStep", () -> {
                     int step = tmpStepCount();
                     try {
@@ -123,7 +123,7 @@ public class AntSports extends ModelTask {
                         } else {
                             Log.record("同步运动步数失败:" + step);
                         }
-                        Status.SyncStepToday();
+                        Status.tagToday("sport::syncStep");
                     } catch (Throwable t) {
                         Log.printStackTrace(TAG, t);
                     }
@@ -380,6 +380,9 @@ public class AntSports extends ModelTask {
     }
 
     private Boolean hasTreasureBox() {
+        if (Status.hasTagToday("sport::treasureBoxLimit")) {
+            return false;
+        }
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryMailList());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -397,7 +400,10 @@ public class AntSports extends ModelTask {
                 }
                 count++;
             }
-            return count < 20;
+            if (count < 20) {
+                return true;
+            }
+            Status.tagToday("sport::treasureBoxLimit");
         } catch (Throwable t) {
             Log.i(TAG, "hasTreasureBox err:");
             Log.printStackTrace(TAG, t);
@@ -670,6 +676,9 @@ public class AntSports extends ModelTask {
      * 新版行走路线 -- end
      */
     private Boolean canDonateCharityCoinToday() {
+        if (Status.hasTagToday("sport::donate")) {
+            return false;
+        }
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.queryDonateRecord());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -685,6 +694,7 @@ public class AntSports extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(lastDonationTime)) {
                 return true;
             }
+            Status.tagToday("sport::donate");
         } catch (Throwable t) {
             Log.i(TAG, "canDonateCharityCoinToday err:");
             Log.printStackTrace(TAG, t);

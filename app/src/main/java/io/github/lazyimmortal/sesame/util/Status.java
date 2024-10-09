@@ -23,7 +23,6 @@ public class Status {
     private Map<String, Integer> vitalityExchangeBenefitList = new HashMap<>();
     private Map<Integer, Integer> exchangeReserveList = new HashMap<>();
     private Set<String> ancientTreeCityCodeList = new HashSet<>();
-    private boolean protectBubble = false;
     private int doubleTimes = 0;
 
     // farm
@@ -32,32 +31,18 @@ public class Status {
     private int useAccelerateToolCount = 0;
     private int useSpecialFoodCount = 0;
 
-    // orchard
-    private boolean antOrchardAssistFriend = false;
-
     // stall
     private Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
-    private boolean spreadManure = false;
     private Set<String> stallP2PHelpedList = new HashSet<>();
 
-    // sport
-    private boolean syncStep = false;
+    // member
+    private Set<String> memberPointExchangeBenefitList = new HashSet<>();
 
     // other
-    private boolean memberSignIn = false;
-    private Set<String> memberPointExchangeBenefitList = new HashSet<>();
+    private final Set<String> tags = new HashSet<>();
 
     // 保存时间
     private Long saveTime = 0L;
-
-    /**
-     * 新村助力好友，已上限的用户
-     */
-    private boolean antStallAssistFriend = false;
-    /**
-     * 新村-罚单已贴完的用户
-     */
-    private boolean pasteTicketTime = false;
 
     /**
      * 绿色经营，收取好友金币已完成用户
@@ -69,7 +54,18 @@ public class Status {
      */
     private Set<Integer> greenFinancePrizesSet = new HashSet<>();
 
-    public static boolean canWaterFriendToday(String id, int newCount) {
+    public static Boolean hasTagToday(String tag) {
+        return INSTANCE.tags.contains(tag);
+    }
+
+    public static void tagToday(String tag) {
+        if (!hasTagToday(tag)) {
+            INSTANCE.tags.add(tag);
+            save();
+        }
+    }
+
+    public static Boolean canWaterFriendToday(String id, int newCount) {
         Integer count = INSTANCE.waterFriendLogList.get(id);
         if (count == null) {
             return true;
@@ -90,14 +86,9 @@ public class Status {
         return exchangedCount;
     }
 
-    public static void setVitalityExchangeBenefitCountToday(String skuId, int count) {
-        int exchangedCount = getVitalityExchangeBenefitCountToday(skuId);
-        INSTANCE.vitalityExchangeBenefitList.put(skuId, Math.max(exchangedCount, count));
-        save();
-    }
-
     public static Boolean canVitalityExchangeBenefitToday(String skuId, int count) {
-        return getVitalityExchangeBenefitCountToday(skuId) < count;
+        return !hasTagToday("forest::exchangeLimit::" + skuId)
+                && getVitalityExchangeBenefitCountToday(skuId) < count;
     }
 
     public static void vitalityExchangeBenefitToday(String skuId) {
@@ -133,7 +124,7 @@ public class Status {
         }
     }
 
-    public static boolean canAncientTreeToday(String cityCode) {
+    public static Boolean canAncientTreeToday(String cityCode) {
         return !INSTANCE.ancientTreeCityCodeList.contains(cityCode);
     }
 
@@ -145,7 +136,7 @@ public class Status {
         }
     }
 
-    public static boolean canFeedFriendToday(String id, int newCount) {
+    public static Boolean canFeedFriendToday(String id, int newCount) {
         Integer count = INSTANCE.feedFriendLogList.get(id);
         if (count == null) {
             return true;
@@ -162,7 +153,7 @@ public class Status {
         save();
     }
 
-    public static boolean canVisitFriendToday(String id, int newCount) {
+    public static Boolean canVisitFriendToday(String id, int newCount) {
         Integer count = INSTANCE.visitFriendLogList.get(id);
         if (count == null) {
             return true;
@@ -197,20 +188,9 @@ public class Status {
         save();
     }
 
-    public static boolean canMemberSignInToday() {
-        return !INSTANCE.memberSignIn;
-    }
-
-    public static void memberSignInToday() {
-        Status stat = INSTANCE;
-        if (!stat.memberSignIn) {
-            stat.memberSignIn = true;
-            save();
-        }
-    }
-
-    public static boolean canUseAccelerateToolToday() {
-        return INSTANCE.useAccelerateToolCount < 8;
+    public static Boolean canUseAccelerateToolToday() {
+        return !hasTagToday("farm::useFarmToolLimit::" + "ACCELERATE" + "TOOL")
+                && INSTANCE.useAccelerateToolCount < 8;
     }
 
     public static void useAccelerateToolToday() {
@@ -218,7 +198,7 @@ public class Status {
         save();
     }
 
-    public static boolean canUseSpecialFoodToday() {
+    public static Boolean canUseSpecialFoodToday() {
         AntFarm task = ModelTask.getModel(AntFarm.class);
         if (task == null) {
             return false;
@@ -235,18 +215,6 @@ public class Status {
         save();
     }
 
-    public static boolean canSpreadManureToday() {
-        return !INSTANCE.spreadManure;
-    }
-
-    public static void spreadManureToday() {
-        Status stat = INSTANCE;
-        if (!stat.spreadManure) {
-            stat.spreadManure = true;
-            save();
-        }
-    }
-
     public static boolean canStallP2PHelpToday(String uid) {
         return !INSTANCE.stallP2PHelpedList.contains(uid);
     }
@@ -255,71 +223,6 @@ public class Status {
         Status stat = INSTANCE;
         if (!stat.stallP2PHelpedList.contains(uid)) {
             stat.stallP2PHelpedList.add(uid);
-            save();
-        }
-    }
-
-    /**
-     * 是否可以新村助力
-     *
-     * @return true是，false否
-     */
-    public static boolean canAntStallAssistFriendToday() {
-        return !INSTANCE.antStallAssistFriend;
-    }
-
-    /**
-     * 设置新村助力已到上限
-     */
-    public static void antStallAssistFriendToday() {
-        Status stat = INSTANCE;
-        if (!stat.antStallAssistFriend) {
-            stat.antStallAssistFriend = true;
-            save();
-        }
-    }
-
-    // 农场助力
-    public static boolean canAntOrchardAssistFriendToday() {
-        return !INSTANCE.antOrchardAssistFriend;
-    }
-
-    public static void antOrchardAssistFriendToday() {
-        Status stat = INSTANCE;
-        if (!stat.antOrchardAssistFriend) {
-            stat.antOrchardAssistFriend = true;
-            save();
-        }
-    }
-
-    public static boolean canProtectBubbleToday() {
-        return !INSTANCE.protectBubble;
-    }
-
-    public static void protectBubbleToday() {
-        Status stat = INSTANCE;
-        if (!stat.protectBubble) {
-            stat.protectBubble = true;
-            save();
-        }
-    }
-
-    /**
-     * 是否可以贴罚单
-     *
-     * @return true是，false否
-     */
-    public static boolean canPasteTicketTime() {
-        return !INSTANCE.pasteTicketTime;
-    }
-
-    /**
-     * 罚单贴完了
-     */
-    public static void pasteTicketTime() {
-        Status stat = INSTANCE;
-        if (!stat.pasteTicketTime) {
-            stat.pasteTicketTime = true;
             save();
         }
     }
@@ -335,18 +238,6 @@ public class Status {
     public static void DoubleToday() {
         INSTANCE.doubleTimes += 1;
         save();
-    }
-
-    public static boolean canSyncStepToday() {
-        return !INSTANCE.syncStep;
-    }
-
-    public static void SyncStepToday() {
-        Status stat = INSTANCE;
-        if (!stat.syncStep) {
-            stat.syncStep = true;
-            save();
-        }
     }
 
     /**

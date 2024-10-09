@@ -1,8 +1,8 @@
 package io.github.lazyimmortal.sesame.model.task.antStall;
 
-import android.util.Base64;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
@@ -727,38 +727,27 @@ public class AntStall extends ModelTask {
      */
     private void assistFriend() {
         try {
-            if (!Status.canAntStallAssistFriendToday()) {
+            if (Status.hasTagToday("stall::assistFriend")) {
                 return;
             }
             Set<String> friendSet = assistFriendList.getValue();
-            for (String uid : friendSet) {
-                String shareId = Base64.encodeToString((uid + "-" + RandomUtil.getRandom(5) + "ANUTSALTML_2PA_SHARE").getBytes(), Base64.NO_WRAP);
-                String str = AntStallRpcCall.achieveBeShareP2P(shareId);
-                JSONObject jsonObject = new JSONObject(str);
+            for (String friendUserId : friendSet) {
+                JSONObject jo = new JSONObject(AntStallRpcCall.achieveBeShareP2P(friendUserId));
                 TimeUtil.sleep(5000);
-                String name = UserIdMap.getMaskName(uid);
-                if (!jsonObject.optBoolean("success")) {
-                    String code = jsonObject.getString("code");
-                    if ("600000028".equals(code)) {
-                        Log.record("新村助力🐮被助力次数上限[" + name + "]");
-                        continue;
-                    }
-                    if ("600000027".equals(code)) {
-                        Log.record("新村助力💪今日助力他人次数上限");
-                        Status.antStallAssistFriendToday();
-                        return;
-                    }
-                    //600000010 人传人邀请关系不存在
-                    //600000015 人传人完成邀请，菲方用户
-                    //600000031 人传人完成邀请过于频繁
-                    //600000029 人传人分享一对一接受邀请达到限制
-                    Log.record("新村助力😔失败[" + name + "]" + jsonObject.optString("desc"));
-                    continue;
+                if (MessageUtil.checkSuccess(TAG, jo)) {
+                    Log.farm("新村助力🎉助力[" + UserIdMap.getMaskName(friendUserId) + "]成功");
+                } else if (Objects.equals("600000027", jo.getString("code"))) {
+                    break;
                 }
-                Log.farm("新村助力🎉成功[" + name + "]");
+                // 600000010 人传人邀请关系不存在
+                // 600000015 人传人完成邀请，非法用户
+                // 600000031 人传人完成邀请过于频繁
+                // 600000027 今日助力他人次数上限
+                // 600000028 被助力次数上限
+                // 600000029 人传人分享一对一接受邀请达到限制
             }
             //暂时一天只做一次
-            Status.antStallAssistFriendToday();
+            Status.tagToday("stall::assistFriend");
         } catch (Throwable t) {
             Log.i(TAG, "assistFriend err:");
             Log.printStackTrace(TAG, t);
@@ -839,6 +828,9 @@ public class AntStall extends ModelTask {
     }
 
     private static Boolean canDonateToday() {
+        if (Status.hasTagToday("stall::donate")) {
+            return false;
+        }
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.letterList());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -850,7 +842,10 @@ public class AntStall extends ModelTask {
             }
             jo = ja.getJSONObject(0);
             long gmtBiz = jo.getLong("gmtBiz");
-            return TimeUtil.isLessThanNowOfDays(gmtBiz);
+            if (TimeUtil.isLessThanNowOfDays(gmtBiz)) {
+                return true;
+            }
+            Status.tagToday("stall::donate");
         } catch (Throwable t) {
             Log.i(TAG, "canDonateToday err:");
             Log.printStackTrace(TAG, t);
@@ -981,10 +976,10 @@ public class AntStall extends ModelTask {
      * 贴罚单
      */
     private void pasteTicket() {
+        if (Status.hasTagToday("stall::pasteTicket")) {
+            return;
+        }
         try {
-            if (!Status.canPasteTicketTime()) {
-                return;
-            }
             while (true) {
                 JSONObject jo = new JSONObject(AntStallRpcCall.nextTicketFriend());
                 if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -992,7 +987,7 @@ public class AntStall extends ModelTask {
                 }
                 if (jo.getInt("canPasteTicketCount") == 0) {
                     Log.record("蚂蚁新村👍今日罚单已贴完");
-                    Status.pasteTicketTime();
+                    Status.tagToday("stall::pasteTicket");
                     return;
                 }
                 if (!jo.has("friendUserId")) {
