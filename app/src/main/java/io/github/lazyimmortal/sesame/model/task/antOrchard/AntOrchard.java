@@ -460,21 +460,25 @@ public class AntOrchard extends ModelTask {
 
     // 助力
     private void orchardAssistFriend() {
+        if (Status.hasTagToday("orchard::shareP2PLimit")) {
+            return;
+        }
         try {
-            if (Status.hasTagToday("orchard::assistFriend")) {
-                return;
-            }
             Set<String> friendSet = assistFriendList.getValue();
             for (String friendUserId : friendSet) {
+                if (!Status.canOrchardShareP2PToday(friendUserId)) {
+                    continue;
+                }
                 JSONObject jo = new JSONObject(AntOrchardRpcCall.achieveBeShareP2P(friendUserId));
                 TimeUtil.sleep(5000);
                 if (MessageUtil.checkSuccess(TAG, jo)) {
                     Log.farm("农场助力🎉助力[" + UserIdMap.getMaskName(friendUserId) + "]成功");
+                    Status.orchardShareP2PToday(friendUserId);
                 } else if (Objects.equals("600000027", jo.getString("code"))) {
-                    break;
+                    Status.tagToday("orchard::shareP2PLimit");
+                    return;
                 }
             }
-            Status.tagToday("orchard::assistFriend");
         } catch (Throwable t) {
             Log.i(TAG, "orchardAssistFriend err:");
             Log.printStackTrace(TAG, t);

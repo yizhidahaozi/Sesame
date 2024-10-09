@@ -727,17 +727,22 @@ public class AntStall extends ModelTask {
      */
     private void assistFriend() {
         try {
-            if (Status.hasTagToday("stall::assistFriend")) {
+            if (Status.hasTagToday("stall::shareP2PLimit")) {
                 return;
             }
             Set<String> friendSet = assistFriendList.getValue();
             for (String friendUserId : friendSet) {
+                if (!Status.canStallShareP2PToday(friendUserId)) {
+                    continue;
+                }
                 JSONObject jo = new JSONObject(AntStallRpcCall.achieveBeShareP2P(friendUserId));
                 TimeUtil.sleep(5000);
                 if (MessageUtil.checkSuccess(TAG, jo)) {
                     Log.farm("新村助力🎉助力[" + UserIdMap.getMaskName(friendUserId) + "]成功");
+                    Status.stallShareP2PToday(friendUserId);
                 } else if (Objects.equals("600000027", jo.getString("code"))) {
-                    break;
+                    Status.tagToday("stall::shareP2PLimit");
+                    return;
                 }
                 // 600000010 人传人邀请关系不存在
                 // 600000015 人传人完成邀请，非法用户
@@ -746,8 +751,6 @@ public class AntStall extends ModelTask {
                 // 600000028 被助力次数上限
                 // 600000029 人传人分享一对一接受邀请达到限制
             }
-            //暂时一天只做一次
-            Status.tagToday("stall::assistFriend");
         } catch (Throwable t) {
             Log.i(TAG, "assistFriend err:");
             Log.printStackTrace(TAG, t);

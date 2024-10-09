@@ -19,24 +19,27 @@ public class Status {
     public static final Status INSTANCE = new Status();
 
     // forest
-    private Map<String, Integer> waterFriendLogList = new HashMap<>();
-    private Map<String, Integer> vitalityExchangeBenefitList = new HashMap<>();
-    private Map<Integer, Integer> exchangeReserveList = new HashMap<>();
-    private Set<String> ancientTreeCityCodeList = new HashSet<>();
+    private final Map<String, Integer> waterFriendLogList = new HashMap<>();
+    private final Map<String, Integer> vitalityExchangeBenefitList = new HashMap<>();
+    private final Map<Integer, Integer> exchangeReserveList = new HashMap<>();
+    private final Set<String> ancientTreeCityCodeList = new HashSet<>();
     private int doubleTimes = 0;
 
     // farm
-    private Map<String, Integer> feedFriendLogList = new HashMap<>();
-    private Map<String, Integer> visitFriendLogList = new HashMap<>();
+    private final Map<String, Integer> feedFriendLogList = new HashMap<>();
+    private final Map<String, Integer> visitFriendLogList = new HashMap<>();
     private int useAccelerateToolCount = 0;
     private int useSpecialFoodCount = 0;
 
+    // orchard
+    private final Set<String> orchardShareP2PList = new HashSet<>();
+
     // stall
-    private Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
-    private Set<String> stallP2PHelpedList = new HashSet<>();
+    private final Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
+    private final Set<String> stallShareP2PList = new HashSet<>();
 
     // member
-    private Set<String> memberPointExchangeBenefitList = new HashSet<>();
+    private final Set<String> memberPointExchangeBenefitList = new HashSet<>();
 
     // other
     private final Set<String> tags = new HashSet<>();
@@ -52,7 +55,7 @@ public class Status {
     /**
      * 绿色经营，评级领奖已完成用户
      */
-    private Set<Integer> greenFinancePrizesSet = new HashSet<>();
+    private final Set<Integer> greenFinancePrizesSet = new HashSet<>();
 
     public static Boolean hasTagToday(String tag) {
         return INSTANCE.tags.contains(tag);
@@ -215,14 +218,26 @@ public class Status {
         save();
     }
 
-    public static boolean canStallP2PHelpToday(String uid) {
-        return !INSTANCE.stallP2PHelpedList.contains(uid);
+    public static Boolean canOrchardShareP2PToday(String friendUserId) {
+        return !hasTagToday("orchard::shareP2PLimit")
+                && !INSTANCE.orchardShareP2PList.contains(friendUserId);
     }
 
-    public static void stallP2PHelpeToday(String uid) {
-        Status stat = INSTANCE;
-        if (!stat.stallP2PHelpedList.contains(uid)) {
-            stat.stallP2PHelpedList.add(uid);
+    public static void orchardShareP2PToday(String friendUserId) {
+        if (canOrchardShareP2PToday(friendUserId)) {
+            INSTANCE.orchardShareP2PList.add(friendUserId);
+            save();
+        }
+    }
+
+    public static Boolean canStallShareP2PToday(String friendUserId) {
+        return !hasTagToday("stall::shareP2PLimit")
+                && !INSTANCE.stallShareP2PList.contains(friendUserId);
+    }
+
+    public static void stallShareP2PToday(String friendUserId) {
+        if (canStallShareP2PToday(friendUserId)) {
+            INSTANCE.stallShareP2PList.add(friendUserId);
             save();
         }
     }

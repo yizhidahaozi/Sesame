@@ -227,11 +227,8 @@ public class AntStallRpcCall {
 
     public static String achieveBeShareP2P(String friendUserId) {
         String shareId = Base64.encodeToString((friendUserId + "-" + RandomUtil.getRandom(5) + "ANUTSALTML_2PA_SHARE").getBytes(), Base64.NO_WRAP);
-        return ApplicationHook.requestString("com.alipay.antiep.achieveBeShareP2P",
-                "[{\"requestType\":\"RPC\",\"sceneCode\":\"ANTSTALL_P2P_SHARER\",\"shareId\":\""
-                        + shareId
-                        + "\",\"source\":\"ANTSTALL\",\"systemType\":\"android\",\"version\":\""
-                        + VERSION + "\"}]");
+        String args = "[{\"requestType\":\"RPC\",\"sceneCode\":\"ANTSTALL_P2P_SHARER\",\"shareId\":\"" + shareId + "\",\"source\":\"ANTSTALL\"}]";
+        return ApplicationHook.requestString("com.alipay.antiep.achieveBeShareP2P", args);
     }
 
     public static String shopSendBackPre(String billNo, String seatId, String shopId, String shopUserId) {
