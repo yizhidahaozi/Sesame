@@ -676,7 +676,7 @@ public class AntSports extends ModelTask {
      * 新版行走路线 -- end
      */
     private Boolean canDonateCharityCoinToday() {
-        if (Status.hasTagToday("sport::donate")) {
+        if (Status.hasTagToday("sport::donateCharityCoin")) {
             return false;
         }
         try {
@@ -694,7 +694,7 @@ public class AntSports extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(lastDonationTime)) {
                 return true;
             }
-            Status.tagToday("sport::donate");
+            Status.tagToday("sport::donateCharityCoin");
         } catch (Throwable t) {
             Log.i(TAG, "canDonateCharityCoinToday err:");
             Log.printStackTrace(TAG, t);
@@ -754,6 +754,9 @@ public class AntSports extends ModelTask {
     }
 
     private Boolean canDonateWalkExchangeToday() {
+        if (Status.hasTagToday("sport::donateWalk")) {
+            return false;
+        }
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.donateExchangeRecord());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -768,6 +771,7 @@ public class AntSports extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(gmtCreate)) {
                 return true;
             }
+            Status.tagToday("sport::donateWalk");
         } catch (Throwable t) {
             Log.i(TAG, "canDonateWalkExchangeToday err:");
             Log.printStackTrace(TAG, t);
