@@ -701,7 +701,7 @@ public class AntForestV2 extends ModelTask {
                     }
                     if (helpFriendCollectType.getValue() != HelpFriendCollectType.NONE
                             && friendObject.optBoolean("canProtectBubble")
-                            && !Status.hasTagToday("forest::protectBubble")) {
+                            && !Status.hasFlagToday("forest::protectBubble")) {
                         boolean isHelpCollect = helpFriendCollectList.getValue().contains(userId);
                         if (helpFriendCollectType.getValue() != HelpFriendCollectType.HELP) {
                             isHelpCollect = !isHelpCollect;
@@ -780,7 +780,7 @@ public class AntForestV2 extends ModelTask {
                             continue;
                         }
                         if (wateringBubble.getJSONObject("extInfo").optInt("restTimes", 0) == 0) {
-                            Status.tagToday("forest::protectBubble");
+                            Status.flagToday("forest::protectBubble");
                         }
                         if (!wateringBubble.getBoolean("canProtect")) {
                             continue;
@@ -2348,7 +2348,7 @@ public class AntForestV2 extends ModelTask {
                         || ItemStatus.NO_ENOUGH_STOCK.name().equals(itemStatus)) {
                     Log.record("活力兑换🎐[" + skuName + "]停止:" + ItemStatus.valueOf(itemStatus).nickName());
                     if (ItemStatus.REACH_LIMIT.name().equals(itemStatus)) {
-                        Status.tagToday("forest::exchangeLimit::" + skuId);
+                        Status.flagToday("forest::exchangeLimit::" + skuId);
                     }
                     return false;
                 }

@@ -20,8 +20,8 @@ public class Status {
 
     // forest
     private final Map<String, Integer> waterFriendLogList = new HashMap<>();
-    private final Map<String, Integer> vitalityExchangeBenefitList = new HashMap<>();
-    private final Map<Integer, Integer> exchangeReserveList = new HashMap<>();
+    private final Map<String, Integer> vitalityExchangeBenefitLogList = new HashMap<>();
+    private final Map<Integer, Integer> exchangeReserveLogList = new HashMap<>();
     private final Set<String> ancientTreeCityCodeList = new HashSet<>();
     private int doubleTimes = 0;
 
@@ -32,17 +32,17 @@ public class Status {
     private int useSpecialFoodCount = 0;
 
     // orchard
-    private final Set<String> orchardShareP2PList = new HashSet<>();
+    private final Set<String> orchardShareP2PLogList = new HashSet<>();
 
     // stall
     private final Map<String, Integer> stallHelpedCountLogList = new HashMap<>();
-    private final Set<String> stallShareP2PList = new HashSet<>();
+    private final Set<String> stallShareP2PLogList = new HashSet<>();
 
     // member
-    private final Set<String> memberPointExchangeBenefitList = new HashSet<>();
+    private final Set<String> memberPointExchangeBenefitLogList = new HashSet<>();
 
     // other
-    private final Set<String> tags = new HashSet<>();
+    private final Set<String> flagLogList = new HashSet<>();
 
     // 保存时间
     private Long saveTime = 0L;
@@ -57,13 +57,13 @@ public class Status {
      */
     private final Set<Integer> greenFinancePrizesSet = new HashSet<>();
 
-    public static Boolean hasTagToday(String tag) {
-        return INSTANCE.tags.contains(tag);
+    public static Boolean hasFlagToday(String tag) {
+        return INSTANCE.flagLogList.contains(tag);
     }
 
-    public static void tagToday(String tag) {
-        if (!hasTagToday(tag)) {
-            INSTANCE.tags.add(tag);
+    public static void flagToday(String tag) {
+        if (!hasFlagToday(tag)) {
+            INSTANCE.flagLogList.add(tag);
             save();
         }
     }
@@ -82,7 +82,7 @@ public class Status {
     }
 
     public static int getVitalityExchangeBenefitCountToday(String skuId) {
-        Integer exchangedCount = INSTANCE.vitalityExchangeBenefitList.get(skuId);
+        Integer exchangedCount = INSTANCE.vitalityExchangeBenefitLogList.get(skuId);
         if (exchangedCount == null) {
             exchangedCount = 0;
         }
@@ -90,18 +90,18 @@ public class Status {
     }
 
     public static Boolean canVitalityExchangeBenefitToday(String skuId, int count) {
-        return !hasTagToday("forest::exchangeLimit::" + skuId)
+        return !hasFlagToday("forest::exchangeLimit::" + skuId)
                 && getVitalityExchangeBenefitCountToday(skuId) < count;
     }
 
     public static void vitalityExchangeBenefitToday(String skuId) {
         int count = getVitalityExchangeBenefitCountToday(skuId) + 1;
-        INSTANCE.vitalityExchangeBenefitList.put(skuId, count);
+        INSTANCE.vitalityExchangeBenefitLogList.put(skuId, count);
         save();
     }
 
     public static int getExchangeReserveCountToday(int id) {
-        Integer count = INSTANCE.exchangeReserveList.get(id);
+        Integer count = INSTANCE.exchangeReserveLogList.get(id);
         return count == null ? 0 : count;
     }
 
@@ -111,18 +111,17 @@ public class Status {
 
     public static void exchangeReserveToday(int id) {
         int count = getExchangeReserveCountToday(id) + 1;
-        INSTANCE.exchangeReserveList.put(id, count);
+        INSTANCE.exchangeReserveLogList.put(id, count);
         save();
     }
 
     public static Boolean canMemberPointExchangeBenefitToday(String benefitId) {
-        return !INSTANCE.memberPointExchangeBenefitList.contains(benefitId);
+        return !INSTANCE.memberPointExchangeBenefitLogList.contains(benefitId);
     }
 
     public static void memberPointExchangeBenefitToday(String benefitId) {
-        Status stat = INSTANCE;
-        if (!stat.memberPointExchangeBenefitList.contains(benefitId)) {
-            stat.memberPointExchangeBenefitList.add(benefitId);
+        if (canMemberPointExchangeBenefitToday(benefitId)) {
+            INSTANCE.memberPointExchangeBenefitLogList.add(benefitId);
             save();
         }
     }
@@ -139,33 +138,41 @@ public class Status {
         }
     }
 
-    public static Boolean canFeedFriendToday(String id, int newCount) {
+    private static int getFeedFriendCountToday(String id) {
         Integer count = INSTANCE.feedFriendLogList.get(id);
-        if (count == null) {
-            return true;
-        }
-        return count < newCount;
+        return count == null ? 0 : count;
+    }
+
+    public static Boolean canFeedFriendToday(String id, int countLimit) {
+        return getFeedFriendCountToday(id) < countLimit;
     }
 
     public static void feedFriendToday(String id) {
-        Integer count = INSTANCE.feedFriendLogList.get(id);
-        if (count == null) {
-            count = 0;
-        }
-        INSTANCE.feedFriendLogList.put(id, count + 1);
+        int count = getFeedFriendCountToday(id) + 1;
+        INSTANCE.feedFriendLogList.put(id, count);
         save();
     }
 
-    public static Boolean canVisitFriendToday(String id, int newCount) {
+    private static int getVisitFriendCountToday(String id) {
         Integer count = INSTANCE.visitFriendLogList.get(id);
-        if (count == null) {
-            return true;
-        }
-        return count < newCount;
+        return count == null ? 0 : count;
     }
 
-    public static void visitFriendToday(String id, int newCount) {
-        INSTANCE.visitFriendLogList.put(id, newCount);
+    public static Boolean canVisitFriendToday(String id, int countLimit) {
+        countLimit = Math.max(countLimit, 0);
+        countLimit = Math.min(countLimit, 3);
+        return !hasFlagToday("farm::visitFriendLimit::" + id)
+                && getVisitFriendCountToday(id) < countLimit;
+    }
+
+    public static void visitFriendToday(String id) {
+        int count = getVisitFriendCountToday(id) + 1;
+        INSTANCE.visitFriendLogList.put(id, count);
+        save();
+    }
+
+    public static void visitFriendToday(String id, int count) {
+        INSTANCE.visitFriendLogList.put(id, count);
         save();
     }
 
@@ -192,7 +199,7 @@ public class Status {
     }
 
     public static Boolean canUseAccelerateToolToday() {
-        return !hasTagToday("farm::useFarmToolLimit::" + "ACCELERATE" + "TOOL")
+        return !hasFlagToday("farm::useFarmToolLimit::" + "ACCELERATE" + "TOOL")
                 && INSTANCE.useAccelerateToolCount < 8;
     }
 
@@ -219,25 +226,27 @@ public class Status {
     }
 
     public static Boolean canOrchardShareP2PToday(String friendUserId) {
-        return !hasTagToday("orchard::shareP2PLimit")
-                && !INSTANCE.orchardShareP2PList.contains(friendUserId);
+        return !hasFlagToday("orchard::shareP2PLimit")
+                && !hasFlagToday("orchard::shareP2PLimit::" + friendUserId)
+                && !INSTANCE.orchardShareP2PLogList.contains(friendUserId);
     }
 
     public static void orchardShareP2PToday(String friendUserId) {
         if (canOrchardShareP2PToday(friendUserId)) {
-            INSTANCE.orchardShareP2PList.add(friendUserId);
+            INSTANCE.orchardShareP2PLogList.add(friendUserId);
             save();
         }
     }
 
     public static Boolean canStallShareP2PToday(String friendUserId) {
-        return !hasTagToday("stall::shareP2PLimit")
-                && !INSTANCE.stallShareP2PList.contains(friendUserId);
+        return !hasFlagToday("stall::shareP2PLimit")
+                && !hasFlagToday("stall::shareP2PLimit::" + friendUserId)
+                && !INSTANCE.stallShareP2PLogList.contains(friendUserId);
     }
 
     public static void stallShareP2PToday(String friendUserId) {
         if (canStallShareP2PToday(friendUserId)) {
-            INSTANCE.stallShareP2PList.add(friendUserId);
+            INSTANCE.stallShareP2PLogList.add(friendUserId);
             save();
         }
     }

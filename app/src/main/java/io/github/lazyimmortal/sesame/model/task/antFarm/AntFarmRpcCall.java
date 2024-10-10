@@ -12,6 +12,11 @@ import io.github.lazyimmortal.sesame.util.RandomUtil;
 public class AntFarmRpcCall {
     private static final String VERSION = "1.8.2302070202.46";
 
+    public static String enterFarm(String userId) {
+        String args = "[{\"queryLastRecordNum\":true,\"recall\":false,\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"userId\":\"" + userId + "\"}]";
+        return ApplicationHook.requestString("com.alipay.antfarm.enterFarm", args);
+    }
+
     public static String enterFarm(String farmId, String userId) {
         return ApplicationHook.requestString("com.alipay.antfarm.enterFarm",
                 "[{\"animalId\":\"\",\"farmId\":\"" + farmId +

@@ -640,7 +640,7 @@ public class AntStall extends ModelTask {
                         signReward.append(type).append("*").append(count);
                     }
                 }
-                Log.farm("新村任务🧾每日签到#获得[" + signReward + "]");
+                Log.farm("新村任务📅签到#获得[" + signReward + "]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "signToday err:");
@@ -652,7 +652,7 @@ public class AntStall extends ModelTask {
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.receiveTaskAward(taskType));
             if (MessageUtil.checkSuccess(TAG, jo)) {
-                Log.farm("新村任务🧾领取[" + title + "]奖励#获得[产速增加" + jo.getInt("incAwardCount") + "/小时]");
+                Log.farm("新村任务🎖️领取[" + title + "]奖励#获得[产速增加" + jo.getInt("incAwardCount") + "/小时]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "receiveTaskAward err:");
@@ -731,7 +731,7 @@ public class AntStall extends ModelTask {
      */
     private void assistFriend() {
         try {
-            if (Status.hasTagToday("stall::shareP2PLimit")) {
+            if (Status.hasFlagToday("stall::shareP2PLimit")) {
                 return;
             }
             Set<String> friendSet = assistFriendList.getValue();
@@ -745,8 +745,10 @@ public class AntStall extends ModelTask {
                     Log.farm("新村助力🎉助力[" + UserIdMap.getMaskName(friendUserId) + "]成功");
                     Status.stallShareP2PToday(friendUserId);
                 } else if (Objects.equals("600000027", jo.getString("code"))) {
-                    Status.tagToday("stall::shareP2PLimit");
+                    Status.flagToday("stall::shareP2PLimit");
                     return;
+                } else if (Objects.equals("600000028", jo.getString("code"))) {
+                    Status.feedFriendToday("stall::shareP2PLimit::" + friendUserId);
                 }
                 // 600000010 人传人邀请关系不存在
                 // 600000015 人传人完成邀请，非法用户
@@ -835,7 +837,7 @@ public class AntStall extends ModelTask {
     }
 
     private static Boolean canDonateToday() {
-        if (Status.hasTagToday("stall::donate")) {
+        if (Status.hasFlagToday("stall::donate")) {
             return false;
         }
         try {
@@ -852,7 +854,7 @@ public class AntStall extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(gmtBiz)) {
                 return true;
             }
-            Status.tagToday("stall::donate");
+            Status.flagToday("stall::donate");
         } catch (Throwable t) {
             Log.i(TAG, "canDonateToday err:");
             Log.printStackTrace(TAG, t);
@@ -983,7 +985,7 @@ public class AntStall extends ModelTask {
      * 贴罚单
      */
     private void pasteTicket() {
-        if (Status.hasTagToday("stall::pasteTicketLimit")) {
+        if (Status.hasFlagToday("stall::pasteTicketLimit")) {
             return;
         }
         try {
@@ -994,7 +996,7 @@ public class AntStall extends ModelTask {
                 }
                 if (jo.getInt("canPasteTicketCount") == 0) {
                     Log.record("蚂蚁新村👍今日罚单已贴完");
-                    Status.tagToday("stall::pasteTicketLimit");
+                    Status.flagToday("stall::pasteTicketLimit");
                     return;
                 }
                 if (!jo.has("friendUserId")) {

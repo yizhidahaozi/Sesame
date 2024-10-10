@@ -149,13 +149,16 @@ public class AntMember extends ModelTask {
 
     private void memberSign() {
         try {
-            if (!Status.hasTagToday("member::sign")) {
+            if (!Status.hasFlagToday("member::sign")) {
                 JSONObject jo = new JSONObject(AntMemberRpcCall.queryMemberSigninCalendar());
                 TimeUtil.sleep(500);
                 if (MessageUtil.checkResultCode(TAG, jo)) {
-                    Log.other("每日签到📅[" + jo.getString("signinPoint") + "积分]#已签到"
-                            + jo.getString("signinSumDay") + "天");
-                    Status.tagToday("member::sign");
+                    if (jo.getBoolean("autoSignInSuccess")) {
+                        Log.other("会员任务📅签到[坚持"
+                                + jo.getString("signinSumDay") + "天]#获得["
+                                + jo.getString("signinPoint") + "积分]");
+                    }
+                    Status.flagToday("member::sign");
                 }
             }
 
@@ -185,7 +188,7 @@ public class AntMember extends ModelTask {
                 int pointAmount = jo.getInt("pointAmount");
                 jo = new JSONObject(AntMemberRpcCall.receivePointByUser(id));
                 if (MessageUtil.checkResultCode(TAG, jo)) {
-                    Log.other("会员任务🎖️领取[" + bizTitle + "]奖励[" + pointAmount + "积分]");
+                    Log.other("会员任务🎖️领取[" + bizTitle + "]奖励#获得[" + pointAmount + "积分]");
                 }
             }
             if (hasNextPage) {
@@ -395,12 +398,10 @@ public class AntMember extends ModelTask {
     private void signPageTaskList() {
         try {
             do {
-                String s = AntMemberRpcCall.signPageTaskList();
+                JSONObject jo = new JSONObject(AntMemberRpcCall.signPageTaskList());
                 TimeUtil.sleep(500);
-                JSONObject jo = new JSONObject(s);
                 boolean doubleCheck = false;
-                if (!"SUCCESS".equals(jo.getString("resultCode"))) {
-                    Log.i(TAG, "queryAllStatusTaskList err:" + jo.getString("resultDesc"));
+                if (!MessageUtil.checkResultCode(TAG + " signPageTaskList", jo)) {
                     return;
                 }
                 if (!jo.has("categoryTaskList")) {
@@ -431,17 +432,15 @@ public class AntMember extends ModelTask {
      */
     private void queryAllStatusTaskList() {
         try {
-            String str = AntMemberRpcCall.queryAllStatusTaskList();
+            JSONObject jo = new JSONObject(AntMemberRpcCall.queryAllStatusTaskList());
             TimeUtil.sleep(500);
-            JSONObject jsonObject = new JSONObject(str);
-            if (!"SUCCESS".equals(jsonObject.getString("resultCode"))) {
-                Log.i(TAG, "queryAllStatusTaskList err:" + jsonObject.getString("resultDesc"));
+            if (!MessageUtil.checkResultCode(TAG + " queryAllStatusTaskList", jo)) {
                 return;
             }
-            if (!jsonObject.has("availableTaskList")) {
+            if (!jo.has("availableTaskList")) {
                 return;
             }
-            if (doTask(jsonObject.getJSONArray("availableTaskList"))) {
+            if (doTask(jo.getJSONArray("availableTaskList"))) {
                 queryAllStatusTaskList();
             }
         } catch (Throwable t) {
@@ -643,7 +642,7 @@ public class AntMember extends ModelTask {
                     if (hybrid) {
                         ex = "(" + (periodCurrentCount + k + 1) + "/" + periodTargetCount + ")";
                     }
-                    Log.other("会员任务🎖️完成[" + name + ex + "]奖励[" + awardParamPoint + "积分]");
+                    Log.other("会员任务🎖️完成[" + name + ex + "]#获得[" + awardParamPoint + "积分]");
                     doubleCheck = true;
                 }
             }
@@ -893,7 +892,7 @@ public class AntMember extends ModelTask {
                 String itemId = benefitInfo.getString("itemId");
                 if (exchangeBenefit(benefitId, itemId)) {
                     String point = pricePresentation.getString("point");
-                    Log.other("会员积分🎐兑换[" + name + "]花费[" + point + "积分]");
+                    Log.other("会员积分🎐兑换[" + name + "]#花费[" + point + "积分]");
                 }
             }
             MemberBenefitIdMap.save(userId);
@@ -1047,7 +1046,8 @@ public class AntMember extends ModelTask {
                 jo = new JSONObject(AntMemberRpcCall.openBoxAward());
                 if (MessageUtil.checkSuccess(TAG, jo)) {
                     int amount = jo.getInt("amount");
-                    Log.other("攒消费金💰[签到:获得" + amount + "金币]");
+                    int consecutiveSignInDays = jo.getInt("consecutiveSignInDays");
+                    Log.other("攒消费金💰签到[坚持" + consecutiveSignInDays + "天]#获得[" + amount + "消费金]");
                 }
             }
         } catch (Throwable t) {

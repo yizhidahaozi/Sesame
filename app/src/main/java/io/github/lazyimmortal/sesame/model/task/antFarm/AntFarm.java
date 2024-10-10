@@ -313,7 +313,7 @@ public class AntFarm extends ModelTask {
             visitAnimal();
 
             // 送麦子
-            visit();
+            visitFriend();
 
             // 帮好友喂鸡
             if (feedFriendAnimal.getValue()) {
@@ -858,7 +858,7 @@ public class AntFarm extends ModelTask {
     }
 
     private Boolean canDonationToday() {
-        if (Status.hasTagToday("farm::donation")) {
+        if (Status.hasFlagToday("farm::donation")) {
             return false;
         }
         try {
@@ -875,7 +875,7 @@ public class AntFarm extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(charityTime)) {
                 return true;
             }
-            Status.tagToday("farm::donation");
+            Status.flagToday("farm::donation");
         } catch (Throwable t) {
             Log.i(TAG, "canDonationToday err:");
             Log.printStackTrace(TAG, t);
@@ -1235,7 +1235,7 @@ public class AntFarm extends ModelTask {
                     Log.farm("使用道具🎭[" + toolType.nickName() + "]#剩余" + (toolCount - 1) + "张");
                     return true;
                 } else if (Objects.equals("3D16", jo.getString("resultCode"))) {
-                    Status.tagToday("farm::useFarmToolLimit::" + toolType);
+                    Status.flagToday("farm::useFarmToolLimit::" + toolType);
                 }
                 break;
             }
@@ -1649,66 +1649,53 @@ public class AntFarm extends ModelTask {
         }
     }
 
-    private void visit() {
-        try {
-            Map<String, Integer> map = visitFriendList.getValue();
-            for (Map.Entry<String, Integer> entry : map.entrySet()) {
-                String userId = entry.getKey();
-                Integer count = entry.getValue();
-                if (userId.equals(UserIdMap.getCurrentUid()))
-                    continue;
-                if (count <= 0)
-                    continue;
-                if (count > 3)
-                    count = 3;
-                if (Status.canVisitFriendToday(userId, count)) {
-                    count = visitFriend(userId, count);
-                    if (count > 0)
-                        Status.visitFriendToday(userId, count);
-                }
+    private void visitFriend() {
+        Map<String, Integer> map = visitFriendList.getValue();
+        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+            String userId = entry.getKey();
+            Integer countLimit = entry.getValue();
+            if (userId.equals(UserIdMap.getCurrentUid())) {
+                continue;
             }
-        } catch (Throwable t) {
-            Log.i(TAG, "visit err:");
-            Log.printStackTrace(TAG, t);
+            if (Status.canVisitFriendToday(userId, countLimit)) {
+                visitFriend(userId, countLimit);
+            }
         }
     }
 
-    private int visitFriend(String userId, int count) {
-        int visitedTimes = 0;
+    private void visitFriend(String userId, int countLimit) {
         try {
-            JSONObject jo = new JSONObject(AntFarmRpcCall.enterFarm("", userId));
+            JSONObject jo = new JSONObject(AntFarmRpcCall.enterFarm(userId));
             if (!MessageUtil.checkMemo(TAG, jo)) {
-                return 0;
+                return;
             }
             JSONObject farmVO = jo.getJSONObject("farmVO");
             foodStock = farmVO.getInt("foodStock");
             JSONObject subFarmVO = farmVO.getJSONObject("subFarmVO");
-            if (subFarmVO.optBoolean("visitedToday", true))
-                return 3;
+            if (subFarmVO.optBoolean("visitedToday", true)) {
+                Status.flagToday("farm::visitFriendLimit::" + userId);
+                return;
+            }
             String farmId = subFarmVO.getString("farmId");
-            for (int i = 0; i < count; i++) {
-                if (foodStock < 10) {
-                    break;
-                }
+            while (Status.canVisitFriendToday(userId, countLimit) && foodStock >= 10) {
                 jo = new JSONObject(AntFarmRpcCall.visitFriend(farmId));
                 if (!MessageUtil.checkMemo(TAG, jo)) {
-                    continue;
-                }
-                foodStock = jo.getInt("foodStock");
-                Log.farm("赠送麦子🌾[" + UserIdMap.getMaskName(userId) + "]#" + jo.getInt("giveFoodNum") + "g");
-                visitedTimes++;
-                if (jo.optBoolean("isReachLimit")) {
-                    Log.record("今日给[" + UserIdMap.getMaskName(userId) + "]送麦子已达上限");
-                    visitedTimes = 3;
                     break;
                 }
-                Thread.sleep(1000L);
+                TimeUtil.sleep(1000);
+                Status.visitFriendToday(userId);
+                foodStock = jo.getInt("foodStock");
+                Log.farm("赠送麦子🌾赠送[" + UserIdMap.getMaskName(userId) + "]麦子#消耗[" + jo.getInt("giveFoodNum") + "g饲料]");
+                if (jo.optBoolean("isReachLimit")) {
+                    Log.record("今日给[" + UserIdMap.getMaskName(userId) + "]送麦子已达上限");
+                    Status.flagToday("farm::visitFriendLimit::" + userId);
+                    break;
+                }
             }
         } catch (Throwable t) {
             Log.i(TAG, "visitFriend err:");
             Log.printStackTrace(TAG, t);
         }
-        return visitedTimes;
     }
 
     private void acceptGift() {

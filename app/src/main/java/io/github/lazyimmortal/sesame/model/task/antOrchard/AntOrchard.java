@@ -91,7 +91,7 @@ public class AntOrchard extends ModelTask {
                             triggerTbTask();
                         }
                         Integer orchardSpreadManureCountValue = orchardSpreadManureCount.getValue();
-                        if (orchardSpreadManureCountValue > 0 && !Status.hasTagToday("orchard::spreadManureLimit"))
+                        if (orchardSpreadManureCountValue > 0 && !Status.hasFlagToday("orchard::spreadManureLimit"))
                             orchardSpreadManure();
 
                         if (orchardSpreadManureCountValue >= 3
@@ -196,7 +196,7 @@ public class AntOrchard extends ModelTask {
                         String stageText = jo.getJSONObject("currentStage").getString("stageText");
                         Log.farm("农场施肥💩[" + stageText + "]");
                         if (!canSpreadManureContinue(seedStage.getInt("totalValue"), jo.getJSONObject("currentStage").getInt("totalValue"))) {
-                            Status.tagToday("orchard::spreadManureLimit");
+                            Status.flagToday("orchard::spreadManureLimit");
                             return;
                         }
                         continue;
@@ -463,7 +463,7 @@ public class AntOrchard extends ModelTask {
 
     // 助力
     private void orchardAssistFriend() {
-        if (Status.hasTagToday("orchard::shareP2PLimit")) {
+        if (Status.hasFlagToday("orchard::shareP2PLimit")) {
             return;
         }
         try {
@@ -478,8 +478,10 @@ public class AntOrchard extends ModelTask {
                     Log.farm("农场助力🎉助力[" + UserIdMap.getMaskName(friendUserId) + "]成功");
                     Status.orchardShareP2PToday(friendUserId);
                 } else if (Objects.equals("600000027", jo.getString("code"))) {
-                    Status.tagToday("orchard::shareP2PLimit");
+                    Status.flagToday("orchard::shareP2PLimit");
                     return;
+                } else if (Objects.equals("600000028", jo.getString("code"))) {
+                    Status.feedFriendToday("orchard::shareP2PLimit::" + friendUserId);
                 }
             }
         } catch (Throwable t) {

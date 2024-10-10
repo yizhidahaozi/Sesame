@@ -113,7 +113,7 @@ public class AntSports extends ModelTask {
     @Override
     public void run() {
         try {
-            if (!Status.hasTagToday("sport::syncStep") && TimeUtil.isNowAfterOrCompareTimeStr("0600")) {
+            if (!Status.hasFlagToday("sport::syncStep") && TimeUtil.isNowAfterOrCompareTimeStr("0600")) {
                 addChildTask(new ChildModelTask("syncStep", () -> {
                     int step = tmpStepCount();
                     try {
@@ -123,7 +123,7 @@ public class AntSports extends ModelTask {
                         } else {
                             Log.record("同步运动步数失败:" + step);
                         }
-                        Status.tagToday("sport::syncStep");
+                        Status.flagToday("sport::syncStep");
                     } catch (Throwable t) {
                         Log.printStackTrace(TAG, t);
                     }
@@ -380,7 +380,7 @@ public class AntSports extends ModelTask {
     }
 
     private Boolean hasTreasureBox() {
-        if (Status.hasTagToday("sport::treasureBoxLimit")) {
+        if (Status.hasFlagToday("sport::treasureBoxLimit")) {
             return false;
         }
         try {
@@ -403,7 +403,7 @@ public class AntSports extends ModelTask {
             if (count < 20) {
                 return true;
             }
-            Status.tagToday("sport::treasureBoxLimit");
+            Status.flagToday("sport::treasureBoxLimit");
         } catch (Throwable t) {
             Log.i(TAG, "hasTreasureBox err:");
             Log.printStackTrace(TAG, t);
@@ -676,7 +676,7 @@ public class AntSports extends ModelTask {
      * 新版行走路线 -- end
      */
     private Boolean canDonateCharityCoinToday() {
-        if (Status.hasTagToday("sport::donateCharityCoin")) {
+        if (Status.hasFlagToday("sport::donateCharityCoin")) {
             return false;
         }
         try {
@@ -694,7 +694,7 @@ public class AntSports extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(lastDonationTime)) {
                 return true;
             }
-            Status.tagToday("sport::donateCharityCoin");
+            Status.flagToday("sport::donateCharityCoin");
         } catch (Throwable t) {
             Log.i(TAG, "canDonateCharityCoinToday err:");
             Log.printStackTrace(TAG, t);
@@ -754,7 +754,7 @@ public class AntSports extends ModelTask {
     }
 
     private Boolean canDonateWalkExchangeToday() {
-        if (Status.hasTagToday("sport::donateWalk")) {
+        if (Status.hasFlagToday("sport::donateWalk")) {
             return false;
         }
         try {
@@ -771,7 +771,7 @@ public class AntSports extends ModelTask {
             if (TimeUtil.isLessThanNowOfDays(gmtCreate)) {
                 return true;
             }
-            Status.tagToday("sport::donateWalk");
+            Status.flagToday("sport::donateWalk");
         } catch (Throwable t) {
             Log.i(TAG, "canDonateWalkExchangeToday err:");
             Log.printStackTrace(TAG, t);
