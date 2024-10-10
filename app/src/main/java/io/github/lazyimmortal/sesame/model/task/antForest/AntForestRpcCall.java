@@ -337,17 +337,6 @@ public class AntForestRpcCall {
         return ApplicationHook.requestString("alipay.antforest.forest.h5.updateUserConfig", "[{\"configMap\":{\"whackMole\":\"N\"},\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
     }
 
-    /* 森林集市 */
-    public static String consultForSendEnergyByAction(String sourceType) {
-        return ApplicationHook.requestString("alipay.bizfmcg.greenlife.consultForSendEnergyByAction",
-                "[{\"sourceType\":\"" + sourceType + "\"}]");
-    }
-
-    public static String sendEnergyByAction(String sourceType) {
-        return ApplicationHook.requestString("alipay.bizfmcg.greenlife.sendEnergyByAction",
-                "[{\"actionType\":\"GOODS_BROWSE\",\"requestId\":\"" + RandomUtil.getRandomString(8) + "\",\"sourceType\":\"" + sourceType + "\"}]");
-    }
-
     /* 翻倍额外能量收取 */
     public static String collectRobExpandEnergy(String propId, String propType) {
         return ApplicationHook.requestString("alipay.antforest.forest.h5.collectRobExpandEnergy",

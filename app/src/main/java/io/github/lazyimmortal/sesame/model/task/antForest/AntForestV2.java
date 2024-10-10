@@ -121,7 +121,7 @@ public class AntForestV2 extends ModelTask {
     private BooleanModelField userPatrol;
     private BooleanModelField collectGiftBox;
     private BooleanModelField medicalHealth;
-    private BooleanModelField sendEnergyByAction;
+    private BooleanModelField greenLife;
     private BooleanModelField combineAnimalPiece;
     private BooleanModelField consumeAnimalProp;
     private SelectModelField whoYouWantToGiveTo;
@@ -190,10 +190,10 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(receiveForestTaskAward = new BooleanModelField("receiveForestTaskAward", "森林任务", false));
         modelFields.addField(collectGiftBox = new BooleanModelField("collectGiftBox", "领取礼盒", false));
         modelFields.addField(medicalHealth = new BooleanModelField("medicalHealth", "医疗健康", false));
-        modelFields.addField(sendEnergyByAction = new BooleanModelField("sendEnergyByAction", "森林集市", false));
-        modelFields.addField(ecoLifeTick = new BooleanModelField("ecoLifeTick", "绿色 | 行动打卡", false));
-        modelFields.addField(ecoLifeOpen = new BooleanModelField("ecoLifeOpen", "绿色 | 自动开通", false));
-        modelFields.addField(photoGuangPan = new BooleanModelField("photoGuangPan", "绿色 | 光盘行动", false));
+        modelFields.addField(greenLife = new BooleanModelField("greenLife", "森林集市", false));
+        modelFields.addField(ecoLifeTick = new BooleanModelField("ecoLifeTick", "绿色行动 | 行动打卡", false));
+        modelFields.addField(ecoLifeOpen = new BooleanModelField("ecoLifeOpen", "绿色行动 | 自动开通", false));
+        modelFields.addField(photoGuangPan = new BooleanModelField("photoGuangPan", "绿色行动 | 光盘打卡", false));
         modelFields.addField(dress = new BooleanModelField("dress", "装扮保护 | 开启", false));
         modelFields.addField(dressDetailList = new TextModelField("dressDetailList", "装扮保护 | 装扮信息", ""));
         return modelFields;
@@ -444,9 +444,8 @@ public class AntForestV2 extends ModelTask {
                     vitalityExchangeBenefit();
                 }
                 /* 森林集市 */
-                if (sendEnergyByAction.getValue()) {
-                    sendEnergyByAction("GREEN_LIFE");
-                    sendEnergyByAction("ANTFOREST");
+                if (greenLife.getValue()) {
+                    greenLife();
                 }
 
                 if (medicalHealth.getValue()) {
@@ -1073,7 +1072,8 @@ public class AntForestV2 extends ModelTask {
                 energyGeneratedList = jo.getJSONArray("energyGeneratedList");
                 if (energyGeneratedList.length() > 0) {
                     String title = scene.equals("FEEDS") ? "绿色医疗" : "电子小票";
-                    Log.forest("医疗健康🚑完成[" + title + "]");
+                    int cumulativeEnergy = jo.getInt("cumulativeEnergy");
+                    Log.forest("医疗健康🚑完成[" + title + "]#产生[" + cumulativeEnergy + "g能量]");
                 }
             }
         } catch (Throwable th) {
@@ -1093,7 +1093,7 @@ public class AntForestV2 extends ModelTask {
             int collectedEnergy = jo.getInt("collectedEnergy");
             if (collectedEnergy > 0) {
                 String title = scene.equals("FEEDS") ? "绿色医疗" : "电子小票";
-                Log.forest("医疗健康🚑收取[" + title + "]能量" + collectedEnergy + "g");
+                Log.forest("医疗健康🚑收取[" + title + "]#获得[" + collectedEnergy + "g能量]");
                 totalCollected += collectedEnergy;
                 Statistics.addData(Statistics.DataType.COLLECTED, collectedEnergy);
                 return true;
@@ -1155,20 +1155,56 @@ public class AntForestV2 extends ModelTask {
     }
 
     /* 森林集市 */
-    private void sendEnergyByAction(String sourceType) {
+    private static void greenLife() {
+        sendEnergyByAction("GREEN_LIFE");
+        sendEnergyByAction("ANTFOREST");
+        retrieveCurrentActivity();
+    }
+
+    private static void retrieveCurrentActivity() {
         try {
-            JSONObject jo = new JSONObject(AntForestRpcCall.consultForSendEnergyByAction(sourceType));
+            JSONObject jo = new JSONObject(GreenLifeRpcCall.retrieveCurrentActivity());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            JSONObject currentActivity = jo.getJSONObject("currentActivity");
+            int numberOfDaysCompleted = currentActivity.getInt("numberOfDaysCompleted") + 1;
+            JSONObject currentTask = jo.getJSONObject("currentTask");
+            if (currentTask.getBoolean("checkInCompleted")) {
+                return;
+            }
+            String taskTemplateId = currentTask.getString("taskTemplateId");
+            jo = new JSONObject(GreenLifeRpcCall.finishCurrentTask(taskTemplateId));
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
+                return;
+            }
+            Log.forest("森林集市🛍️打卡[坚持" + numberOfDaysCompleted + "天]");
+            jo = jo.getJSONObject("data");
+            JSONArray ja = jo.getJSONArray("prizes");
+            for (int i = 0; i < ja.length(); i++) {
+                String name = jo.getString("name");
+                Log.forest("森林集市🛍️领取打卡奖励[" + name + "]");
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "retrieveCurrentActivity err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+     private static void sendEnergyByAction(String sourceType) {
+        try {
+            JSONObject jo = new JSONObject(GreenLifeRpcCall.consultForSendEnergyByAction(sourceType));
             if (!MessageUtil.checkSuccess(TAG, jo)) {
                 return;
             }
             JSONObject data = jo.getJSONObject("data");
             if (data.optBoolean("canSendEnergy", false)) {
-                jo = new JSONObject(AntForestRpcCall.sendEnergyByAction(sourceType));
+                jo = new JSONObject(GreenLifeRpcCall.sendEnergyByAction(sourceType));
                 if (MessageUtil.checkSuccess(TAG, jo)) {
                     data = jo.getJSONObject("data");
                     if (data.optBoolean("canSendEnergy", false)) {
                         int receivedEnergyAmount = data.getInt("receivedEnergyAmount");
-                        Log.forest("集市逛街👀[获得:能量" + receivedEnergyAmount + "g]");
+                        Log.forest("森林集市🛍️完成[线上逛街]#产生[" + receivedEnergyAmount + "g能量]");
                     }
                 }
             }
@@ -1434,7 +1470,7 @@ public class AntForestV2 extends ModelTask {
             TimeUtil.sleep(500);
             if (MessageUtil.checkSuccess(TAG, jo)) {
                 int incAwardCount = jo.optInt("incAwardCount", 1);
-                Log.forest("森林任务🎖️领取[" + taskTitle + "]奖励[" + incAwardCount + "活力值]");
+                Log.forest("森林任务🎖️领取[" + taskTitle + "]奖励#获得[" + incAwardCount + "活力值]");
                 return true;
             }
         } catch (Throwable t) {
@@ -1839,8 +1875,8 @@ public class AntForestV2 extends ModelTask {
                     TokenConfig.saveDishImage(dishImage);
                 }
             }
-            if ("SUCCESS".equals(JsonUtil.getValueByPath(jo, "data.status"))) {
-                //Log.forest("光盘行动💿今日已完成");
+            if (Objects.equals("SUCCESS", jo.getJSONObject("data").getString("status"))) {
+                //Log.forest("光盘行动💿今日打卡已完成");
                 return;
             }
 
@@ -1864,7 +1900,8 @@ public class AntForestV2 extends ModelTask {
             if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
-            Log.forest("光盘行动💿任务完成");
+            String toastMsg = jo.getJSONObject("data").getString("toastMsg");
+            Log.forest("光盘行动💿打卡完成#" + toastMsg);
         } catch (Throwable t) {
             Log.i(TAG, "photoGuangPan err:");
             Log.printStackTrace(TAG, t);
