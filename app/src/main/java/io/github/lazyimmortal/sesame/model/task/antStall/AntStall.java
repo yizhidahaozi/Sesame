@@ -747,8 +747,8 @@ public class AntStall extends ModelTask {
                 } else if (Objects.equals("600000027", jo.getString("code"))) {
                     Status.flagToday("stall::shareP2PLimit");
                     return;
-                } else if (Objects.equals("600000028", jo.getString("code"))) {
-                    Status.feedFriendToday("stall::shareP2PLimit::" + friendUserId);
+                } else {
+                    Status.flagToday("stall::shareP2PLimit::" + friendUserId);
                 }
                 // 600000010 人传人邀请关系不存在
                 // 600000015 人传人完成邀请，非法用户

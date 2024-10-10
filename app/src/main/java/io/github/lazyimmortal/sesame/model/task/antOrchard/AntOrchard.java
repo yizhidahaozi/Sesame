@@ -480,8 +480,8 @@ public class AntOrchard extends ModelTask {
                 } else if (Objects.equals("600000027", jo.getString("code"))) {
                     Status.flagToday("orchard::shareP2PLimit");
                     return;
-                } else if (Objects.equals("600000028", jo.getString("code"))) {
-                    Status.feedFriendToday("orchard::shareP2PLimit::" + friendUserId);
+                } else {
+                    Status.flagToday("orchard::shareP2PLimit::" + friendUserId);
                 }
             }
         } catch (Throwable t) {
