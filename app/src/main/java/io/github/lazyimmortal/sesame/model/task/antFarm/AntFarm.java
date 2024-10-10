@@ -910,7 +910,7 @@ public class AntFarm extends ModelTask {
                     if (jo.has("receiveFoodCount")) {
                         award.append(";肥料*").append(jo.getString("receiveFoodCount"));
                     }
-                    Log.farm("小鸡乐园🎮游玩[" + gameType.gameName() + "]奖励[" + award + "]");
+                    Log.farm("小鸡乐园🎮游玩[" + gameType.gameName() + "]#获得[" + award + "]");
                     if (jo.optInt("remainingGameCount", 0) > 0) {
                         continue;
                     }
@@ -957,6 +957,10 @@ public class AntFarm extends ModelTask {
     }
 
     private Boolean sign(JSONObject SignList) {
+        if (Status.hasFlagToday("farm::sign")) {
+            return false;
+        }
+        boolean signed = false;
         try {
             String currentSignKey = SignList.getString("currentSignKey");
             JSONArray signList = SignList.getJSONArray("signList");
@@ -967,6 +971,7 @@ public class AntFarm extends ModelTask {
                 }
                 if (jo.optBoolean("signed")) {
                     Log.record("庄园今日已签到");
+                    signed = true;
                     return false;
                 }
                 int awardCount = jo.getInt("awardCount");
@@ -977,7 +982,8 @@ public class AntFarm extends ModelTask {
                 jo = new JSONObject(AntFarmRpcCall.sign());
                 if (MessageUtil.checkMemo(TAG, jo)) {
                     foodStock = jo.getInt("foodStock");
-                    Log.farm("饲料任务📅签到[" + currentContinuousCount + "天]获得[" + awardCount + "g饲料]");
+                    Log.farm("饲料任务📅签到[坚持" + currentContinuousCount + "天]#获得[" + awardCount + "g饲料]");
+                    signed = true;
                     return true;
                 }
                 return false;
@@ -985,6 +991,10 @@ public class AntFarm extends ModelTask {
         } catch (Throwable t) {
             Log.i(TAG, "sign err:");
             Log.printStackTrace(TAG, t);
+        } finally {
+            if (signed) {
+                Status.flagToday("farm::sign");
+            }
         }
         return false;
     }
@@ -1039,7 +1049,7 @@ public class AntFarm extends ModelTask {
             JSONObject extInfo = jo.getJSONObject("extInfo");
             boolean correct = jo.getBoolean("correct");
             String award = extInfo.getString("award");
-            Log.record("庄园答题📝回答" + (correct ? "正确" : "错误") + ",获得[" + award + "g饲料]");
+            Log.record("庄园答题📝回答" + (correct ? "正确" : "错误") + "#获得[" + award + "g饲料]");
             JSONArray operationConfigList = jo.getJSONArray("operationConfigList");
             savePreviewQuestion(operationConfigList);
             return true;
@@ -1112,7 +1122,7 @@ public class AntFarm extends ModelTask {
             if (awardType.equals("ALLPURPOSE")) {
                 add2FoodStock(awardCount);
                 String title = task.getString("title");
-                Log.farm("饲料任务🎖️领取[" + title + "]奖励[" + awardCount + "g饲料]");
+                Log.farm("饲料任务🎖️领取[" + title + "]奖励#获得[" + awardCount + "g饲料]");
                 return true;
             }
         } catch (Throwable t) {
@@ -1378,7 +1388,7 @@ public class AntFarm extends ModelTask {
                     foodStock = (int) jo.getDouble("finalFoodStock");
                 else
                     add2FoodStock(rewardCount);
-                Log.farm("通知赶鸡📧提醒[" + user + "]被偷吃#奖励[" + rewardCount + "g饲料]");
+                Log.farm("通知赶鸡📧提醒[" + user + "]被偷吃#获得[" + rewardCount + "g饲料]");
                 return true;
             }
         } catch (Throwable t) {
@@ -1810,7 +1820,7 @@ public class AntFarm extends ModelTask {
                 if (MessageUtil.checkMemo(TAG, jo)) {
                     String prizeName = jo.getString("prizeName");
                     String userMaskName = UserIdMap.getMaskName(AntFarmRpcCall.farmId2UserId(farmId));
-                    Log.farm("小鸡到访💞投喂[" + userMaskName + "]奖励[" + prizeName + "]");
+                    Log.farm("小鸡到访💞投喂[" + userMaskName + "]#获得[" + prizeName + "]");
                 }
             }
         } catch (Throwable t) {
