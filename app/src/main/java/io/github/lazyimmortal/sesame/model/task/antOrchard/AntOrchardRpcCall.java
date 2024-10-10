@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.util.RandomUtil;
+import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 public class AntOrchardRpcCall {
     private static final String VERSION = "0.1.2401111000.31";
@@ -107,13 +108,13 @@ public class AntOrchardRpcCall {
                         + VERSION + "\"}]");
     }
 
-    public static String finishTask(String userId, String sceneCode, String taskType) {
-        return ApplicationHook.requestString("com.alipay.antiep.finishTask",
-                "[{\"outBizNo\":\"" + userId + System.currentTimeMillis()
-                        + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"" + sceneCode
-                        + "\",\"source\":\"ch_appcenter__chsub_9patch\",\"taskType\":\""
-                        + taskType + "\",\"userId\":\"" + userId + "\",\"version\":\"" + VERSION
-                        + "\"}]");
+    public static String finishTask(String sceneCode, String taskType) {
+        String userId = UserIdMap.getCurrentUid();
+        String args = "[{\"outBizNo\":\"" + userId + System.currentTimeMillis()
+                + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"" + sceneCode
+                + "\",\"source\":\"ANTFARM_ORCHARD\",\"taskType\":\"" + taskType
+                + "\",\"userId\":\"" + userId + "\",\"version\":\"" + VERSION + "\"}]";
+        return ApplicationHook.requestString("com.alipay.antiep.finishTask", args);
     }
 
     public static String triggerTbTask(String taskId, String taskPlantType) {

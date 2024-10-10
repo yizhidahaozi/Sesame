@@ -11,6 +11,7 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
+import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm.TaskStatus;
 import io.github.lazyimmortal.sesame.util.*;
 import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
@@ -27,7 +28,7 @@ public class AntOrchard extends ModelTask {
     private Integer executeIntervalInt;
 
     private IntegerModelField executeInterval;
-    private BooleanModelField orchardTask;
+    private BooleanModelField orchardListTask;
     private IntegerModelField orchardSpreadManureCount;
     private BooleanModelField batchHireAnimal;
     private SelectModelField dontHireList;
@@ -49,7 +50,7 @@ public class AntOrchard extends ModelTask {
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(executeInterval = new IntegerModelField("executeInterval", "执行间隔(毫秒)", 500));
-        modelFields.addField(orchardTask = new BooleanModelField("orchardTask", "农场任务", false));
+        modelFields.addField(orchardListTask = new BooleanModelField("orchardListTask", "农场任务", false));
         modelFields.addField(orchardSpreadManureCount = new IntegerModelField("orchardSpreadManureCount", "农场每日施肥次数", 0));
         modelFields.addField(assistFriend = new BooleanModelField("assistFriend", "分享助力 | 开启", false));
         modelFields.addField(assistFriendList = new SelectModelField("assistFriendList", "分享助力 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
@@ -86,9 +87,8 @@ public class AntOrchard extends ModelTask {
                                     && !joo.optBoolean("hireCountOneDayLimit", true))
                                 batchHireAnimalRecommend();
                         }
-                        if (orchardTask.getValue()) {
-                            doOrchardDailyTask(userId);
-                            triggerTbTask();
+                        if (orchardListTask.getValue()) {
+                            orchardListTask();
                         }
                         Integer orchardSpreadManureCountValue = orchardSpreadManureCount.getValue();
                         if (orchardSpreadManureCountValue > 0 && !Status.hasFlagToday("orchard::spreadManureLimit"))
@@ -275,58 +275,59 @@ public class AntOrchard extends ModelTask {
         }
     }
 
-    private void doOrchardDailyTask(String userId) {
+    private static void orchardListTask() {
         try {
-            String s = AntOrchardRpcCall.orchardListTask();
-            JSONObject jo = new JSONObject(s);
-            if ("100".equals(jo.getString("resultCode"))) {
-                if (jo.has("signTaskInfo")) {
-                    JSONObject signTaskInfo = jo.getJSONObject("signTaskInfo");
-                    orchardSign(signTaskInfo);
+            JSONObject jo = new JSONObject(AntOrchardRpcCall.orchardListTask());
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return;
+            }
+            if (jo.has("signTaskInfo")) {
+                orchardSign(jo.getJSONObject("signTaskInfo"));
+            }
+            JSONArray ja = jo.getJSONArray("taskList");
+            for (int i = 0; i < ja.length(); i++) {
+                jo = ja.getJSONObject(i);
+                String taskStatus = jo.getString("taskStatus");
+                if (TaskStatus.RECEIVED.name().equals(taskStatus)) {
+                    continue;
                 }
-                JSONArray jaTaskList = jo.getJSONArray("taskList");
-                for (int i = 0; i < jaTaskList.length(); i++) {
-                    jo = jaTaskList.getJSONObject(i);
-                    if (!"TODO".equals(jo.getString("taskStatus")))
+                if (TaskStatus.TODO.name().equals(taskStatus)) {
+                    if (!finishOrchardTask(jo)) {
                         continue;
-                    String title = jo.getJSONObject("taskDisplayConfig").getString("title");
-                    if ("TRIGGER".equals(jo.getString("actionType")) || "ADD_HOME".equals(jo.getString("actionType"))
-                            || "PUSH_SUBSCRIBE".equals(jo.getString("actionType"))) {
-                        String taskId = jo.getString("taskId");
-                        String sceneCode = jo.getString("sceneCode");
-                        jo = new JSONObject(AntOrchardRpcCall.finishTask(userId, sceneCode, taskId));
-                        if (jo.optBoolean("success")) {
-                            Log.farm("农场任务🧾[" + title + "]");
-                        } else {
-                            Log.record(jo.getString("desc"));
-                            Log.i(jo.toString());
-                        }
                     }
+                    TimeUtil.sleep(500);
                 }
-            } else {
-                Log.record(jo.getString("resultCode"));
-                Log.i(s);
+                String taskId = jo.getString("taskId");
+                String taskPlantType = jo.getString("taskPlantType");
+                String title = jo.getJSONObject("taskDisplayConfig").getString("title");
+                triggerTbTask(taskId, taskPlantType, title);
             }
         } catch (Throwable t) {
-            Log.i(TAG, "doOrchardDailyTask err:");
+            Log.i(TAG, "orchardListTask err:");
             Log.printStackTrace(TAG, t);
         }
     }
 
-    private void orchardSign(JSONObject signTaskInfo) {
+    private static void orchardSign(JSONObject signTaskInfo) {
+        if (Status.hasFlagToday("orchard::sign")) {
+            return;
+        }
         try {
-            JSONObject currentSignItem = signTaskInfo.getJSONObject("currentSignItem");
-            if (!currentSignItem.getBoolean("signed")) {
-                JSONObject joSign = new JSONObject(AntOrchardRpcCall.orchardSign());
-                if ("100".equals(joSign.getString("resultCode"))) {
-                    int awardCount = joSign.getJSONObject("signTaskInfo").getJSONObject("currentSignItem")
-                            .getInt("awardCount");
-                    Log.farm("农场签到📅[获得肥料]#" + awardCount + "g");
-                } else {
-                    Log.i(joSign.getString("resultDesc"), joSign.toString());
+            boolean signed = signTaskInfo.getJSONObject("currentSignItem").getBoolean("signed");
+            if (!signed) {
+                JSONObject jo = new JSONObject(AntOrchardRpcCall.orchardSign());
+                if (MessageUtil.checkResultCode(TAG, jo)) {
+                    jo = jo.getJSONObject("signTaskInfo").getJSONObject("currentSignItem");
+                    int currentContinuousCount = jo.getInt("currentContinuousCount");
+                    int awardCount = jo.getInt("awardCount");
+                    Log.farm("农场任务📅签到[坚持" + currentContinuousCount + "天]#获得[" + awardCount + "g肥料]");
+                    signed = true;
                 }
             } else {
                 Log.record("农场今日已签到");
+            }
+            if (signed) {
+                Status.flagToday("orchard::sign");
             }
         } catch (Throwable t) {
             Log.i(TAG, "orchardSign err:");
@@ -334,31 +335,34 @@ public class AntOrchard extends ModelTask {
         }
     }
 
-    private static void triggerTbTask() {
+    private static Boolean finishOrchardTask(JSONObject task) {
         try {
-            String s = AntOrchardRpcCall.orchardListTask();
-            JSONObject jo = new JSONObject(s);
-            if ("100".equals(jo.getString("resultCode"))) {
-                JSONArray jaTaskList = jo.getJSONArray("taskList");
-                for (int i = 0; i < jaTaskList.length(); i++) {
-                    jo = jaTaskList.getJSONObject(i);
-                    if (!"FINISHED".equals(jo.getString("taskStatus")))
-                        continue;
-                    String title = jo.getJSONObject("taskDisplayConfig").getString("title");
-                    int awardCount = jo.optInt("awardCount", 0);
-                    String taskId = jo.getString("taskId");
-                    String taskPlantType = jo.getString("taskPlantType");
-                    jo = new JSONObject(AntOrchardRpcCall.triggerTbTask(taskId, taskPlantType));
-                    if ("100".equals(jo.getString("resultCode"))) {
-                        Log.farm("领取奖励🎖️[" + title + "]#" + awardCount + "g肥料");
-                    } else {
-                        Log.record(jo.getString("resultDesc"));
-                        Log.i(jo.toString());
-                    }
+            String title = task.getJSONObject("taskDisplayConfig").getString("title");
+            String actionType = task.getString("actionType");
+            if (Objects.equals("TRIGGER", actionType)
+                    || Objects.equals("ADD_HOME", actionType)
+                    || Objects.equals("PUSH_SUBSCRIBE", actionType)) {
+                String taskId = task.getString("taskId");
+                String sceneCode = task.getString("sceneCode");
+                JSONObject jo = new JSONObject(AntOrchardRpcCall.finishTask(sceneCode, taskId));
+                if (MessageUtil.checkResultCode(TAG, jo)) {
+                    Log.farm("农场任务🧾完成[" + title + "]");
+                    return true;
                 }
-            } else {
-                Log.record(jo.getString("resultDesc"));
-                Log.i(s);
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "finishOrchardTask err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private static void triggerTbTask(String taskId, String taskPlantType, String title) {
+        try {
+            JSONObject jo = new JSONObject(AntOrchardRpcCall.triggerTbTask(taskId, taskPlantType));
+            if (MessageUtil.checkResultCode(TAG, jo)) {
+                int incAwardCount = jo.getInt("incAwardCount");
+                Log.farm("农场任务🎖️领取[" + title + "]奖励#获得[" + incAwardCount + "g肥料]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "triggerTbTask err:");
