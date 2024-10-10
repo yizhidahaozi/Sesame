@@ -1037,11 +1037,11 @@ public class AntStall extends ModelTask {
                 }
                 jo = new JSONObject(
                         AntStallRpcCall.pasteTicket(
-                                jo.getString("rentLastBill"),
-                                jo.getString("seatId"),
-                                jo.getString("rentLastShop"),
-                                jo.getString("rentLastUser"),
-                                jo.getString("userId")
+                                seat.getString("rentLastBill"),
+                                seat.getString("seatId"),
+                                seat.getString("rentLastShop"),
+                                seat.getString("rentLastUser"),
+                                seat.getString("userId")
                         )
                 );
                 if (MessageUtil.checkResultCode(TAG, jo)) {

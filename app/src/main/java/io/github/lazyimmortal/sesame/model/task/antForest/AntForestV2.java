@@ -1183,6 +1183,7 @@ public class AntForestV2 extends ModelTask {
             jo = jo.getJSONObject("data");
             JSONArray ja = jo.getJSONArray("prizes");
             for (int i = 0; i < ja.length(); i++) {
+                jo = ja.getJSONObject(i);
                 String name = jo.getString("name");
                 Log.forest("森林集市🛍️领取打卡奖励[" + name + "]");
             }
