@@ -414,7 +414,7 @@ public class AntMember extends ModelTask {
                         continue;
                     }
                     JSONArray taskList = jo.getJSONArray("taskList");
-                    doubleCheck = doTask(taskList);
+                    doubleCheck = doBrowseTask(taskList);
                 }
                 if (doubleCheck) {
                     continue;
@@ -434,13 +434,11 @@ public class AntMember extends ModelTask {
         try {
             JSONObject jo = new JSONObject(AntMemberRpcCall.queryAllStatusTaskList());
             TimeUtil.sleep(500);
-            if (!MessageUtil.checkResultCode(TAG + " queryAllStatusTaskList", jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
-            if (!jo.has("availableTaskList")) {
-                return;
-            }
-            if (doTask(jo.getJSONArray("availableTaskList"))) {
+            JSONArray availableTaskList = jo.getJSONArray("availableTaskList");
+            if (doBrowseTask(availableTaskList)) {
                 queryAllStatusTaskList();
             }
         } catch (Throwable t) {
@@ -594,60 +592,66 @@ public class AntMember extends ModelTask {
     }
 
     // 蚂蚁积分-做浏览任务
-    private boolean doTask(JSONArray taskList) {
+    private static Boolean doBrowseTask(JSONArray taskList) {
         boolean doubleCheck = false;
         try {
-            for (int j = 0; j < taskList.length(); j++) {
-                JSONObject task = taskList.getJSONObject(j);
-                int count = 1;
-                boolean hybrid = task.getBoolean("hybrid");
-                int periodCurrentCount = 0;
-                int periodTargetCount = 0;
-                if (hybrid) {
-                    periodCurrentCount = Integer.parseInt(task.getJSONObject("extInfo").getString("PERIOD_CURRENT_COUNT"));
-                    periodTargetCount = Integer.parseInt(task.getJSONObject("extInfo").getString("PERIOD_TARGET_COUNT"));
-                    count = periodTargetCount > periodCurrentCount ? periodTargetCount - periodCurrentCount : 0;
-                }
-                if (count <= 0) {
-                    continue;
-                }
-                JSONObject taskConfigInfo = task.getJSONObject("taskConfigInfo");
-                String name = taskConfigInfo.getString("name");
-                Long id = taskConfigInfo.getLong("id");
-                String awardParamPoint = taskConfigInfo.getJSONObject("awardParam")
-                        .getString("awardParamPoint");
-                String targetBusiness = taskConfigInfo.getJSONArray("targetBusiness").getString(0);
-                for (int k = 0; k < count; k++) {
-                    JSONObject jo = new JSONObject(AntMemberRpcCall.applyTask(name, id));
-                    TimeUtil.sleep(300);
-                    if (!MessageUtil.checkResultCode(TAG, jo)) {
-                        continue;
+            for (int i = 0; i < taskList.length(); i++) {
+                JSONObject task = taskList.getJSONObject(i);
+                if (task.getBoolean("hybrid")) {
+                    int periodCurrentCount = Integer.parseInt(task.getJSONObject("extInfo").getString("PERIOD_CURRENT_COUNT"));
+                    int periodTargetCount = Integer.parseInt(task.getJSONObject("extInfo").getString("PERIOD_TARGET_COUNT"));
+                    int count = periodTargetCount > periodCurrentCount ? periodTargetCount - periodCurrentCount : 0;
+                    if (count > 0) {
+                        doubleCheck = doubleCheck || doBrowseTask(task, periodTargetCount, periodTargetCount);
                     }
-                    String[] targetBusinessArray = targetBusiness.split("#");
-                    String bizParam;
-                    String bizSubType;
-                    if (targetBusinessArray.length > 2) {
-                        bizParam = targetBusinessArray[2];
-                        bizSubType = targetBusinessArray[1];
-                    } else {
-                        bizParam = targetBusinessArray[1];
-                        bizSubType = targetBusinessArray[0];
-                    }
-                    jo = new JSONObject(AntMemberRpcCall.executeTask(bizParam, bizSubType));
-                    TimeUtil.sleep(300);
-                    if (!MessageUtil.checkResultCode(TAG, jo)) {
-                        continue;
-                    }
-                    String ex = "";
-                    if (hybrid) {
-                        ex = "(" + (periodCurrentCount + k + 1) + "/" + periodTargetCount + ")";
-                    }
-                    Log.other("会员任务🎖️完成[" + name + ex + "]#获得[" + awardParamPoint + "积分]");
-                    doubleCheck = true;
+                } else {
+                    doubleCheck = doubleCheck || doBrowseTask(task, 1, 1);
                 }
             }
         } catch (Throwable t) {
-            Log.i(TAG, "signPageTaskList err:");
+            Log.i(TAG, "doBrowseTask err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return doubleCheck;
+    }
+
+    private static Boolean doBrowseTask(JSONObject task, int left, int right) {
+        boolean doubleCheck = false;
+        try {
+            JSONObject taskConfigInfo = task.getJSONObject("taskConfigInfo");
+            String name = taskConfigInfo.getString("name");
+            Long id = taskConfigInfo.getLong("id");
+            String awardParamPoint = taskConfigInfo.getJSONObject("awardParam")
+                    .getString("awardParamPoint");
+            String targetBusiness = taskConfigInfo.getJSONArray("targetBusiness")
+                    .getString(0);
+            for (int i = left; i <= right; i++) {
+                JSONObject jo = new JSONObject(AntMemberRpcCall.applyTask(name, id));
+                TimeUtil.sleep(300);
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
+                    continue;
+                }
+                String[] targetBusinessArray = targetBusiness.split("#");
+                String bizParam;
+                String bizSubType;
+                if (targetBusinessArray.length > 2) {
+                    bizParam = targetBusinessArray[2];
+                    bizSubType = targetBusinessArray[1];
+                } else {
+                    bizParam = targetBusinessArray[1];
+                    bizSubType = targetBusinessArray[0];
+                }
+                jo = new JSONObject(AntMemberRpcCall.executeTask(bizParam, bizSubType));
+                TimeUtil.sleep(300);
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
+                    continue;
+                }
+                String ex = left == right && left == 1 ? "" : "(" + (i + 1) + "/" + right + ")";
+                Log.other("会员任务🎖️完成[" + name + ex + "]#获得[" + awardParamPoint + "积分]");
+                doubleCheck = true;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "doBrowseTask err:");
             Log.printStackTrace(TAG, t);
         }
         return doubleCheck;

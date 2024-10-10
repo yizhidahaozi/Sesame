@@ -121,8 +121,8 @@ public class AntMemberRpcCall {
     }
 
     public static String queryAllStatusTaskList() {
-        return ApplicationHook.requestString("alipay.antmember.biz.rpc.membertask.h5.signPageTaskList",
-                "[{\"sourceBusiness\":\"signInAd\",\"sourcePassMap\":{\"innerSource\":\"\",\"source\":\"myTab\",\"unid\":\"\"}}]");
+        String args = "[{\"sourceBusiness\":\"signInAd\"}]";
+        return ApplicationHook.requestString("alipay.antmember.biz.rpc.membertask.h5.queryAllStatusTaskList", args);
     }
 
     /**
