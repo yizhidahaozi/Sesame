@@ -708,6 +708,10 @@ public class AntSports extends ModelTask {
             JSONArray ja = jo.getJSONObject("projectPage").getJSONArray("data");
             for (int i = 0; i < ja.length(); i++) {
                 jo = ja.getJSONObject(i).getJSONObject("basicModel");
+                if (jo.optInt("acwProjectStatus") == 0) {
+                    // acwProjectStatus: 0 1
+                    continue;
+                }
                 // footballFieldStatus: OPENING_DONATE DONATE_COMPLETED
                 if ("DONATE_COMPLETED".equals(jo.getString("footballFieldStatus"))) {
                     break;
