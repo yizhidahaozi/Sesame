@@ -64,14 +64,14 @@ public class AntStall extends ModelTask {
         return ModelGroup.STALL;
     }
 
-    private ChoiceModelField shopOpenType;
-    private SelectModelField shopOpenList;
-    private BooleanModelField shopClose;
-    private IntegerModelField shopCloseTime;
-    private BooleanModelField shopSendBack;
-    private IntegerModelField shopSendBackTime;
-    private SelectModelField shopSendBackWhiteList;
-    private SelectModelField shopSendBackBlackList;
+    private ChoiceModelField openShopType;
+    private SelectModelField openShopList;
+    private BooleanModelField closeShop;
+    private IntegerModelField closeShopTime;
+    private BooleanModelField sendBackShop;
+    private IntegerModelField sendBackShopTime;
+    private SelectModelField sendBackShopWhiteList;
+    private SelectModelField sendBackShopBlackList;
     private ChoiceModelField inviteOpenShopType;
     private SelectModelField inviteOpenShopList;
     private ChoiceModelField pasteTicketType;
@@ -89,18 +89,18 @@ public class AntStall extends ModelTask {
     @Override
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
-        modelFields.addField(shopOpenType = new ChoiceModelField("shopOpenType", "摆摊 | 动作", ShopOpenType.NONE, ShopOpenType.nickNames));
-        modelFields.addField(shopOpenList = new SelectModelField("shopOpenList", "摆摊 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(shopClose = new BooleanModelField("shopClose", "收摊 | 开启", false));
-        modelFields.addField(shopCloseTime = new IntegerModelField("shopCloseTime", "收摊 | 摆摊时长(分钟)", 120));
+        modelFields.addField(openShopType = new ChoiceModelField("openShopType", "摆摊 | 动作", OpenShopType.NONE, OpenShopType.nickNames));
+        modelFields.addField(openShopList = new SelectModelField("openShopList", "摆摊 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
+        modelFields.addField(closeShop = new BooleanModelField("closeShop", "收摊 | 开启", false));
+        modelFields.addField(closeShopTime = new IntegerModelField("closeShopTime", "收摊 | 摆摊时长(分钟)", 120));
         modelFields.addField(pasteTicketType = new ChoiceModelField("pasteTicketType", "贴罚单 | 动作", PasteTicketType.NONE, PasteTicketType.nickNames));
         modelFields.addField(pasteTicketList = new SelectModelField("pasteTicketList", "贴罚单 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(throwManureType = new ChoiceModelField("throwManureType", "丢肥料 | 动作", ThrowManureType.NONE, ThrowManureType.nickNames));
         modelFields.addField(throwManureList = new SelectModelField("throwManureList", "丢肥料 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(shopSendBack = new BooleanModelField("shopSendBack", "请走小摊 | 开启", false));
-        modelFields.addField(shopSendBackTime = new IntegerModelField("shopSendBackTime", "请走小摊 | 允许摆摊时长(分钟)", 121));
-        modelFields.addField(shopSendBackWhiteList = new SelectModelField("shopSendBackWhiteList", "请走小摊 | 白名单(超时也不赶)", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(shopSendBackBlackList = new SelectModelField("shopSendBackBlackList", "请走小摊 | 黑名单(不超时也赶)", new LinkedHashSet<>(), AlipayUser::getList));
+        modelFields.addField(sendBackShop = new BooleanModelField("sendBackShop", "请走小摊 | 开启", false));
+        modelFields.addField(sendBackShopTime = new IntegerModelField("sendBackShopTime", "请走小摊 | 允许摆摊时长(分钟)", 121));
+        modelFields.addField(sendBackShopWhiteList = new SelectModelField("sendBackShopWhiteList", "请走小摊 | 白名单(超时也不赶)", new LinkedHashSet<>(), AlipayUser::getList));
+        modelFields.addField(sendBackShopBlackList = new SelectModelField("sendBackShopBlackList", "请走小摊 | 黑名单(不超时也赶)", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(inviteOpenShopType = new ChoiceModelField("inviteOpenShopType", "邀请摆摊 | 动作", InviteOpenShopType.NONE, InviteOpenShopType.nickNames));
         modelFields.addField(inviteOpenShopList = new SelectModelField("inviteOpenShopList", "邀请摆摊 | 好友列表", new LinkedHashSet<>(), AlipayUser::getList));
         modelFields.addField(taskList = new BooleanModelField("taskList", "加速产币", false));
@@ -132,10 +132,12 @@ public class AntStall extends ModelTask {
             }
             collectManure();
 
-            if (shopClose.getValue()) {
-                shopClose();
+            if (closeShop.getValue()) {
+                closeShop();
             }
-            shopOpen();
+            if (openShopType.getValue() != OpenShopType.NONE) {
+                openShop();
+            }
 
             if (taskList.getValue()) {
                 taskList();
@@ -236,14 +238,14 @@ public class AntStall extends ModelTask {
                 Log.farm("蚂蚁新村⛪请走[" + UserIdMap.getMaskName(shopUserId) + "]的小摊"
                         + (amount > 0 ? "#获得[" + amount + "木兰币]" : ""));
             }
-            inviteOpen(seatId);
+            inviteOpenShop(seatId);
         } catch (Throwable t) {
             Log.i(TAG, "sendBack err:");
             Log.printStackTrace(TAG, t);
         }
     }
 
-    private void inviteOpen(String seatId) {
+    private void inviteOpenShop(String seatId) {
         if (inviteOpenShopType.getValue() == InviteOpenShopType.NONE) {
             return;
         }
@@ -264,7 +266,7 @@ public class AntStall extends ModelTask {
                 if (!isInviteShop) {
                     continue;
                 }
-                if (friend.getBoolean("canInviteOpenShop")) {
+                if (friend.getBoolean("canOneKeyInviteOpenShop")) {
                     jo = new JSONObject(AntStallRpcCall.oneKeyInviteOpenShop(friendUserId, seatId));
                     if (MessageUtil.checkResultCode(TAG, jo)) {
                         Log.farm("蚂蚁新村⛪邀请[" + UserIdMap.getMaskName(friendUserId) + "]来新村摆摊");
@@ -273,7 +275,7 @@ public class AntStall extends ModelTask {
                 }
             }
         } catch (Throwable t) {
-            Log.i(TAG, "inviteOpen err:");
+            Log.i(TAG, "inviteOpenShop err:");
             Log.printStackTrace(TAG, t);
         }
     }
@@ -284,11 +286,11 @@ public class AntStall extends ModelTask {
                 JSONObject seat = seatsMap.getJSONObject("GUEST_0" + i);
                 String seatId = seat.getString("seatId");
                 if ("FREE".equals(seat.getString("status"))) {
-                    inviteOpen(seatId);
+                    inviteOpenShop(seatId);
                     continue;
                 }
                 // 请走小摊 未开启直接跳过
-                if (!shopSendBack.getValue()) {
+                if (!sendBackShop.getValue()) {
                     continue;
                 }
                 String rentLastUser = seat.optString("rentLastUser");
@@ -296,25 +298,25 @@ public class AntStall extends ModelTask {
                     continue;
                 }
                 // 白名单直接跳过
-                if (shopSendBackWhiteList.getValue().contains(rentLastUser)) {
+                if (sendBackShopWhiteList.getValue().contains(rentLastUser)) {
                     continue;
                 }
                 String rentLastBill = seat.getString("rentLastBill");
                 String rentLastShop = seat.getString("rentLastShop");
                 // 黑名单直接赶走
-                if (shopSendBackBlackList.getValue().contains(rentLastUser)) {
+                if (sendBackShopBlackList.getValue().contains(rentLastUser)) {
                     sendBack(rentLastBill, seatId, rentLastShop, rentLastUser);
                     continue;
                 }
                 long bizStartTime = seat.getLong("bizStartTime");
-                long endTime = bizStartTime + TimeUnit.MINUTES.toMillis(shopSendBackTime.getValue());
+                long endTime = bizStartTime + TimeUnit.MINUTES.toMillis(sendBackShopTime.getValue());
                 if (System.currentTimeMillis() > endTime) {
                     sendBack(rentLastBill, seatId, rentLastShop, rentLastUser);
                 } else {
                     String taskId = "SB|" + seatId;
                     if (!hasChildTask(taskId)) {
                         addChildTask(new ChildModelTask(taskId, "SB", () -> {
-                            if (shopSendBack.getValue()) {
+                            if (sendBackShop.getValue()) {
                                 sendBack(rentLastBill, seatId, rentLastShop, rentLastUser);
                             }
                         }, endTime));
@@ -357,7 +359,7 @@ public class AntStall extends ModelTask {
         }
     }
 
-    private void shopClose() {
+    private void closeShop() {
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.shopList());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -366,24 +368,24 @@ public class AntStall extends ModelTask {
             JSONArray astUserShopList = jo.getJSONArray("astUserShopList");
             for (int i = 0; i < astUserShopList.length(); i++) {
                 JSONObject shop = astUserShopList.getJSONObject(i);
-                if ("OPEN".equals(shop.getString("status"))) {
+                if (Objects.equals("OPEN", shop.getString("status"))) {
                     JSONObject rentLastEnv = shop.getJSONObject("rentLastEnv");
                     long gmtLastRent = rentLastEnv.getLong("gmtLastRent");
-                    long shopTime = gmtLastRent + TimeUnit.MINUTES.toMillis(shopCloseTime.getValue());
+                    long shopTime = gmtLastRent + TimeUnit.MINUTES.toMillis(closeShopTime.getValue());
                     String shopId = shop.getString("shopId");
                     String rentLastBill = shop.getString("rentLastBill");
                     String rentLastUser = shop.getString("rentLastUser");
                     if (System.currentTimeMillis() > shopTime) {
-                        shopClose(shopId, rentLastBill, rentLastUser);
+                        closeShop(shopId, rentLastBill, rentLastUser);
                     } else {
                         String taskId = "SH|" + shopId;
                         if (!hasChildTask(taskId)) {
                             addChildTask(new ChildModelTask(taskId, "SH", () -> {
-                                if (shopClose.getValue()) {
-                                    shopClose(shopId, rentLastBill, rentLastUser);
-                                }
+                                closeShop(shopId, rentLastBill, rentLastUser);
                                 TimeUtil.sleep(300L);
-                                shopOpen();
+                                if (openShopType.getValue() != OpenShopType.NONE) {
+                                    openShop();
+                                }
                             }, shopTime));
                             Log.record("添加蹲点收摊⛪在[" + TimeUtil.getCommonDate(shopTime) + "]执行");
                         } /*else {
@@ -397,15 +399,12 @@ public class AntStall extends ModelTask {
                 }
             }
         } catch (Throwable t) {
-            Log.i(TAG, "shopClose err:");
+            Log.i(TAG, "closeShop err:");
             Log.printStackTrace(TAG, t);
         }
     }
 
-    private void shopOpen() {
-        if (shopOpenType.getValue() == ShopOpenType.NONE) {
-            return;
-        }
+    private synchronized void openShop() {
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.shopList());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -421,7 +420,7 @@ public class AntStall extends ModelTask {
             }
             rankCoinDonate(shopIds);
         } catch (Throwable t) {
-            Log.i(TAG, "shopOpen err:");
+            Log.i(TAG, "openShop err:");
             Log.printStackTrace(TAG, t);
         }
     }
@@ -438,8 +437,8 @@ public class AntStall extends ModelTask {
                 JSONObject friendRank = friendRankList.getJSONObject(i);
                 if (friendRank.getBoolean("canOpenShop")) {
                     String userId = friendRank.getString("userId");
-                    boolean isStallOpen = shopOpenList.getValue().contains(userId);
-                    if (shopOpenType.getValue() != ShopOpenType.OPEN) {
+                    boolean isStallOpen = openShopList.getValue().contains(userId);
+                    if (openShopType.getValue() != OpenShopType.OPEN) {
                         isStallOpen = !isStallOpen;
                     }
                     if (!isStallOpen) {
@@ -449,31 +448,37 @@ public class AntStall extends ModelTask {
                     seats.add(new Seat(userId, hot));
                 }
             }
-            friendHomeOpen(seats, shopIds);
+            friendHomeOpenShop(seats, shopIds);
         } catch (Throwable t) {
             Log.i(TAG, "rankCoinDonate err:");
             Log.printStackTrace(TAG, t);
         }
     }
 
-    private static void shopOpen(String seatId, String userId, String shopId) {
+    private Boolean openShop(String seatId, String userId, String shopId) {
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.shopOpen(seatId, userId, shopId));
             if (MessageUtil.checkResultCode(TAG, jo)) {
                 Log.farm("蚂蚁新村⛪在[" + UserIdMap.getMaskName(userId) + "]的新村摆摊");
+                return true;
             }
         } catch (Throwable t) {
-            Log.i(TAG, "shopOpen err:");
+            Log.i(TAG, "openShop err:");
             Log.printStackTrace(TAG, t);
         }
+        return false;
     }
 
-    private void friendHomeOpen(List<Seat> seats, Queue<String> shopIds) {
+    private void friendHomeOpenShop(List<Seat> seats, Queue<String> shopIds) {
         Collections.sort(seats, (e1, e2) -> e2.hot - e1.hot);
+        String shopId = null;
+        String selfId = UserIdMap.getCurrentUid();
         for (Seat seat : seats) {
-            String shopId = shopIds.poll();
             if (shopId == null) {
-                return;
+                shopId = shopIds.poll();
+                if (shopId == null) {
+                    return;
+                }
             }
             String userId = seat.userId;
             try {
@@ -482,24 +487,36 @@ public class AntStall extends ModelTask {
                     return;
                 }
                 JSONObject seatsMap = jo.getJSONObject("seatsMap");
-                JSONObject guest = seatsMap.getJSONObject("GUEST_01");
-                if (guest.getBoolean("canOpenShop")) {
-                    shopOpen(guest.getString("seatId"), userId, shopId);
-                } else {
-                    guest = seatsMap.getJSONObject("GUEST_02");
-                    if (guest.getBoolean("canOpenShop")) {
-                        shopOpen(guest.getString("seatId"), userId, shopId);
+                String seatId = null;
+                boolean canOpenShop = true;
+
+                jo = seatsMap.getJSONObject("GUEST_02");
+                if (jo.getBoolean("canOpenShop")) {
+                    seatId = jo.getString("seatId");
+                } else if (Objects.equals(selfId, jo.getString("rentLastUser"))) {
+                    canOpenShop = false;
+                }
+                jo = seatsMap.getJSONObject("GUEST_01");
+                if (jo.getBoolean("canOpenShop")) {
+                    seatId = jo.getString("seatId");
+                } else if (Objects.equals(selfId, jo.getString("rentLastUser"))) {
+                    canOpenShop = false;
+                }
+                if (canOpenShop && seatId != null) {
+                    if (openShop(seatId, userId, shopId)) {
+                        shopId = null;
                     }
                 }
             } catch (Throwable t) {
+                Log.i(TAG, "friendHomeOpenShop err:");
                 Log.printStackTrace(TAG, t);
             }
         }
     }
 
-    private static void shopClose(String shopId, String billNo, String userId) {
+    private void closeShop(String shopId, String billNo, String userId) {
         try {
-            JSONObject jo = new JSONObject(AntStallRpcCall.preShopClose(shopId, billNo));
+            JSONObject jo = new JSONObject(AntStallRpcCall.shopClosePre(shopId, billNo));
             if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
@@ -510,7 +527,7 @@ public class AntStall extends ModelTask {
                 Log.farm("蚂蚁新村⛪在[" + UserIdMap.getMaskName(userId) + "]的新村收摊#获得[" + amount + "木兰币]");
             }
         } catch (Throwable t) {
-            Log.i(TAG, "shopClose err:");
+            Log.i(TAG, "closeShop err:");
             Log.printStackTrace(TAG, t);
         }
     }
@@ -836,7 +853,7 @@ public class AntStall extends ModelTask {
         return false;
     }
 
-    private static Boolean canDonateToday() {
+    private Boolean canDonateToday() {
         if (Status.hasFlagToday("stall::donate")) {
             return false;
         }
@@ -907,7 +924,7 @@ public class AntStall extends ModelTask {
         return false;
     }
 
-    private static void collectManure() {
+    private void collectManure() {
         try {
             JSONObject jo = new JSONObject(AntStallRpcCall.queryManureInfo());
             if (!MessageUtil.checkResultCode(TAG, jo)) {
@@ -1056,7 +1073,7 @@ public class AntStall extends ModelTask {
         }
     }
 
-    public interface ShopOpenType {
+    public interface OpenShopType {
 
         int NONE = 0;
         int OPEN = 1;

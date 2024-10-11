@@ -57,7 +57,7 @@ public class AntStallRpcCall {
                         + VERSION + "\"}]");
     }
 
-    public static String preShopClose(String shopId, String billNo) {
+    public static String shopClosePre(String shopId, String billNo) {
         return ApplicationHook.requestString("com.alipay.antstall.user.shop.close.pre",
                 "[{\"billNo\":\"" + billNo + "\",\"shopId\":\"" + shopId +
                         "\",\"source\":\"ch_appcenter__chsub_9patch\",\"systemType\":\"android\",\"version\":\"" + VERSION + "\"}]");
