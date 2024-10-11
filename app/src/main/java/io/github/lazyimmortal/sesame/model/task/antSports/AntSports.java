@@ -31,7 +31,6 @@ public class AntSports extends ModelTask {
 
     private int tmpStepCount = -1;
     private BooleanModelField walk;
-    private BooleanModelField walkDayReward;
     private ChoiceModelField walkPathTheme;
     private BooleanModelField walkCustomPath;
     private StringModelField walkCustomPathId;
@@ -63,7 +62,6 @@ public class AntSports extends ModelTask {
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(walk = new BooleanModelField("walk", "行走路线 | 开启", false));
-        modelFields.addField(walkDayReward = new BooleanModelField("walkDayReward", "行走路线 | 每日夺宝", false));
         modelFields.addField(walkPathTheme = new ChoiceModelField("walkPathTheme", "行走路线 | 路线主题", WalkPathTheme.DA_MEI_ZHONG_GUO, WalkPathTheme.nickNames));
         modelFields.addField(walkCustomPath = new BooleanModelField("walkCustomPath", "行走路线 | 开启自定义路线", false));
         modelFields.addField(walkCustomPathId = new StringModelField("walkCustomPathId", "行走路线 | 自定义路线代码(debug)", "p000202408231708"));
@@ -335,15 +333,6 @@ public class AntSports extends ModelTask {
      */
     private void walk() {
         String goingPathId = queryGoingPathId();
-        if (walkDayReward.getValue()) {
-            String joinPathId = "p000202407261531001";
-            if (checkJoinPathId(joinPathId)) {
-                if (!joinPath(joinPathId)) {
-                    return;
-                }
-                goingPathId = joinPathId;
-            }
-        }
         do {
             TimeUtil.sleep(1000);
             if (isNeedJoinNewPath(goingPathId)) {
@@ -489,7 +478,7 @@ public class AntSports extends ModelTask {
         return city;
     }
 
-    private JSONObject queryPath(String pathId) {
+    private static JSONObject queryPath(String pathId) {
         JSONObject path = null;
         try {
             String date = Log.getFormatDate();
@@ -505,7 +494,7 @@ public class AntSports extends ModelTask {
         return path;
     }
 
-    private void openTreasureBox(JSONArray treasureBoxList) {
+    private static void openTreasureBox(JSONArray treasureBoxList) {
         try {
             for (int i = 0; i < treasureBoxList.length(); i++) {
                 JSONObject treasureBox = treasureBoxList.getJSONObject(i);
@@ -518,7 +507,7 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private void receiveEvent(String eventBillNo) {
+    private static void receiveEvent(String eventBillNo) {
         try {
             JSONObject jo = new JSONObject(AntSportsRpcCall.receiveEvent(eventBillNo));
             if (MessageUtil.checkSuccess(TAG, jo)) {
@@ -531,7 +520,7 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private void parseRewardsByJSONArrayRewards(JSONArray rewards, int rewardsType) {
+    private static void parseRewardsByJSONArrayRewards(JSONArray rewards, int rewardsType) {
         String rewardsTypeName;
         switch (rewardsType) {
             case 0:
@@ -565,7 +554,7 @@ public class AntSports extends ModelTask {
         }
     }
 
-    private void parseRewardsByJSONObjectData(JSONObject data) {
+    private static void parseRewardsByJSONObjectData(JSONObject data) {
         try {
             JSONArray treasureBoxList = data.getJSONArray("treasureBoxList");
             openTreasureBox(treasureBoxList);
@@ -636,7 +625,7 @@ public class AntSports extends ModelTask {
         return pathId;
     }
 
-    private Boolean checkJoinPathId(String joinPathId) {
+    private static Boolean checkJoinPathId(String joinPathId) {
         try {
             JSONObject jo = queryPath(joinPathId);
             String goingPathId = jo.optString("goingPathId");
