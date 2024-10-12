@@ -37,8 +37,8 @@ public class TokenConfig {
 
     private Boolean newUI = true;
 
-    private Map<String, String> answerList = new HashMap<>();
-    private Set<Map<String, String> > dishImageList = new HashSet<>();
+    private final Map<String, String> answerList = new HashMap<>();
+    private final Set<Map<String, String> > dishImageList = new HashSet<>();
 
     public static String getAnswer(String question) {
         Calendar calendar = TimeUtil.getToday();
@@ -55,6 +55,9 @@ public class TokenConfig {
 
         question = tomorrowTimeMillis + "::" + question;
         TokenConfig tokenConfig = INSTANCE;
+        if (Objects.equals(tokenConfig.answerList.get(question), answer)) {
+            return;
+        }
         tokenConfig.answerList.put(question, answer);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

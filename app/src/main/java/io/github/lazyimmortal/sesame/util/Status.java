@@ -365,7 +365,7 @@ public class Status {
             throw new RuntimeException("用户为空，状态保存失败");
         }
         if (updateDay(nowCalendar)) {
-            Log.system(TAG, "重置 statistics.json");
+            Log.system(TAG, "重置 status.json");
         } else {
             Log.system(TAG, "保存 status.json");
         }
