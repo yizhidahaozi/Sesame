@@ -2,9 +2,6 @@ package io.github.lazyimmortal.sesame.model.task.antMember;
 
 import org.json.JSONObject;
 
-import java.util.UUID;
-
-import io.github.lazyimmortal.sesame.entity.AlipayVersion;
 import io.github.lazyimmortal.sesame.entity.RpcEntity;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.util.RandomUtil;
@@ -286,26 +283,18 @@ public class AntMemberRpcCall {
     /**
      * 查询会员积分兑换福利列表方法1
      * @param userId userId
-     * @param naviCode 导航分类码
+     * @param deliveryId 分类码
+     *                   94000SR2023102305988003: 0元起
+     *                   94000SR2024011106752003: 0元起/公益道具
+     *                   94000SR2024071108523003: 0元起/皮肤
+     *                   94000SR2024071808609003: 皮肤
+     * @ param naviCode 导航分类码
      *                 皮肤："bb82b"、0元起："全积分"、影音："13"
      * @return 分类下商品列表
      */
-    public static String queryDeliveryZoneDetail(String userId, String naviCode) {
-        String args = "[\n" +
-                "    {\n" +
-                "        \"cityCode\": \"\",\n" +
-                "        \"deliveryId\": \"94000SR2023102305988003\",\n" +
-                "        \"pageNum\": 1,\n" +
-                "        \"pageSize\": 50,\n" +
-                "        \"sourcePassMap\": {\n" +
-                "            \"innerSource\": \"\",\n" +
-                "            \"source\": \"myTab\",\n" +
-                "            \"unid\": \"\"\n" +
-                "        },\n" +
-                "        \"topIdList\": [],\n" +
-                "        \"uniqueId\": \"" + System.currentTimeMillis() + naviCode + "0and99999999INTELLIGENT_SORT" + userId + "\"\n" +
-                "    }\n" +
-                "]";
+    public static String queryDeliveryZoneDetail(String userId, String deliveryId) {
+        String uniqueId = System.currentTimeMillis() + "全积分0and99999999INTELLIGENT_SORT" + userId;
+        String args = "[{\"cityCode\":\"\",\"deliveryId\":\"" + deliveryId + "\",\"pageNum\":1,\"pageSize\":18,\"sourcePassMap\":{\"innerSource\":\"\",\"source\":\"myTab\",\"unid\":\"\"},\"topIdList\":[],\"uniqueId\":\"" + uniqueId + "\"}]";
         return ApplicationHook.requestString("com.alipay.alipaymember.biz.rpc.config.h5.queryDeliveryZoneDetail", args);
     }
 
@@ -356,92 +345,10 @@ public class AntMemberRpcCall {
      * @return 结果
      */
     public static String exchangeBenefit(String benefitId, String itemId) {
-        String args = "[\n" +
-                "        {\n" +
-                "            \"benefitId\": \"" + benefitId + "\",\n" +
-                "            \"cityCode\": \"\",\n" +
-                "            \"exchangeType\": \"POINT_PAY\",\n" +
-                "            \"itemId\": \"" + itemId + "\",\n" +
-                "            \"miniAppId\": \"\",\n" +
-                "            \"orderSource\": \"\",\n" +
-                "            \"requestId\": \"requestId" + System.currentTimeMillis() +"\",\n" +
-                "            \"requestSourceInfo\": \"\",\n" +
-                "            \"sourcePassMap\": {\n" +
-                "                \"alipayClientVersion\": \"10.6.10.9100\",\n" +
-                "                \"innerSource\": \"\",\n" +
-                "                \"mobileOsType\": \"Android\",\n" +
-                "                \"source\": \"\",\n" +
-                "                \"unid\": \"\"\n" +
-                "            },\n" +
-                "            \"userOutAccount\": \"\"\n" +
-                "        }\n" +
-                "    ]";
+        String requestId = "requestId" + System.currentTimeMillis();
+        String alipayClientVersion = ApplicationHook.getAlipayVersion().getVersionString();
+        String args = "[{\"benefitId\":\"" + benefitId + "\",\"cityCode\":\"\",\"exchangeType\":\"POINT_PAY\",\"itemId\":\"" + itemId + "\",\"miniAppId\":\"\",\"orderSource\":\"\",\"requestId\":\"" + requestId + "\",\"requestSourceInfo\":\"\",\"sourcePassMap\":{\"alipayClientVersion\":\"" + alipayClientVersion + "\",\"innerSource\":\"\",\"mobileOsType\":\"Android\",\"source\":\"\",\"unid\":\"\"},\"userOutAccount\":\"\"}]";
         return ApplicationHook.requestString("com.alipay.alipaymember.biz.rpc.exchange.h5.exchangeBenefit", args);
-    }
-
-    public static String queryDeliveryZoneDetail(String userId) {
-        String args1 = "[\n" +
-                "    {\n" +
-                "        \"cityCode\": \"450100\",\n" +
-                "        \"deliveryId\": \"94000SR2023102305988003\",\n" +
-                "        \"pageNum\": 1,\n" +
-                "        \"pageSize\": 18,\n" +
-                "        \"sourcePassMap\": {\n" +
-                "            \"innerSource\": \"\",\n" +
-                "            \"source\": \"ch_appcenter__chsub_9patch\",\n" +
-                "            \"unid\": \"\"\n" +
-                "        },\n" +
-                "        \"topIdList\": [],\n" +
-                "        \"uniqueId\": \"" + System.currentTimeMillis() + "全积分0and99999999INTELLIGENT_SORT" + userId + "\"\n" +
-                "    }\n" +
-                "]";
-
-
-        return ApplicationHook.requestString("com.alipay.alipaymember.biz.rpc.config.h5.queryDeliveryZoneDetail", args1);
-    }
-
-    public static String exchangeBenefit(String benefitId, String itemId, String userId, int index) {
-        AlipayVersion alipayVersion = ApplicationHook.getAlipayVersion();
-        String args1 = "[\n" +
-                "    {\n" +
-                "        \"benefitId\": \"" + benefitId + "\",\n" +
-                "        \"cityCode\": \"450100\",\n" +
-                "        \"exchangeType\": \"POINT_PAY\",\n" +
-                "        \"itemId\": \"" + itemId + "\",\n" +
-                "        \"miniAppId\": \"\",\n" +
-                "        \"orderSource\": \"\",\n" +
-                "        \"requestId\": \"requestId" + System.currentTimeMillis() + "\",\n" +
-                "        \"requestSourceInfo\": \"SID:" + System.currentTimeMillis() + "全积分0and99999999INTELLIGENT_SORT" + userId + "|" + index + "\",\n" +
-                "        \"sourcePassMap\": {\n" +
-                "            \"alipayClientVersion\": \"" + alipayVersion.getVersionString() + "\",\n" +
-                "            \"bid\": \"\",\n" +
-                "            \"feedsIndex\": \"" + index + "\",\n" +
-                "            \"innerSource\": \"feeds\",\n" +
-                "            \"isCpc\": \"\",\n" +
-                "            \"mobileOsType\": \"Android\",\n" +
-                "            \"source\": \"ch_appcenter__chsub_9patch\",\n" +
-                "            \"unid\": \"" + generateFormattedUUID() + "\",\n" +
-                "            \"uniqueId\": \"" + System.currentTimeMillis() + "全积分0and99999999INTELLIGENT_SORT" + userId + "\"\n" +
-                "        },\n" +
-                "        \"userOutAccount\": \"\"\n" +
-                "    }\n" +
-                "]";
-        return ApplicationHook.requestString("com.alipay.alipaymember.biz.rpc.exchange.h5.exchangeBenefit", args1);
-    }
-
-    public static String generateFormattedUUID() {
-        // 生成随机的UUID
-        UUID uuid = UUID.randomUUID();
-
-        // 格式化UUID为指定的格式
-        String formattedUUID = String.format("%s-%s-%s-%s-%s",
-                uuid.toString().substring(0, 8),
-                uuid.toString().substring(8, 12),
-                uuid.toString().substring(12, 16),
-                uuid.toString().substring(16, 20),
-                uuid.toString().substring(20));
-
-        return formattedUUID;
     }
 
     // 我的快递任务

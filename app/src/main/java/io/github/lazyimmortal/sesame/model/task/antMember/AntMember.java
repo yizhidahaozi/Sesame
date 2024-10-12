@@ -18,6 +18,7 @@ import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 public class AntMember extends ModelTask {
     private static final String TAG = AntMember.class.getSimpleName();
@@ -202,21 +203,16 @@ public class AntMember extends ModelTask {
 
     private static void kmdkSignIn() {
         try {
-            String s = AntMemberRpcCall.queryActivity();
-            JSONObject jo = new JSONObject(s);
-            if (jo.optBoolean("success")) {
-                if ("SIGN_IN_ENABLE".equals(jo.getString("signInStatus"))) {
-                    String activityNo = jo.getString("activityNo");
-                    JSONObject joSignIn = new JSONObject(AntMemberRpcCall.signIn(activityNo));
-                    if (joSignIn.optBoolean("success")) {
-                        Log.other("商家服务🕴🏻[开门打卡签到成功]");
-                    } else {
-                        Log.record(joSignIn.getString("errorMsg"));
-                        Log.i(joSignIn.toString());
-                    }
+            JSONObject jo = new JSONObject(AntMemberRpcCall.queryActivity());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
+                return;
+            }
+            if (Objects.equals("SIGN_IN_ENABLE", jo.getString("signInStatus"))) {
+                String activityNo = jo.getString("activityNo");
+                jo = new JSONObject(AntMemberRpcCall.signIn(activityNo));
+                if (MessageUtil.checkResultCode(TAG, jo)) {
+                    Log.other("商家服务🕴🏻[开门打卡签到成功]");
                 }
-            } else {
-                Log.record("queryActivity" + " " + s);
             }
         } catch (Throwable t) {
             Log.i(TAG, "kmdkSignIn err:");
@@ -225,34 +221,36 @@ public class AntMember extends ModelTask {
     }
 
     private static void kmdkSignUp() {
+        if (Status.hasFlagToday("kmdk::signUp")) {
+            return;
+        }
         try {
+            boolean hasSignUp = false;
             for (int i = 0; i < 5; i++) {
                 JSONObject jo = new JSONObject(AntMemberRpcCall.queryActivity());
-                if (jo.optBoolean("success")) {
-                    String activityNo = jo.getString("activityNo");
-                    if (!Log.getFormatDate().replace("-", "").equals(activityNo.split("_")[2])) {
-                        break;
-                    }
-                    if ("SIGN_UP".equals(jo.getString("signUpStatus"))) {
-                        Log.record("开门打卡今日已报名！");
-                        break;
-                    }
-                    if ("UN_SIGN_UP".equals(jo.getString("signUpStatus"))) {
-                        String activityPeriodName = jo.getString("activityPeriodName");
-                        JSONObject joSignUp = new JSONObject(AntMemberRpcCall.signUp(activityNo));
-                        if (joSignUp.optBoolean("success")) {
-                            Log.other("商家服务🕴🏻[" + activityPeriodName + "开门打卡报名]");
-                            return;
-                        } else {
-                            Log.record(joSignUp.getString("errorMsg"));
-                            Log.i(joSignUp.toString());
-                        }
-                    }
-                } else {
-                    Log.record("queryActivity");
-                    Log.i(jo.toString());
+                if (!MessageUtil.checkSuccess(TAG, jo)) {
+                    continue;
                 }
-                Thread.sleep(500);
+                String activityNo = jo.getString("activityNo");
+                if (!Log.getFormatDate().replace("-", "").equals(activityNo.split("_")[2])) {
+                    break;
+                } else if (Objects.equals("SIGN_UP", jo.getString("signUpStatus"))) {
+                    Log.record("开门打卡今日已报名！");
+                    hasSignUp = true;
+                    break;
+                } else if (Objects.equals("UN_SIGN_UP", jo.getString("signUpStatus"))) {
+                    String activityPeriodName = jo.getString("activityPeriodName");
+                    jo = new JSONObject(AntMemberRpcCall.signUp(activityNo));
+                    if (MessageUtil.checkSuccess(TAG, jo)) {
+                        Log.other("商家服务🕴🏻报名[" + activityPeriodName + "开门打卡]");
+                        hasSignUp = true;
+                        break;
+                    }
+                }
+                TimeUtil.sleep(500);
+            }
+            if (hasSignUp) {
+                Status.flagToday("kmdk::signUp");
             }
         } catch (Throwable t) {
             Log.i(TAG, "kmdkSignUp err:");
@@ -262,21 +260,19 @@ public class AntMember extends ModelTask {
 
     private static void zcjSignIn() {
         try {
-            String s = AntMemberRpcCall.zcjSignInQuery();
-            JSONObject jo = new JSONObject(s);
-            if (jo.optBoolean("success")) {
-                JSONObject button = jo.getJSONObject("data").getJSONObject("button");
-                if ("UNRECEIVED".equals(button.getString("status"))) {
-                    jo = new JSONObject(AntMemberRpcCall.zcjSignInExecute());
-                    if (jo.optBoolean("success")) {
-                        JSONObject data = jo.getJSONObject("data");
-                        int todayReward = data.getInt("todayReward");
-                        String widgetName = data.getString("widgetName");
-                        Log.other("商家服务🕴🏻[" + widgetName + "]#" + todayReward + "积分");
-                    }
+            JSONObject jo = new JSONObject(AntMemberRpcCall.zcjSignInQuery());
+            if (!MessageUtil.checkSuccess(TAG + " zcjSignInQuery", jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data").getJSONObject("button");
+            if (Objects.equals("UNRECEIVED", jo.getString("status"))) {
+                jo = new JSONObject(AntMemberRpcCall.zcjSignInExecute());
+                if (MessageUtil.checkSuccess(TAG, jo)) {
+                    jo = jo.getJSONObject("data");
+                    int todayReward = jo.getInt("todayReward");
+                    String widgetName = jo.getString("widgetName");
+                    Log.other("商家服务🕴🏻完成[" + widgetName + "]#获得[" + todayReward + "商家积分]");
                 }
-            } else {
-                Log.record("zcjSignInQuery" + " " + s);
             }
         } catch (Throwable t) {
             Log.i(TAG, "zcjSignIn err:");
@@ -286,105 +282,96 @@ public class AntMember extends ModelTask {
 
     /* 商家服务任务 */
     private static void taskListQuery() {
-        String s = AntMemberRpcCall.taskListQuery();
         try {
             boolean doubleCheck = false;
-            JSONObject jo = new JSONObject(s);
-            if (jo.optBoolean("success")) {
-                JSONArray taskList = jo.getJSONObject("data").getJSONArray("taskList");
-                for (int i = 0; i < taskList.length(); i++) {
-                    JSONObject task = taskList.getJSONObject(i);
-                    if (!task.has("status")) {
-                        continue;
-                    }
-                    String title = task.getString("title");
-                    String reward = task.getString("reward");
-                    String taskStatus = task.getString("status");
-                    if ("NEED_RECEIVE".equals(taskStatus)) {
-                        if (task.has("pointBallId")) {
-                            jo = new JSONObject(AntMemberRpcCall.ballReceive(task.getString("pointBallId")));
-                            if (jo.optBoolean("success")) {
-                                Log.other("商家服务🕴🏻[" + title + "]#" + reward);
-                            }
+            JSONObject jo = new JSONObject(AntMemberRpcCall.taskListQuery());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
+                return;
+            }
+            JSONArray taskList = jo.getJSONObject("data").getJSONArray("taskList");
+            for (int i = 0; i < taskList.length(); i++) {
+                JSONObject task = taskList.getJSONObject(i);
+                if (!task.has("status")) {
+                    continue;
+                }
+                String title = task.getString("title");
+                String reward = task.getString("reward");
+                String taskStatus = task.getString("status");
+                if ("NEED_RECEIVE".equals(taskStatus)) {
+                    if (task.has("pointBallId")) {
+                        jo = new JSONObject(AntMemberRpcCall.ballReceive(task.getString("pointBallId")));
+                        if (jo.optBoolean("success")) {
+                            Log.other("商家服务🕴🏻[" + title + "]#" + reward);
                         }
-                    } else if ("PROCESSING".equals(taskStatus) || "UNRECEIVED".equals(taskStatus)) {
-                        if (task.has("extendLog")) {
-                            JSONObject bizExtMap = task.getJSONObject("extendLog").getJSONObject("bizExtMap");
-                            jo = new JSONObject(AntMemberRpcCall.taskFinish(bizExtMap.getString("bizId")));
-                            if (jo.optBoolean("success")) {
-                                Log.other("商家服务🕴🏻[" + title + "]#" + reward);
-                            }
-                            doubleCheck = true;
-                        } else {
-                            String taskCode = task.getString("taskCode");
-                            switch (taskCode) {
-                                case "XCZBJLLRWCS_TASK":
-                                    // 逛一逛精彩内容
-                                    taskReceive(taskCode, "XCZBJLL_VIEWED", title);
-                                    break;
-                                case "BBNCLLRWX_TASK":
-                                    // 逛一逛芭芭农场
-                                    taskReceive(taskCode, "GYG_BBNC_VIEWED", title);
-                                    break;
-                                case "LLSQMDLB_TASK":
-                                    // 浏览收钱码大礼包
-                                    taskReceive(taskCode, "LL_SQMDLB_VIEWED", title);
-                                    break;
-                                case "SYH_CPC_FIXED_2":
-                                    // 逛一逛商品橱窗
-                                    taskReceive(taskCode, "MRCH_CPC_FIXED_VIEWED", title);
-                                    break;
-                                case "SYH_CPC_ALMM_1":
-                                    taskReceive(taskCode, "MRCH_CPC_ALMM_VIEWED", title);
-                                    break;
-                                case "TJBLLRW_TASK":
-                                    // 逛逛淘金币，购物可抵钱
-                                    taskReceive(taskCode, "TJBLLRW_TASK_VIEWED", title);
-                                    break;
-                                case "HHKLLRW_TASK":
-                                    // 49999元花呗红包集卡抽
-                                    taskReceive(taskCode, "HHKLLX_VIEWED", title);
-                                    break;
-                                case "ZCJ_VIEW_TRADE":
-                                    // 浏览攻略，赚商家积分
-                                    taskReceive(taskCode, "ZCJ_VIEW_TRADE_VIEWED", title);
-                                    break;
-                            }
+                    }
+                } else if ("PROCESSING".equals(taskStatus) || "UNRECEIVED".equals(taskStatus)) {
+                    if (task.has("extendLog")) {
+                        JSONObject bizExtMap = task.getJSONObject("extendLog").getJSONObject("bizExtMap");
+                        jo = new JSONObject(AntMemberRpcCall.taskFinish(bizExtMap.getString("bizId")));
+                        if (jo.optBoolean("success")) {
+                            Log.other("商家服务🕴🏻[" + title + "]#" + reward);
+                        }
+                        doubleCheck = true;
+                    } else {
+                        String taskCode = task.getString("taskCode");
+                        switch (taskCode) {
+                            case "XCZBJLLRWCS_TASK":
+                                // 逛一逛精彩内容
+                                taskReceive(taskCode, "XCZBJLL_VIEWED", title);
+                                break;
+                            case "BBNCLLRWX_TASK":
+                                // 逛一逛芭芭农场
+                                taskReceive(taskCode, "GYG_BBNC_VIEWED", title);
+                                break;
+                            case "LLSQMDLB_TASK":
+                                // 浏览收钱码大礼包
+                                taskReceive(taskCode, "LL_SQMDLB_VIEWED", title);
+                                break;
+                            case "SYH_CPC_FIXED_2":
+                                // 逛一逛商品橱窗
+                                taskReceive(taskCode, "MRCH_CPC_FIXED_VIEWED", title);
+                                break;
+                            case "SYH_CPC_ALMM_1":
+                                taskReceive(taskCode, "MRCH_CPC_ALMM_VIEWED", title);
+                                break;
+                            case "TJBLLRW_TASK":
+                                // 逛逛淘金币，购物可抵钱
+                                taskReceive(taskCode, "TJBLLRW_TASK_VIEWED", title);
+                                break;
+                            case "HHKLLRW_TASK":
+                                // 49999元花呗红包集卡抽
+                                taskReceive(taskCode, "HHKLLX_VIEWED", title);
+                                break;
+                            case "ZCJ_VIEW_TRADE":
+                                // 浏览攻略，赚商家积分
+                                taskReceive(taskCode, "ZCJ_VIEW_TRADE_VIEWED", title);
+                                break;
                         }
                     }
                 }
-                if (doubleCheck) {
-                    taskListQuery();
-                }
-            } else {
-                Log.i("taskListQuery err:" + " " + s);
+            }
+            if (doubleCheck) {
+                taskListQuery();
             }
         } catch (Throwable t) {
             Log.i(TAG, "taskListQuery err:");
             Log.printStackTrace(TAG, t);
         } finally {
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                Log.printStackTrace(e);
-            }
+            TimeUtil.sleep(1000);
         }
     }
 
     private static void taskReceive(String taskCode, String actionCode, String title) {
         try {
-            String s = AntMemberRpcCall.taskReceive(taskCode);
-            JSONObject jo = new JSONObject(s);
-            if (jo.optBoolean("success")) {
+            JSONObject jo = new JSONObject(AntMemberRpcCall.taskReceive(taskCode));
+            if (MessageUtil.checkSuccess(TAG, jo)) {
                 jo = new JSONObject(AntMemberRpcCall.actioncode(actionCode));
-                if (jo.optBoolean("success")) {
+                if (MessageUtil.checkSuccess(TAG, jo)) {
                     jo = new JSONObject(AntMemberRpcCall.produce(actionCode));
-                    if (jo.optBoolean("success")) {
-                        Log.other("完成任务🕴🏻[" + title + "]");
+                    if (MessageUtil.checkSuccess(TAG, jo)) {
+                        Log.other("商家服务🕴🏻完成[" + title + "]");
                     }
                 }
-            } else {
-                Log.record("taskReceive" + " " + s);
             }
         } catch (Throwable t) {
             Log.i(TAG, "taskReceive err:");
@@ -535,7 +522,7 @@ public class AntMember extends ModelTask {
     private void gainSumInsured() {
         try {
             JSONObject jo = new JSONObject(AntMemberRpcCall.queryMultiSceneWaitToGainList());
-            if (!jo.optBoolean("success")) {
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
                 return;
             }
             jo = jo.getJSONObject("data");
@@ -565,7 +552,8 @@ public class AntMember extends ModelTask {
     }
 
     private void gainMyAndFamilySumInsured(JSONObject giftData) {
-        if (giftData == null) {
+        if (giftData == null
+                || giftData.optInt("sendType", 2) != 1) {
             return;
         }
         try {
@@ -869,8 +857,7 @@ public class AntMember extends ModelTask {
     private void memberPointExchangeBenefit() {
         try {
             String userId = UserIdMap.getCurrentUid();
-//            JSONObject jo = new JSONObject(AntMemberRpcCall.queryIndexNaviBenefitFlowV2(userId, "14"));
-            JSONObject jo = new JSONObject(AntMemberRpcCall.queryDeliveryZoneDetail(userId, "全积分"));
+            JSONObject jo = new JSONObject(AntMemberRpcCall.queryDeliveryZoneDetail(userId, "94000SR2024011106752003"));
             if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return;
             }
@@ -901,7 +888,7 @@ public class AntMember extends ModelTask {
             }
             MemberBenefitIdMap.save(userId);
         } catch (Throwable t) {
-            Log.i(TAG, "pointExchangeBenefit err:");
+            Log.i(TAG, "memberPointExchangeBenefit err:");
             Log.printStackTrace(TAG, t);
         }
     }
