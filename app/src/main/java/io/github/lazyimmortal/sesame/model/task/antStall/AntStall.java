@@ -343,7 +343,7 @@ public class AntStall extends ModelTask {
                 JSONObject coinsMap = seat.getJSONObject("coinsMap");
                 JSONObject master = coinsMap.getJSONObject("MASTER");
                 String assetId = master.getString("assetId");
-                int settleCoin = (int) (master.getJSONObject("money").getDouble("amount"));
+                double settleCoin = master.getJSONObject("money").getDouble("amount");
                 boolean fullShow = master.getBoolean("fullShow");
                 if (fullShow || settleCoin > 100) {
                     JSONObject jo = new JSONObject(AntStallRpcCall.settle(assetId, settleCoin));
@@ -1041,24 +1041,19 @@ public class AntStall extends ModelTask {
                 return;
             }
             JSONObject seatsMap = jo.getJSONObject("seatsMap");
-            Iterator<String> keys = seatsMap.keys();
-            while (keys.hasNext()) {
-                String key = keys.next();
-                JSONObject seat = seatsMap.getJSONObject(key);
-                if (Objects.equals("MASTER", seat.getString("seatType"))
-                        || seat.getBoolean("canOpenShop")
-                        || !seat.getBoolean("overTicketProtection")) {
-                    // seatType: GUEST MASTER
-                    // status: FREE BUSY
+            for (int i = 1; i <= 2; i++) {
+                jo = seatsMap.getJSONObject("GUEST_0" + i);
+                if (jo.getBoolean("canOpenShop")
+                        || !jo.getBoolean("overTicketProtection")) {
                     continue;
                 }
                 jo = new JSONObject(
                         AntStallRpcCall.pasteTicket(
-                                seat.getString("rentLastBill"),
-                                seat.getString("seatId"),
-                                seat.getString("rentLastShop"),
-                                seat.getString("rentLastUser"),
-                                seat.getString("userId")
+                                jo.getString("rentLastBill"),
+                                jo.getString("seatId"),
+                                jo.getString("rentLastShop"),
+                                jo.getString("rentLastUser"),
+                                jo.getString("userId")
                         )
                 );
                 if (MessageUtil.checkResultCode(TAG, jo)) {

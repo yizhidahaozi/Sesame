@@ -1179,14 +1179,18 @@ public class AntForestV2 extends ModelTask {
             if (!MessageUtil.checkSuccess(TAG, jo)) {
                 return;
             }
-            Log.forest("森林集市🛍️打卡[坚持" + numberOfDaysCompleted + "天]");
             jo = jo.getJSONObject("data");
             JSONArray ja = jo.getJSONArray("prizes");
+            StringBuilder award = new StringBuilder();
             for (int i = 0; i < ja.length(); i++) {
                 jo = ja.getJSONObject(i);
-                String name = jo.getString("name");
-                Log.forest("森林集市🛍️领取打卡奖励[" + name + "]");
+                if (i > 0) award.append(";");
+                award.append(jo.getString("name"));
             }
+            if (award.length() > 0) {
+                award = new StringBuilder("#获得[" + award + "]");
+            }
+            Log.forest("森林集市🛍️打卡[坚持" + numberOfDaysCompleted + "天]" + award);
         } catch (Throwable t) {
             Log.i(TAG, "retrieveCurrentActivity err:");
             Log.printStackTrace(TAG, t);

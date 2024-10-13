@@ -1,6 +1,7 @@
 package io.github.lazyimmortal.sesame.util;
 
 import java.util.Random;
+import java.util.UUID;
 
 public class RandomUtil {
     private static final Random rnd = new Random();
@@ -44,5 +45,9 @@ public class RandomUtil {
             sb.append(str.charAt(number));
         }
         return sb.toString();
+    }
+
+    public static String getRandomUUID() {
+        return UUID.randomUUID().toString();
     }
 }

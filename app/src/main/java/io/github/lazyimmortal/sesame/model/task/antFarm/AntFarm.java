@@ -1864,8 +1864,9 @@ public class AntFarm extends ModelTask {
                     if (!LibraryUtil.doFarmDrawTimesTask(jo)) {
                         continue;
                     }
+                    TimeUtil.sleep(3000);
                 }
-                TimeUtil.sleep(1000);
+                TimeUtil.sleep(2000);
                 String taskId = jo.getString("taskId");
                 String title = jo.getString("title");
                 receiveFarmDrawTimesTaskAward(taskId, title);

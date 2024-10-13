@@ -32,7 +32,7 @@ public class AntStallRpcCall {
         return ApplicationHook.requestString("com.alipay.antstall.self.home", args);
     }
 
-    public static String settle(String assetId, int settleCoin) {
+    public static String settle(String assetId, double settleCoin) {
         return ApplicationHook.requestString("com.alipay.antstall.self.settle",
                 "[{\"assetId\":\"" + assetId + "\",\"coinType\":\"MASTER\",\"settleCoin\":" + settleCoin +
                         ",\"source\":\"ch_appcenter__chsub_9patch\",\"systemType\":\"android\",\"version\":\""
