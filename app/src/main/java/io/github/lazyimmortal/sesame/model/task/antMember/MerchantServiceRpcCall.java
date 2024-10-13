@@ -60,6 +60,10 @@ public class MerchantServiceRpcCall {
         return ApplicationHook.requestString("alipay.mrchservbase.biz.task.action.produce", args);
     }
 
+    public static String ballQueryV1() {
+        return ApplicationHook.requestString("alipay.mrchservbase.mrchpoint.ball.query.v1", "[{}]");
+    }
+
     public static String ballReceive(String ballIds) {
         String args = "[{\"ballIds\":[\"" + ballIds + "\"],\"channel\":\"MRCH_SELF\",\"outBizNo\":\"" + RandomUtil.getRandomUUID() + "\"}]";
         return ApplicationHook.requestString("alipay.mrchservbase.mrchpoint.ball.receive", args);

@@ -65,41 +65,38 @@ public class MerchantService {
     public static void taskListQueryV2() {
         zcjSignIn();
         try {
-            boolean doubleCheck;
-            do {
-                doubleCheck = false;
-                JSONObject jo = new JSONObject(MerchantServiceRpcCall.taskListQueryV2());
-                if (!MessageUtil.checkSuccess(TAG, jo)) {
-                    return;
+            JSONObject jo = new JSONObject(MerchantServiceRpcCall.taskListQueryV2());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            JSONArray ja = jo.getJSONArray("moduleList");
+            for (int i = 0; i < ja.length(); i++) {
+                jo = ja.getJSONObject(i);
+                if (!Objects.equals("MORE", jo.getString("planCode"))) {
+                    // planCode: SERVICE MORE
+                    continue;
                 }
-                jo = jo.getJSONObject("data");
-                JSONArray ja = jo.getJSONArray("moduleList");
-                for (int i = 0; i < ja.length(); i++) {
-                    jo = ja.getJSONObject(i);
-                    if (!Objects.equals("MORE", jo.getString("planCode"))) {
-                        // planCode: SERVICE MORE
-                        continue;
-                    }
-                    doubleCheck = taskListProcessing(jo.getJSONArray("taskList"));
-                }
-            } while (doubleCheck);
+                taskListProcessing(jo.getJSONArray("taskList"));
+            }
         } catch (Throwable t) {
             Log.i(TAG, "taskListQueryV2 err:");
             Log.printStackTrace(TAG, t);
         }
+        ballQueryV1();
     }
 
-    private static Boolean taskListProcessing(JSONArray taskList) {
-        boolean doubleCheck = false;
+    private static void taskListProcessing(JSONArray taskList) {
         try {
             for (int i = 0; i < taskList.length(); i++) {
                 JSONObject task = taskList.getJSONObject(i);
                 String status = task.getString("status");
                 // UNRECEIVED PROCESSING NEED_RECEIVE
                 if (Objects.equals("NEED_RECEIVE", status)) {
-                    ballReceive(task);
-                } else if (task.has("extendLog")) {
-                    doubleCheck = taskFinish(task);
+                    continue;
+                }
+                if (task.has("extendLog")) {
+                    taskFinish(task);
                 } else {
                     String actionCode = getActionCode(task);
                     if (!taskQueryByActionCode(actionCode)) {
@@ -111,17 +108,16 @@ public class MerchantService {
                         }
                     }
                     // PROCESSING
-                    doubleCheck = taskActionProduce(task, actionCode);
+                    taskActionProduce(task, actionCode);
                 }
             }
         } catch (Throwable t) {
             Log.i(TAG, "taskListProcessing err:");
             Log.printStackTrace(TAG, t);
         }
-        return doubleCheck;
     }
 
-    private static Boolean taskFinish(JSONObject task) {
+    private static void taskFinish(JSONObject task) {
         try {
             String bizId = task.getJSONObject("extendLog")
                     .getJSONObject("bizExtMap").getString("bizId");
@@ -135,45 +131,16 @@ public class MerchantService {
             Log.i(TAG, "taskListProcessing err:");
             Log.printStackTrace(TAG, t);
         }
-        return false;
     }
 
     private static String getActionCode(JSONObject task) {
         String actionCode = null;
         try {
-            String taskCode = task.getString("taskCode");
-            switch (taskCode) {
-                case "XCZBJLLRWCS_TASK":
-                    actionCode = "XCZBJLL_VIEWED";
-                    break;
-                case "BBNCLLRWX_TASK":
-                    actionCode = "GYG_BBNC_VIEWED";
-                    break;
-                case "LLSQMDLB_TASK":
-                    actionCode = "LL_SQMDLB_VIEWED";
-                    break;
-                case "SYH_CPC_FIXED_2":
-                    actionCode = "MRCH_CPC_FIXED_VIEWED";
-                    break;
-                case "SYH_CPC_ALMM_1":
-                    actionCode = "MRCH_CPC_ALMM_VIEWED";
-                    break;
-                case "TJBLLRW_TASK":
-                    actionCode = "TJBLLRW_TASK_VIEWED";
-                    break;
-                case "HHKLLRW_TASK":
-                    actionCode = "HHKLLX_VIEWED";
-                    break;
-                case "ZCJ_VIEW_TRADE":
-                    actionCode = "ZCJ_VIEW_TRADE_VIEWED";
-                    break;
-                default:
-                    JSONObject extInfo = task.getJSONObject("button").optJSONObject("extInfo");
-                    if ((extInfo != null && extInfo.has("actionCode"))
-                            || task.has("sendPointImmediately")) {
-                        actionCode = taskCode + "_VIEWED";
-                    }
-                    break;
+            JSONObject extInfo = task.getJSONObject("button").optJSONObject("extInfo");
+            if (extInfo != null && extInfo.has("actionCode")) {
+                actionCode = extInfo.getString("actionCode") + "_VIEWED";;
+            } else if (task.has("sendPointImmediately")) {
+                actionCode = task.getString("taskCode") + "_VIEWED";
             }
         } catch (Throwable t) {
             Log.i(TAG, "getActionCode err:");
@@ -208,8 +175,7 @@ public class MerchantService {
         return false;
     }
 
-    private static Boolean taskActionProduce(JSONObject task, String actionCode) {
-        boolean hasActionProduce = false;
+    private static void taskActionProduce(JSONObject task, String actionCode) {
         try {
             int count = task.getInt("target") - task.getInt("current");
             for (int i = 0; i < count; i++) {
@@ -217,23 +183,43 @@ public class MerchantService {
                 if (MessageUtil.checkSuccess(TAG, jo)) {
                     String title = task.getString("title");
                     Log.other("商家服务🏪完成[" + title + "]");
-                    hasActionProduce = true;
                 }
+                TimeUtil.sleep(5000);
             }
         } catch (Throwable t) {
             Log.i(TAG, "taskActionProduce err:");
             Log.printStackTrace(TAG, t);
         }
-        return hasActionProduce;
     }
 
-    private static void ballReceive(JSONObject task) {
+    private static void ballQueryV1() {
         try {
-            JSONObject jo = new JSONObject(MerchantServiceRpcCall.ballReceive(task.getString("pointBallId")));
+            JSONObject jo = new JSONObject(MerchantServiceRpcCall.ballQueryV1());
+            if (!MessageUtil.checkSuccess(TAG, jo)) {
+                return;
+            }
+            jo = jo.getJSONObject("data");
+            if (!jo.has("pointBalls")) {
+                return;
+            }
+            JSONArray pointBalls = jo.getJSONArray("pointBalls");
+            for (int i = 0; i < pointBalls.length(); i++) {
+                jo = pointBalls.getJSONObject(i);
+                ballReceive(jo.getString("id"), jo.getString("name"));
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "ballQueryV1 err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private static void ballReceive(String ballId, String ballName) {
+        try {
+            JSONObject jo = new JSONObject(MerchantServiceRpcCall.ballReceive(ballId));
             if (MessageUtil.checkSuccess(TAG, jo)) {
-                String title = task.getString("title");
+                jo = jo.getJSONObject("data");
                 String pointReceived = jo.getString("pointReceived");
-                Log.other("商家服务🏪领取[" + title + "]#获得[" + pointReceived + "商家积分]");
+                Log.other("商家服务🏪领取[" + ballName + "]#获得[" + pointReceived + "商家积分]");
             }
         } catch (Throwable t) {
             Log.i(TAG, "ballReceive err:");
