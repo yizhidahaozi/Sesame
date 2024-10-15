@@ -245,7 +245,7 @@ public class AntStall extends ModelTask {
         }
     }
 
-    private void inviteOpenShop(String seatId) {
+    private synchronized void inviteOpenShop(String seatId) {
         if (inviteOpenShopType.getValue() == InviteOpenShopType.NONE) {
             return;
         }

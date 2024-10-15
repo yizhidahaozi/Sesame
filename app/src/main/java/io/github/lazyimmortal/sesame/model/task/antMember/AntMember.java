@@ -16,7 +16,6 @@ import io.github.lazyimmortal.sesame.util.idMap.MemberBenefitIdMap;
 import io.github.lazyimmortal.sesame.util.idMap.PromiseSimpleTemplateIdMap;
 import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 public class AntMember extends ModelTask {
@@ -33,21 +32,21 @@ public class AntMember extends ModelTask {
     }
 
     private BooleanModelField memberSign;
-    private BooleanModelField collectSesame;
     private BooleanModelField memberPointExchangeBenefit;
     private SelectModelField memberPointExchangeBenefitList;
+    private BooleanModelField collectSesame;
     private BooleanModelField promise;
     private SelectModelField promiseList;
     private BooleanModelField KuaiDiFuLiJia;
+    private BooleanModelField beanSignIn;
+    private BooleanModelField beanExchangeBubbleBoost;
+    private BooleanModelField beanExchangeGoldenTicket;
+    private BooleanModelField gainSumInsured;
     private BooleanModelField signinCalendar;
     private BooleanModelField enableGoldTicket;
     private BooleanModelField enableGameCenter;
     private BooleanModelField merchantSignIn;
     private BooleanModelField merchantKMDK;
-    private BooleanModelField beanSignIn;
-    private BooleanModelField beanExchangeBubbleBoost;
-    private BooleanModelField beanExchangeGoldenTicket;
-    private BooleanModelField gainSumInsured;
 
     @Override
     public ModelFields getFields() {
@@ -82,6 +81,9 @@ public class AntMember extends ModelTask {
             if (memberSign.getValue()) {
                 memberSign();
             }
+            if (memberPointExchangeBenefit.getValue()) {
+                memberPointExchangeBenefit();
+            }
             if (collectSesame.getValue()) {
                 collectSesame();
             }
@@ -97,28 +99,25 @@ public class AntMember extends ModelTask {
             if (enableGoldTicket.getValue()) {
                 goldTicket();
             }
-            if (enableGameCenter.getValue()) {
-                enableGameCenter();
-            }
             if (beanSignIn.getValue()) {
-                beanSignIn();
+                AntInsurance.beanSignIn();
             }
             if (beanExchangeBubbleBoost.getValue()) {
-                beanExchangeBubbleBoost();
+                AntInsurance.beanExchange("IT20230214000700069722");
             }
-            // 安心豆兑换黄金票
             if (beanExchangeGoldenTicket.getValue()) {
-                beanExchangeGoldenTicket();
+                AntInsurance.beanExchange("IT20240322000100086304");
             }
-            if (memberPointExchangeBenefit.getValue()) {
-                memberPointExchangeBenefit();
+            if (gainSumInsured.getValue()) {
+                AntInsurance.lotteryDraw();
+                AntInsurance.gainSumInsured();
             }
             // 消费金签到
             if (signinCalendar.getValue()) {
                 signinCalendar();
             }
-            if (gainSumInsured.getValue()) {
-                gainSumInsured();
+            if (enableGameCenter.getValue()) {
+                enableGameCenter();
             }
             if (merchantSignIn.getValue() || merchantKMDK.getValue()) {
                 if (MerchantService.transcodeCheck()) {
@@ -156,6 +155,7 @@ public class AntMember extends ModelTask {
 
             queryAllStatusTaskList();
         } catch (Throwable t) {
+            Log.i(TAG, "memberSign err:");
             Log.printStackTrace(TAG, t);
         }
     }
@@ -322,58 +322,6 @@ public class AntMember extends ModelTask {
             Log.other("生活记录📝加入[" + promiseName + "]");
         } catch (Throwable t) {
             Log.i(TAG, "promiseJoin err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    // 领取保障金
-    private void gainSumInsured() {
-        try {
-            JSONObject jo = new JSONObject(AntMemberRpcCall.queryMultiSceneWaitToGainList());
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            jo = jo.getJSONObject("data");
-            Iterator<String> keys = jo.keys();
-            while (keys.hasNext()) {
-                String key = keys.next();
-                Object jsonDTO = jo.get(key);
-                if (jsonDTO instanceof JSONArray) {
-                    // 如eventToWaitDTOList、helpChildSumInsuredDTOList
-                    JSONArray jsonArray = ((JSONArray) jsonDTO);
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        gainMyAndFamilySumInsured(jsonArray.getJSONObject(i));
-                    }
-                } else if (jsonDTO instanceof JSONObject) {
-                    // 如signInDTO、priorityChannelDTO
-                    JSONObject jsonObject = ((JSONObject) jsonDTO);
-                    if (jsonObject.length() == 0) {
-                        continue;
-                    }
-                    gainMyAndFamilySumInsured(jsonObject);
-                }
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "gainSumInsured err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    private void gainMyAndFamilySumInsured(JSONObject giftData) {
-        if (giftData == null
-                || giftData.optInt("sendType", 2) != 1) {
-            return;
-        }
-        try {
-            giftData.put("entrance", "jkj_zhima_dairy66");
-            JSONObject jo = new JSONObject(AntMemberRpcCall.gainMyAndFamilySumInsured(giftData));
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            jo = jo.getJSONObject("data").getJSONObject("gainSumInsuredDTO");
-            Log.other("攒保障金💰领取[" + jo.optString("gainSumInsuredYuan") + "元保额]");
-        } catch (Throwable t) {
-            Log.i(TAG, "gainMyAndFamilySumInsured err:");
             Log.printStackTrace(TAG, t);
         }
     }
@@ -576,87 +524,6 @@ public class AntMember extends ModelTask {
                 }
             }
         } catch (Throwable t) {
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    private void beanSignIn() {
-        try {
-            JSONObject jo = new JSONObject(AntMemberRpcCall.querySignInProcess("AP16242232", "INS_BLUE_BEAN_SIGN"));
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            if (jo.getJSONObject("result").getBoolean("canPush")) {
-                jo = new JSONObject(AntMemberRpcCall.signInTrigger("AP16242232", "INS_BLUE_BEAN_SIGN"));
-                if (MessageUtil.checkSuccess(TAG, jo)) {
-                    String prizeName = jo.getJSONObject("result").getJSONArray("prizeSendOrderDTOList").getJSONObject(0)
-                            .getString("prizeName");
-                    Log.other("安心豆🫘[" + prizeName + "]");
-                }
-            }
-
-        } catch (Throwable t) {
-            Log.i(TAG, "beanSignIn err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    private void beanExchangeBubbleBoost() {
-        try {
-            JSONObject jo = new JSONObject(AntMemberRpcCall.queryUserAccountInfo("INS_BLUE_BEAN"));
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            int userCurrentPoint = jo.getJSONObject("result").getInt("userCurrentPoint");
-            jo = new JSONObject(AntMemberRpcCall.beanExchangeDetail("IT20230214000700069722"));
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            jo = jo.getJSONObject("result").getJSONObject("rspContext").getJSONObject("params").getJSONObject("exchangeDetail");
-            String itemId = jo.getString("itemId");
-            String itemName = jo.getString("itemName");
-            jo = jo.getJSONObject("itemExchangeConsultDTO");
-            int realConsumePointAmount = jo.getInt("realConsumePointAmount");
-            if (!jo.getBoolean("canExchange") || realConsumePointAmount > userCurrentPoint) {
-                return;
-            }
-            jo = new JSONObject(AntMemberRpcCall.beanExchange(itemId, realConsumePointAmount));
-            if (MessageUtil.checkSuccess(TAG, jo)) {
-                Log.other("安心豆🫘兑换[" + itemName + "]");
-                return;
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "beanExchangeBubbleBoost err:");
-            Log.printStackTrace(TAG, t);
-        }
-    }
-
-    // 兑换黄金票
-    private void beanExchangeGoldenTicket() {
-        try {
-            JSONObject jo = new JSONObject(AntMemberRpcCall.queryUserAccountInfo("INS_BLUE_BEAN"));
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            int userCurrentPoint = jo.getJSONObject("result").getInt("userCurrentPoint");
-            jo = new JSONObject(AntMemberRpcCall.beanExchangeDetail("IT20240322000100086304"));
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            jo = jo.getJSONObject("result").getJSONObject("rspContext").getJSONObject("params").getJSONObject("exchangeDetail");
-            String itemId = jo.getString("itemId");
-            String itemName = jo.getString("itemName");
-            jo = jo.getJSONObject("itemExchangeConsultDTO");
-            int realConsumePointAmount = jo.getInt("realConsumePointAmount");
-            if (!jo.getBoolean("canExchange") || realConsumePointAmount > userCurrentPoint) {
-                return;
-            }
-            jo = new JSONObject(AntMemberRpcCall.beanExchange(itemId, realConsumePointAmount));
-            if (MessageUtil.checkSuccess(TAG, jo)) {
-                Log.other("安心豆🫘兑换[" + itemName + "]");
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "beanExchangeGoldenTicket err:");
             Log.printStackTrace(TAG, t);
         }
     }

@@ -165,58 +165,6 @@ public class AntMemberRpcCall {
     }
 
     /**
-     * 查询待领取的保障金
-     *
-     * @return 结果
-     */
-    public static String queryMultiSceneWaitToGainList() {
-        String args = "[{\"entrance\":\"jkj_zhima_dairy66\"," +
-                "\"eventToWaitParamDTO\":{\"giftProdCode\":\"GIFT_UNIVERSAL_COVERAGE\",\"rightNoList\":[\"UNIVERSAL_ACCIDENT\",\"UNIVERSAL_HOSPITAL\",\"UNIVERSAL_OUTPATIENT\",\"UNIVERSAL_SERIOUSNESS\",\"UNIVERSAL_WEALTH\",\"UNIVERSAL_TRANS\",\"UNIVERSAL_FRAUD_LIABILITY\"]}," +
-                "\"helpChildParamDTO\":{\"giftProdCode\":\"GIFT_HEALTH_GOLD_CHILD\",\"rightNoList\":[\"UNIVERSAL_ACCIDENT\",\"UNIVERSAL_HOSPITAL\",\"UNIVERSAL_OUTPATIENT\",\"UNIVERSAL_SERIOUSNESS\",\"UNIVERSAL_WEALTH\",\"UNIVERSAL_TRANS\",\"UNIVERSAL_FRAUD_LIABILITY\"]}," +
-                "\"priorityChannelParamDTO\":{\"giftProdCode\":\"GIFT_UNIVERSAL_COVERAGE\",\"rightNoList\":[\"UNIVERSAL_ACCIDENT\",\"UNIVERSAL_HOSPITAL\",\"UNIVERSAL_OUTPATIENT\",\"UNIVERSAL_SERIOUSNESS\",\"UNIVERSAL_WEALTH\",\"UNIVERSAL_TRANS\",\"UNIVERSAL_FRAUD_LIABILITY\"]}," +
-                "\"signInParamDTO\":{\"giftProdCode\":\"GIFT_UNIVERSAL_COVERAGE\",\"rightNoList\":[\"UNIVERSAL_ACCIDENT\",\"UNIVERSAL_HOSPITAL\",\"UNIVERSAL_OUTPATIENT\",\"UNIVERSAL_SERIOUSNESS\",\"UNIVERSAL_WEALTH\",\"UNIVERSAL_TRANS\",\"UNIVERSAL_FRAUD_LIABILITY\"]}}]";
-        return ApplicationHook.requestString("com.alipay.insgiftbff.insgiftMain.queryMultiSceneWaitToGainList", args);
-    }
-
-    /**
-     * 领取保障金
-     *
-     * @return 结果
-     */
-
-    public static String gainMyAndFamilySumInsured(JSONObject data) {
-        return ApplicationHook.requestString("com.alipay.insgiftbff.insgiftMain.gainMyAndFamilySumInsured", "[" + data + "]");
-    }
-
-    // 安心豆
-    public static String querySignInProcess(String appletId, String scene) {
-        return ApplicationHook.requestString("com.alipay.insmarketingbff.bean.querySignInProcess",
-                "[{\"appletId\":\"" + appletId + "\",\"scene\":\"" + scene + "\"}]");
-    }
-
-    public static String signInTrigger(String appletId, String scene) {
-        return ApplicationHook.requestString("com.alipay.insmarketingbff.bean.signInTrigger",
-                "[{\"appletId\":\"" + appletId + "\",\"scene\":\"" + scene + "\"}]");
-    }
-
-    public static String beanExchangeDetail(String itemId) {
-        return ApplicationHook.requestString("com.alipay.insmarketingbff.onestop.planTrigger",
-                "[{\"extParams\":{\"itemId\":\"" + itemId + "\"},"
-                        + "\"planCode\":\"bluebean_onestop\",\"planOperateCode\":\"exchangeDetail\"}]");
-    }
-
-    public static String beanExchange(String itemId, int pointAmount) {
-        return ApplicationHook.requestString("com.alipay.insmarketingbff.onestop.planTrigger",
-                "[{\"extParams\":{\"itemId\":\"" + itemId + "\",\"pointAmount\":\"" + Integer.toString(pointAmount) + "\"},"
-                        + "\"planCode\":\"bluebean_onestop\",\"planOperateCode\":\"exchange\"}]");
-    }
-
-    public static String queryUserAccountInfo(String pointProdCode) {
-        return ApplicationHook.requestString("com.alipay.insmarketingbff.point.queryUserAccountInfo",
-                "[{\"channel\":\"HiChat\",\"pointProdCode\":\"" + pointProdCode + "\",\"pointUnitType\":\"COUNT\"}]");
-    }
-
-    /**
      * 查询会员积分兑换福利列表方法1
      * @param userId userId
      * @param deliveryId 分类码
