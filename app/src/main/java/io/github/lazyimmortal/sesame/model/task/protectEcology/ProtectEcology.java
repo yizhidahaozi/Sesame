@@ -63,6 +63,7 @@ public class ProtectEcology extends ModelTask {
         modelFields.addField(protectReserveList = new SelectAndCountModelField("reserveList", "保护动物 | 保护地列表", new LinkedHashMap<>(), AlipayReserve::getList));
         modelFields.addField(protectAnimal = new BooleanModelField("protectAnimal", "保护动物 | 护林员", false));
         modelFields.addField(protectAnimalList = new SelectModelField("protectAnimalList", "保护动物 | 护林员列表", new HashSet<>(), AlipayAnimal::getList));
+        modelFields.addField(protectMarathon = new BooleanModelField("protectMarathon", "保护环境 | 碳中和", false));
         modelFields.addField(protectBeach = new BooleanModelField("protectBeach", "保护海洋 | 海滩(总数)", false));
         modelFields.addField(protectBeachList = new SelectAndCountModelField("protectOceanList", "保护海洋 | 海滩列表", new LinkedHashMap<>(), AlipayBeach::getList));
         return modelFields;
@@ -86,6 +87,9 @@ public class ProtectEcology extends ModelTask {
         }
         if (protectAnimal.getValue()) {
             protectAnimal();
+        }
+        if (protectMarathon.getValue()) {
+            protectMarathon();
         }
         if (protectBeach.getValue()) {
             protectBeach();
@@ -393,6 +397,72 @@ public class ProtectEcology extends ModelTask {
             Log.i(TAG, "applyGoldAnimalCert err:");
             Log.printStackTrace(TAG, t);
         }
+    }
+
+    private static void protectMarathon() {
+        try {
+            JSONArray treeItems = queryTreeItemsForExchange("AVAILABLE", "special");
+            if (treeItems == null) {
+                return;
+            }
+            for (int i = 0; i < treeItems.length(); i++) {
+                JSONObject jo = treeItems.getJSONObject(i);
+                jo = jo.getJSONObject("extendInfo");
+                String activityName = jo.optString("activityName");
+                if (Objects.equals("marathon", jo.optString("activityType"))) {
+                    String activityId = StringUtil.getSubString(jo.getString("actionUrl"), "activityId%3D", "%26");
+                    if (marathonQueryActivity(activityId)) {
+                        Log.forest("生态保护🏕️助力[" + activityName + "]");
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "protectMarathon err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private static Boolean marathonQueryActivity(String activityId) {
+        try {
+            JSONObject paramMap = new JSONObject();
+            paramMap.put("donateQueryActionParam", "marathonWater");
+            JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("marathonHome", activityId, paramMap));
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
+            }
+            jo = jo.getJSONObject("resultData");
+            if (!jo.optBoolean("certLockStatus", true)) {
+                jo = jo.getJSONObject("donateConfigVO");
+                int donateNum = jo.getInt("donateNum");
+                return marathonCharityActivity(activityId, donateNum);
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "marathonQueryActivity err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private static Boolean marathonCharityActivity(String activityId, int donateNum) {
+        try {
+            JSONObject paramMap = new JSONObject();
+            paramMap.put("donateNum", donateNum);
+            paramMap.put("incrNum", donateNum);
+            JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("marathonWater", activityId, paramMap));
+            return MessageUtil.checkResultCode(TAG, jo);
+//            if (MessageUtil.checkResultCode(TAG, jo)) {
+//                return false;
+//            }
+//            jo = jo.getJSONObject("resultData").getJSONObject("activityCertVO");
+//            String name = jo.getString("name");
+//            int energy = jo.getInt("energy");
+//            Log.forest("生态保护🏕️助力[" + name + "]#累计[" + energy + "g能量]");
+//            return true;
+        } catch (Throwable t) {
+            Log.i(TAG, "marathonCharityActivity err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
     }
 
     private static JSONArray queryCultivationList() {
