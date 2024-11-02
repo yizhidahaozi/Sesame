@@ -17,6 +17,7 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectAndCountOneModelFi
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectOneModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
+import io.github.lazyimmortal.sesame.entity.AlipayAnimal;
 import io.github.lazyimmortal.sesame.entity.AlipayBeach;
 import io.github.lazyimmortal.sesame.entity.AlipayReserve;
 import io.github.lazyimmortal.sesame.entity.AlipayTree;
@@ -250,6 +251,10 @@ public class ListDialog {
                                                 AlipayReserve.remove(curIdAndName.id);
                                                 ReserveIdMap.remove(curIdAndName.id);
                                                 ReserveIdMap.save();
+                                            } else if (curIdAndName instanceof AlipayAnimal) {
+                                                AlipayAnimal.remove(curIdAndName.id);
+                                                AnimalIdMap.remove(curIdAndName.id);
+                                                AnimalIdMap.save();
                                             } else if (curIdAndName instanceof AlipayBeach) {
                                                 AlipayBeach.remove(curIdAndName.id);
                                                 BeachIdMap.remove(curIdAndName.id);

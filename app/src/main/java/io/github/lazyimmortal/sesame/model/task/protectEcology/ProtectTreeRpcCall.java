@@ -16,7 +16,12 @@ public class ProtectTreeRpcCall {
     }
 
     public static String exchangeTree(int projectId) {
-        String args = "[{\"projectId\":" + projectId + ",\"sToken\":\"" + System.currentTimeMillis() + "\"]";
+        String args = "[{\"projectId\":" + projectId + ",\"sToken\":\"" + System.currentTimeMillis() + "\"}]";
         return ApplicationHook.requestString("alipay.antmember.forest.h5.exchangeTree", args);
+    }
+
+    public static String applyGoldAnimalCert(int projectId) {
+        String args = "[{\"projectId\":\"" + projectId + "\"}]";
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.applyGoldAnimalCert", args);
     }
 }

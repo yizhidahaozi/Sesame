@@ -230,6 +230,14 @@ public class FileUtil {
         return file;
     }
 
+    public static File getAnimalIdMapFile() {
+        File file = new File(MAIN_DIRECTORY_FILE, "animal.json");
+        if (file.exists() && file.isDirectory()) {
+            file.delete();
+        }
+        return file;
+    }
+
     public static File getBeachIdMapFile() {
         File file = new File(MAIN_DIRECTORY_FILE, "beach.json");
         if (file.exists() && file.isDirectory()) {

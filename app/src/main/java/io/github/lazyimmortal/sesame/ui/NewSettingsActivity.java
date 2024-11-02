@@ -77,6 +77,7 @@ public class NewSettingsActivity extends BaseActivity {
         PromiseSimpleTemplateIdMap.load(userId);
         TreeIdMap.load();
         ReserveIdMap.load();
+        AnimalIdMap.load();
         BeachIdMap.load();
         ConfigV2.load(userId);
         LanguageUtil.setLocale(this);
