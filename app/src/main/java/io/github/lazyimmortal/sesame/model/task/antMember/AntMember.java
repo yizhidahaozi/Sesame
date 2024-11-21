@@ -8,6 +8,7 @@ import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
+import io.github.lazyimmortal.sesame.entity.CustomOption;
 import io.github.lazyimmortal.sesame.entity.MemberBenefit;
 import io.github.lazyimmortal.sesame.entity.PromiseSimpleTemplate;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
@@ -38,9 +39,7 @@ public class AntMember extends ModelTask {
     private BooleanModelField promise;
     private SelectModelField promiseList;
     private BooleanModelField KuaiDiFuLiJia;
-    private BooleanModelField beanSignIn;
-    private BooleanModelField beanExchangeBubbleBoost;
-    private BooleanModelField beanExchangeGoldenTicket;
+    private SelectModelField beanOptions;
     private BooleanModelField gainSumInsured;
     private BooleanModelField signinCalendar;
     private BooleanModelField enableGoldTicket;
@@ -58,9 +57,7 @@ public class AntMember extends ModelTask {
         modelFields.addField(promise = new BooleanModelField("promise", "生活记录 | 坚持做", false));
         modelFields.addField(promiseList = new SelectModelField("promiseList", "生活记录 | 坚持做列表", new LinkedHashSet<>(), PromiseSimpleTemplate::getList));
         modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 福利加", false));
-        modelFields.addField(beanSignIn = new BooleanModelField("beanSignIn", "安心豆 | 签到", false));
-        modelFields.addField(beanExchangeGoldenTicket = new BooleanModelField("beanExchangeGoldenTicket", "安心豆 | 兑换黄金票", false));
-        modelFields.addField(beanExchangeBubbleBoost = new BooleanModelField("beanExchangeBubbleBoost", "安心豆 | 兑换时光加速器", false));
+        modelFields.addField(beanOptions = new SelectModelField("beanOptions", "安心豆 | 选项", new LinkedHashSet<>(), CustomOption::getBeanOptions));
         modelFields.addField(gainSumInsured = new BooleanModelField("gainSumInsured", "保障金 | 领取", false));
         modelFields.addField(signinCalendar = new BooleanModelField("signinCalendar", "消费金 | 签到", false));
         modelFields.addField(enableGoldTicket = new BooleanModelField("enableGoldTicket", "黄金票 | 签到", false));
@@ -99,13 +96,13 @@ public class AntMember extends ModelTask {
             if (enableGoldTicket.getValue()) {
                 goldTicket();
             }
-            if (beanSignIn.getValue()) {
+            if (beanOptions.getValue().contains("beanSignIn")) {
                 AntInsurance.beanSignIn();
             }
-            if (beanExchangeBubbleBoost.getValue()) {
+            if (beanOptions.getValue().contains("beanExchangeBubbleBoost")) {
                 AntInsurance.beanExchange("IT20230214000700069722");
             }
-            if (beanExchangeGoldenTicket.getValue()) {
+            if (beanOptions.getValue().contains("beanExchangeGoldenTicket")) {
                 AntInsurance.beanExchange("IT20240322000100086304");
             }
             if (gainSumInsured.getValue()) {

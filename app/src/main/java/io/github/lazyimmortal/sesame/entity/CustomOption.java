@@ -32,4 +32,12 @@ public class CustomOption extends IdAndName {
         list.add(new CustomOption("familyAwardList", "领取奖励"));
         return list;
     }
+
+    public static List<CustomOption> getBeanOptions() {
+        List<CustomOption> list = new ArrayList<>();
+        list.add(new CustomOption("beanSignIn", "签到"));
+        list.add(new CustomOption("beanExchangeGoldenTicket", "兑换黄金票"));
+        list.add(new CustomOption("beanExchangeBubbleBoost", "兑换时光加速器"));
+        return list;
+    }
 }
