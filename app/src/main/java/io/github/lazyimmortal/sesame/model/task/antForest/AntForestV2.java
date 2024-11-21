@@ -125,9 +125,8 @@ public class AntForestV2 extends ModelTask {
     private BooleanModelField combineAnimalPiece;
     private BooleanModelField consumeAnimalProp;
     private SelectModelField whoYouWantToGiveTo;
-    private BooleanModelField ecoLifeTick;
-    private BooleanModelField ecoLifeOpen;
-    private BooleanModelField photoGuangPan;
+    private BooleanModelField ecoLife;
+    private SelectModelField ecoLifeOptions;
     private BooleanModelField dress;
     private TextModelField dressDetailList;
 
@@ -191,9 +190,8 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(collectGiftBox = new BooleanModelField("collectGiftBox", "领取礼盒", false));
         modelFields.addField(medicalHealth = new BooleanModelField("medicalHealth", "医疗健康", false));
         modelFields.addField(greenLife = new BooleanModelField("greenLife", "森林集市", false));
-        modelFields.addField(ecoLifeTick = new BooleanModelField("ecoLifeTick", "绿色行动 | 行动打卡", false));
-        modelFields.addField(ecoLifeOpen = new BooleanModelField("ecoLifeOpen", "绿色行动 | 自动开通", false));
-        modelFields.addField(photoGuangPan = new BooleanModelField("photoGuangPan", "绿色行动 | 光盘打卡", false));
+        modelFields.addField(ecoLife = new BooleanModelField("ecoLife", "绿色行动 | 开启", false));
+        modelFields.addField(ecoLifeOptions = new SelectModelField("ecoLifeOptions", "绿色行动 | 选项", new LinkedHashSet<>(), CustomOption::getEcoLifeOptions));
         modelFields.addField(dress = new BooleanModelField("dress", "装扮保护 | 开启", false));
         modelFields.addField(dressDetailList = new TextModelField("dressDetailList", "装扮保护 | 装扮信息", ""));
         return modelFields;
@@ -427,7 +425,7 @@ public class AntForestV2 extends ModelTask {
                 if (receiveForestTaskAward.getValue()) {
                     queryTaskList();
                 }
-                if (ecoLifeTick.getValue() || photoGuangPan.getValue()) {
+                if (ecoLife.getValue()) {
                     ecoLife();
                 }
                 waterFriendEnergy();
@@ -1783,10 +1781,7 @@ public class AntForestV2 extends ModelTask {
             }
             JSONObject data = jo.getJSONObject("data");
             if (!data.getBoolean("openStatus")) {
-                if (!ecoLifeOpen.getValue()) {
-                    Log.forest("绿色任务☘未开通");
-                    return;
-                }
+                Log.forest("绿色任务☘未开通");
                 jo = new JSONObject(EcoLifeRpcCall.openEcolife());
                 if (!MessageUtil.checkResultCode(TAG, jo)) {
                     return;
@@ -1803,10 +1798,10 @@ public class AntForestV2 extends ModelTask {
             }
             String dayPoint = data.getString("dayPoint");
             JSONArray actionListVO = data.getJSONArray("actionListVO");
-            if (ecoLifeTick.getValue()) {
+            if (ecoLifeOptions.getValue().contains("tick")) {
                 ecoLifeTick(actionListVO, dayPoint);
             }
-            if (photoGuangPan.getValue()) {
+            if (ecoLifeOptions.getValue().contains("dish")) {
                 photoGuangPan(dayPoint);
             }
         } catch (Throwable th) {

@@ -10,6 +10,13 @@ public class CustomOption extends IdAndName {
         name = n;
     }
 
+    public static List<CustomOption> getEcoLifeOptions() {
+        List<CustomOption> list = new ArrayList<>();
+        list.add(new CustomOption("tick", "绿色行动打卡"));
+        list.add(new CustomOption("dish", "光盘行动打卡"));
+        return list;
+    }
+
     public static List<CustomOption> getUseAccelerateToolOptions() {
         List<CustomOption> list = new ArrayList<>();
         list.add(new CustomOption("useAccelerateToolContinue", "连续使用"));
