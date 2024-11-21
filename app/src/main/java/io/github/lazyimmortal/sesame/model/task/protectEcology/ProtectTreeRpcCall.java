@@ -30,7 +30,9 @@ public class ProtectTreeRpcCall {
     // 碳中和
     /**
      *
-     * @param actionCode actionCode marathonHome marathonWater
+     * @param actionCode actionCode
+     *                   marathonHome marathonWater
+     *                   carbonHome carbonWater
      * @param activityId activityId
      * @param paramMap 查询时: {"donateQueryActionParam":"marathonWater"}
      *                 捐赠时: {"donateNum":1000,"incrNum":1000}

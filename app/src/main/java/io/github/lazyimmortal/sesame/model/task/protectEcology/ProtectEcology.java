@@ -12,6 +12,7 @@ import java.util.Set;
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
+import io.github.lazyimmortal.sesame.data.modelFieldExt.ChoiceModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectAndCountModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
@@ -40,6 +41,8 @@ public class ProtectEcology extends ModelTask {
     private static BooleanModelField cooperateWater;
     private static SelectAndCountModelField cooperateWaterList;
     private static SelectAndCountModelField cooperateWaterTotalLimitList;
+    private static ChoiceModelField protectMarathonType;
+    private static ChoiceModelField protectNewAncientTreeType;
     private static BooleanModelField protectTree;
     private static SelectAndCountModelField protectTreeList;
     private static BooleanModelField protectReserve;
@@ -48,8 +51,6 @@ public class ProtectEcology extends ModelTask {
     private static SelectAndCountModelField protectBeachList;
     private static BooleanModelField protectAnimal;
     private static SelectModelField protectAnimalList;
-    private static BooleanModelField protectMarathon;
-    private static BooleanModelField protectAncientTree;
 
     @Override
     public ModelFields getFields() {
@@ -57,13 +58,14 @@ public class ProtectEcology extends ModelTask {
         modelFields.addField(cooperateWater = new BooleanModelField("cooperateWater", "合种 | 浇水", false));
         modelFields.addField(cooperateWaterList = new SelectAndCountModelField("cooperateWaterList", "合种 | 日浇水量列表", new LinkedHashMap<>(), CooperateUser::getList));
         modelFields.addField(cooperateWaterTotalLimitList = new SelectAndCountModelField("cooperateWaterTotalLimitList", "合种 | 总浇水量列表", new LinkedHashMap<>(), CooperateUser::getList));
+        modelFields.addField(protectMarathonType = new ChoiceModelField("protectMarathonType", "碳中和 | 马拉松", ProtectType.NONE, ProtectType.nickNames));
+        modelFields.addField(protectNewAncientTreeType = new ChoiceModelField("protectNewAncientTreeType", "碳中和 | 古树医生", ProtectType.NONE, ProtectType.nickNames));
         modelFields.addField(protectTree = new BooleanModelField("protectTree", "保护森林 | 植树(总数)", false));
         modelFields.addField(protectTreeList = new SelectAndCountModelField("protectTreeList", "保护森林 | 植树列表", new LinkedHashMap<>(), AlipayTree::getList));
         modelFields.addField(protectReserve = new BooleanModelField("protectReserve", "保护动物 | 保护地(每天)", false));
         modelFields.addField(protectReserveList = new SelectAndCountModelField("reserveList", "保护动物 | 保护地列表", new LinkedHashMap<>(), AlipayReserve::getList));
         modelFields.addField(protectAnimal = new BooleanModelField("protectAnimal", "保护动物 | 护林员", false));
         modelFields.addField(protectAnimalList = new SelectModelField("protectAnimalList", "保护动物 | 护林员列表", new HashSet<>(), AlipayAnimal::getList));
-        modelFields.addField(protectMarathon = new BooleanModelField("protectMarathon", "保护环境 | 碳中和", false));
         modelFields.addField(protectBeach = new BooleanModelField("protectBeach", "保护海洋 | 海滩(总数)", false));
         modelFields.addField(protectBeachList = new SelectAndCountModelField("protectOceanList", "保护海洋 | 海滩列表", new LinkedHashMap<>(), AlipayBeach::getList));
         return modelFields;
@@ -79,6 +81,10 @@ public class ProtectEcology extends ModelTask {
         if (cooperateWater.getValue()) {
             cooperateWater();
         }
+        if (protectMarathonType.getValue() != ProtectType.NONE
+                || protectNewAncientTreeType.getValue() != ProtectType.NONE) {
+            protectCarbon();
+        }
         if (protectTree.getValue()) {
             protectTree();
         }
@@ -87,9 +93,6 @@ public class ProtectEcology extends ModelTask {
         }
         if (protectAnimal.getValue()) {
             protectAnimal();
-        }
-        if (protectMarathon.getValue()) {
-            protectMarathon();
         }
         if (protectBeach.getValue()) {
             protectBeach();
@@ -399,7 +402,7 @@ public class ProtectEcology extends ModelTask {
         }
     }
 
-    private static void protectMarathon() {
+    private static void protectCarbon() {
         try {
             JSONArray treeItems = queryTreeItemsForExchange("AVAILABLE", "special");
             if (treeItems == null) {
@@ -409,9 +412,16 @@ public class ProtectEcology extends ModelTask {
                 JSONObject jo = treeItems.getJSONObject(i);
                 jo = jo.getJSONObject("extendInfo");
                 String activityName = jo.optString("activityName");
-                if (Objects.equals("marathon", jo.optString("activityType"))) {
+                if (Objects.equals("marathon", jo.optString("activityType"))
+                        && protectMarathonType.getValue() == ProtectType.COLLECT) {
                     String activityId = StringUtil.getSubString(jo.getString("actionUrl"), "activityId%3D", "%26");
                     if (marathonQueryActivity(activityId)) {
+                        Log.forest("生态保护🏕️助力[" + activityName + "]");
+                    }
+                } else if (activityName.contains("古树医生")
+                        && protectNewAncientTreeType.getValue() == ProtectType.COLLECT) {
+                    String activityId = StringUtil.getSubString(jo.getString("actionUrl"), "activityId%3D", "%26");
+                    if (carbonQueryActivity(activityId)) {
                         Log.forest("生态保护🏕️助力[" + activityName + "]");
                     }
                 }
@@ -460,6 +470,49 @@ public class ProtectEcology extends ModelTask {
 //            return true;
         } catch (Throwable t) {
             Log.i(TAG, "marathonCharityActivity err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private static Boolean carbonQueryActivity(String activityId) {
+        try {
+            JSONObject paramMap = new JSONObject();
+            paramMap.put("donateQueryActionParam", "carbonWater");
+            JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("carbonHome", activityId, paramMap));
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
+            }
+            jo = jo.getJSONObject("resultData");
+            if (!jo.optBoolean("certLockStatus", true)) {
+                jo = jo.getJSONObject("donateConfigVO");
+                int donateNum = jo.getInt("donateNum");
+                return carbonCharityActivity(activityId, donateNum);
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "carbonQueryActivity err:");
+            Log.printStackTrace(TAG, t);
+        }
+        return false;
+    }
+
+    private static Boolean carbonCharityActivity(String activityId, int donateNum) {
+        try {
+            JSONObject paramMap = new JSONObject();
+            paramMap.put("donateNum", donateNum);
+            paramMap.put("incrNum", donateNum);
+            JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("carbonWater", activityId, paramMap));
+            return MessageUtil.checkResultCode(TAG, jo);
+//            if (MessageUtil.checkResultCode(TAG, jo)) {
+//                return false;
+//            }
+//            jo = jo.getJSONObject("resultData").getJSONObject("activityCertVO");
+//            String name = jo.getString("name");
+//            int energy = jo.getInt("energy");
+//            Log.forest("生态保护🏕️助力[" + name + "]#累计[" + energy + "g能量]");
+//            return true;
+        } catch (Throwable t) {
+            Log.i(TAG, "carbonCharityActivity err:");
             Log.printStackTrace(TAG, t);
         }
         return false;
@@ -567,5 +620,13 @@ public class ProtectEcology extends ModelTask {
             canExchange = false;
             this.projectId = projectId;
         }
+    }
+
+    public interface ProtectType {
+        int NONE = 0;
+        int COLLECT = 1;
+        int SELECT = 2;
+
+        String[] nickNames = {"不保护", "集邮模式", "列表模式(Todo)"};
     }
 }
