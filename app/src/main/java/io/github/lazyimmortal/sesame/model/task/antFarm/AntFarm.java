@@ -12,6 +12,7 @@ import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.*;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
+import io.github.lazyimmortal.sesame.entity.CustomOption;
 import io.github.lazyimmortal.sesame.entity.FarmOrnaments;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
 import io.github.lazyimmortal.sesame.model.normal.answerAI.AnswerAI;
@@ -92,10 +93,7 @@ public class AntFarm extends ModelTask {
     private ChoiceModelField getFeedType;
     private SelectModelField getFeedList;
     private BooleanModelField family;
-    private BooleanModelField familySign;
-    private BooleanModelField familyFeed;
-    private BooleanModelField familyEatTogether;
-    private BooleanModelField familyAwardList;
+    private SelectModelField familyOptions;
 
     @Override
     public ModelFields getFields() {
@@ -125,10 +123,7 @@ public class AntFarm extends ModelTask {
         modelFields.addField(donationType = new ChoiceModelField("donationType", "每日捐蛋 | 方式", DonationType.ZERO, DonationType.nickNames));
         modelFields.addField(donationAmount = new IntegerModelField("donationAmount", "每日捐蛋 | 倍数(每项)", 1));
         modelFields.addField(family = new BooleanModelField("family", "亲密家庭 | 开启", false));
-        modelFields.addField(familySign = new BooleanModelField("familySign", "亲密家庭 | 每日签到", true));
-        modelFields.addField(familyFeed = new BooleanModelField("familyFeed", "亲密家庭 | 帮喂成员", false));
-        modelFields.addField(familyEatTogether = new BooleanModelField("familyEatTogether", "亲密家庭 | 美食请客", false));
-        modelFields.addField(familyAwardList = new BooleanModelField("familyAwardList", "亲密家庭 | 领取奖励", false));
+        modelFields.addField(familyOptions = new SelectModelField("familyOptions", "亲密家庭 | 选项", new LinkedHashSet<>(), CustomOption::getFarmFamilyOptions));
         modelFields.addField(sleepTime = new StringModelField("sleepTime", "小鸡睡觉 | 时间(关闭:-1)", "2001"));
         modelFields.addField(sleepMinutes = new IntegerModelField("sleepMinutes", "小鸡睡觉 | 时长(分钟)", 10 * 59, 1, 10 * 60));
         modelFields.addField(recordFarmGame = new BooleanModelField("recordFarmGame", "小鸡乐园 | 游戏改分(星星球、登山赛、飞行赛、揍小鸡)", false));
@@ -2230,7 +2225,7 @@ public class AntFarm extends ModelTask {
                 String animalInteractStatus = animalStatusVO.getString("animalInteractStatus");
                 if (AnimalInteractStatus.HOME.name().equals(animalInteractStatus)
                         && AnimalFeedStatus.HUNGRY.name().equals(animalFeedStatus)) {
-                    if (familyFeed.getValue()) {
+                    if (familyOptions.getValue().contains("familyFeed")) {
                         familyFeedFriendAnimal(groupId, farmId, userId);
                     }
                 }
@@ -2244,13 +2239,13 @@ public class AntFarm extends ModelTask {
                 }
             }
 
-            if (familySignTips && familySign.getValue()) {
+            if (familySignTips && familyOptions.getValue().contains("familySign")) {
                 familySign();
             }
-            if (canEatTogether && familyEatTogether.getValue()) {
+            if (canEatTogether && familyOptions.getValue().contains("familyEatTogether")) {
                 familyEatTogether(groupId, friendUserIds);
             }
-            if (familyAwardNum > 0 && familyAwardList.getValue()) {
+            if (familyAwardNum > 0 && familyOptions.getValue().contains("familyAwardList")) {
                 familyAwardList();
             }
         } catch (Throwable t) {
