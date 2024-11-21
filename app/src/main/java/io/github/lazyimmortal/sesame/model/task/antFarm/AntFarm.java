@@ -74,8 +74,7 @@ public class AntFarm extends ModelTask {
     private IntegerModelField donationAmount;
     private BooleanModelField receiveFarmTaskAward;
     private BooleanModelField useAccelerateTool;
-    private BooleanModelField useAccelerateToolContinue;
-    private BooleanModelField useAccelerateToolWhenMaxEmotion;
+    private SelectModelField useAccelerateToolOptions;
     private BooleanModelField feedFriendAnimal;
     private SelectAndCountModelField feedFriendAnimalList;
     private ChoiceModelField notifyFriendType;
@@ -101,8 +100,7 @@ public class AntFarm extends ModelTask {
         modelFields.addField(feedAnimal = new BooleanModelField("feedAnimal", "喂小鸡", false));
         modelFields.addField(useNewEggTool = new BooleanModelField("useNewEggTool", "新蛋卡 | 使用", false));
         modelFields.addField(useAccelerateTool = new BooleanModelField("useAccelerateTool", "加速卡 | 使用", false));
-        modelFields.addField(useAccelerateToolContinue = new BooleanModelField("useAccelerateToolContinue", "加速卡 | 连续使用", false));
-        modelFields.addField(useAccelerateToolWhenMaxEmotion = new BooleanModelField("useAccelerateToolWhenMaxEmotion", "加速卡 | 仅在满状态时使用", false));
+        modelFields.addField(useAccelerateToolOptions = new SelectModelField("useAccelerateToolOptions", "加速卡 | 选项", new LinkedHashSet<>(), CustomOption::getUseAccelerateToolOptions));
         modelFields.addField(useSpecialFood = new BooleanModelField("useSpecialFood", "特殊食品 | 使用", false));
         modelFields.addField(useSpecialFoodCountLimit = new IntegerModelField("useSpecialFoodCountLimit", "特殊食品 | 使用上限(无限:0)", 0));
         modelFields.addField(rewardFriend = new BooleanModelField("rewardFriend", "打赏好友", false));
@@ -1189,8 +1187,8 @@ public class AntFarm extends ModelTask {
             return;
         }
         syncAnimalStatus(ownerFarmId);
-        if ((!useAccelerateToolContinue.getValue() && AnimalBuff.ACCELERATING.name().equals(ownerAnimal.animalBuff))
-                || (useAccelerateToolWhenMaxEmotion.getValue() && finalScore != 100)) {
+        if ((!useAccelerateToolOptions.getValue().contains("useAccelerateToolContinue") && AnimalBuff.ACCELERATING.name().equals(ownerAnimal.animalBuff))
+                || (useAccelerateToolOptions.getValue().contains("useAccelerateToolWhenMaxEmotion") && finalScore != 100)) {
             return;
         }
         double consumeSpeed = 0d;
@@ -1212,7 +1210,7 @@ public class AntFarm extends ModelTask {
             if (!Status.canUseAccelerateToolToday()) {
                 break;
             }
-            if (!useAccelerateToolContinue.getValue()) {
+            if (!useAccelerateToolOptions.getValue().contains("useAccelerateToolContinue")) {
                 break;
             }
         }

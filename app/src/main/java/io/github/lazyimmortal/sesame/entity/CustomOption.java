@@ -10,6 +10,13 @@ public class CustomOption extends IdAndName {
         name = n;
     }
 
+    public static List<CustomOption> getUseAccelerateToolOptions() {
+        List<CustomOption> list = new ArrayList<>();
+        list.add(new CustomOption("useAccelerateToolContinue", "连续使用"));
+        list.add(new CustomOption("useAccelerateToolWhenMaxEmotion", "仅在满状态时使用"));
+        return list;
+    }
+
     public static List<CustomOption> getFarmFamilyOptions() {
         List<CustomOption> list = new ArrayList<>();
         list.add(new CustomOption("familySign", "每日签到"));
