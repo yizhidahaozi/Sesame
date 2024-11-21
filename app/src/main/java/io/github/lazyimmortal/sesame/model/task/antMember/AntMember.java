@@ -39,8 +39,8 @@ public class AntMember extends ModelTask {
     private BooleanModelField promise;
     private SelectModelField promiseList;
     private BooleanModelField KuaiDiFuLiJia;
-    private SelectModelField beanOptions;
-    private BooleanModelField gainSumInsured;
+    private BooleanModelField antInsurance;
+    private SelectModelField antInsuranceOptions;
     private BooleanModelField signinCalendar;
     private BooleanModelField enableGoldTicket;
     private BooleanModelField enableGameCenter;
@@ -57,8 +57,8 @@ public class AntMember extends ModelTask {
         modelFields.addField(promise = new BooleanModelField("promise", "生活记录 | 坚持做", false));
         modelFields.addField(promiseList = new SelectModelField("promiseList", "生活记录 | 坚持做列表", new LinkedHashSet<>(), PromiseSimpleTemplate::getList));
         modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 福利加", false));
-        modelFields.addField(beanOptions = new SelectModelField("beanOptions", "安心豆 | 选项", new LinkedHashSet<>(), CustomOption::getBeanOptions));
-        modelFields.addField(gainSumInsured = new BooleanModelField("gainSumInsured", "保障金 | 领取", false));
+        modelFields.addField(antInsurance = new BooleanModelField("antInsurance", "蚂蚁保 | 开启", false));
+        modelFields.addField(antInsuranceOptions = new SelectModelField("antInsuranceOptions", "蚂蚁保 | 选项", new LinkedHashSet<>(), CustomOption::getAntInsuranceOptions));
         modelFields.addField(signinCalendar = new BooleanModelField("signinCalendar", "消费金 | 签到", false));
         modelFields.addField(enableGoldTicket = new BooleanModelField("enableGoldTicket", "黄金票 | 签到", false));
         modelFields.addField(enableGameCenter = new BooleanModelField("enableGameCenter", "游戏中心 | 签到", false));
@@ -96,18 +96,8 @@ public class AntMember extends ModelTask {
             if (enableGoldTicket.getValue()) {
                 goldTicket();
             }
-            if (beanOptions.getValue().contains("beanSignIn")) {
-                AntInsurance.beanSignIn();
-            }
-            if (beanOptions.getValue().contains("beanExchangeBubbleBoost")) {
-                AntInsurance.beanExchange("IT20230214000700069722");
-            }
-            if (beanOptions.getValue().contains("beanExchangeGoldenTicket")) {
-                AntInsurance.beanExchange("IT20240322000100086304");
-            }
-            if (gainSumInsured.getValue()) {
-                AntInsurance.lotteryDraw();
-                AntInsurance.gainSumInsured();
+            if (antInsurance.getValue()) {
+                AntInsurance.exec(antInsuranceOptions.getValue());
             }
             // 消费金签到
             if (signinCalendar.getValue()) {

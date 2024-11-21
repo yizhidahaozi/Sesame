@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Iterator;
+import java.util.Set;
 
 import io.github.lazyimmortal.sesame.util.Log;
 import io.github.lazyimmortal.sesame.util.MessageUtil;
@@ -12,8 +13,24 @@ import io.github.lazyimmortal.sesame.util.Status;
 public class AntInsurance {
     private static final String TAG = AntInsurance.class.getSimpleName();
 
+    public static void exec(Set<String> options) {
+        if (options.contains("beanSignIn")) {
+            beanSignIn();
+        }
+        if (options.contains("beanExchangeBubbleBoost")) {
+            beanExchange("IT20230214000700069722");
+        }
+        if (options.contains("beanExchangeGoldenTicket")) {
+            beanExchange("IT20240322000100086304");
+        }
+        if (options.contains("gainSumInsured")) {
+            lotteryDraw();
+            gainSumInsured();
+        }
+    }
+
     // 保障金领取
-    public static void gainSumInsured() {
+    private static void gainSumInsured() {
         try {
             JSONObject jo = new JSONObject(AntInsuranceRpcCall.queryMultiSceneWaitToGainList());
             if (!MessageUtil.checkSuccess(TAG, jo)) {
@@ -65,7 +82,7 @@ public class AntInsurance {
     }
 
     // 天天领取保障福利
-    public static void lotteryDraw() {
+    private static void lotteryDraw() {
         if (Status.hasFlagToday("insurance::lotteryDraw")) {
             return;
         }
@@ -95,7 +112,7 @@ public class AntInsurance {
     }
 
     // 安心豆签到
-    public static void beanSignIn() {
+    private static void beanSignIn() {
         try {
             JSONObject jo = new JSONObject(AntInsuranceRpcCall.beanQuerySignInProcess());
             if (!MessageUtil.checkSuccess(TAG, jo)) {
@@ -116,7 +133,7 @@ public class AntInsurance {
     }
 
     // 安心豆兑换
-    public static void beanExchange(String itemId) {
+    private static void beanExchange(String itemId) {
         try {
             JSONObject jo = new JSONObject(AntInsuranceRpcCall.queryUserAccountInfo("INS_BLUE_BEAN"));
             if (!MessageUtil.checkSuccess(TAG, jo)) {

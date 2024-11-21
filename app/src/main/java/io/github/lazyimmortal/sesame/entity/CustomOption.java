@@ -33,11 +33,12 @@ public class CustomOption extends IdAndName {
         return list;
     }
 
-    public static List<CustomOption> getBeanOptions() {
+    public static List<CustomOption> getAntInsuranceOptions() {
         List<CustomOption> list = new ArrayList<>();
-        list.add(new CustomOption("beanSignIn", "签到"));
-        list.add(new CustomOption("beanExchangeGoldenTicket", "兑换黄金票"));
-        list.add(new CustomOption("beanExchangeBubbleBoost", "兑换时光加速器"));
+        list.add(new CustomOption("beanSignIn", "安心豆签到"));
+        list.add(new CustomOption("beanExchangeGoldenTicket", "安心豆兑换黄金票"));
+        list.add(new CustomOption("beanExchangeBubbleBoost", "安心豆兑换时光加速器"));
+        list.add(new CustomOption("gainSumInsured", "保障金领取"));
         return list;
     }
 }
