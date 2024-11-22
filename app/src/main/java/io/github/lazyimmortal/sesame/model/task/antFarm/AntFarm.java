@@ -2270,6 +2270,7 @@ public class AntFarm extends ModelTask {
             JSONObject jo = new JSONObject(AntFarmRpcCall.familySleep(groupId));
             if (MessageUtil.checkMemo(TAG, jo)) {
                 Log.farm("亲密家庭🏠小鸡睡觉");
+                syncFamilyStatus(groupId);
                 return true;
             }
         } catch (Throwable t) {
@@ -2311,6 +2312,7 @@ public class AntFarm extends ModelTask {
             foodStock = jo.getInt("foodStock");
             Log.farm("亲密家庭🏠帮喂成员[" + user + "]小鸡[" + 180 + "g饲料]#剩余" + foodStock + "g");
             Status.feedFriendToday(AntFarmRpcCall.farmId2UserId(friendFarmId));
+            syncFamilyStatus(groupId);
         } catch (Throwable t) {
             Log.i(TAG, "familyFeedFriendAnimal err:");
             Log.printStackTrace(TAG, t);
@@ -2420,6 +2422,7 @@ public class AntFarm extends ModelTask {
             JSONObject jo = new JSONObject(AntFarmRpcCall.familyEatTogether(groupId, cuisines, friendUserIds));
             if (MessageUtil.checkMemo(TAG, jo)) {
                 Log.farm("亲密家庭🏠" + periodName + "请客#消耗美食" + friendUserIds.length() + "份");
+                syncFamilyStatus(groupId);
             }
         } catch (Throwable t) {
             Log.i(TAG, "familyEatTogether err:");
@@ -2429,6 +2432,16 @@ public class AntFarm extends ModelTask {
 
     private void familySign() {
         familyReceiveFarmTaskAward("FAMILY_SIGN_TASK", "每日签到");
+    }
+
+    private void syncFamilyStatus(String groupId) {
+        try {
+            JSONObject jo = new JSONObject(AntFarmRpcCall.syncFamilyStatus(groupId, "INTIMACY_VALUE", userId));
+            MessageUtil.checkMemo(TAG, jo);
+        } catch (Throwable t) {
+            Log.i(TAG, "syncFamilyStatus err:");
+            Log.printStackTrace(TAG, t);
+        }
     }
 
     public interface RecallAnimalType {

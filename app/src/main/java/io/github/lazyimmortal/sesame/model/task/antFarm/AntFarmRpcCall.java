@@ -492,9 +492,23 @@ public class AntFarmRpcCall {
         return ApplicationHook.requestString("com.alipay.antfarm.feedFriendAnimal", args);
     }
 
+    /**
+     * 同步家庭状态
+     * @param groupId 家庭ID
+     * @param operType 要同步的信息类型
+     *                 INTIMACY_VALUE : 亲密度
+     *                 FAMILY_INTERACT_ACTION : 进行的活动
+     *                 ANIMAL_STATUS : 小鸡状态
+     *                 SLEEP_INFO|ANIMAL_STATUS : 小鸡状态与睡眠信息
+     * @param syncUserIds 要同步的用户ID
+     * @return String
+     */
     public static String syncFamilyStatus(String groupId, String operType, String syncUserIds) {
         // INTIMACY_VALUE
         // FAMILY_INTERACT_ACTION
+        // SLEEP_INFO|ANIMAL_STATUS
+        // ANIMAL_STATUS|SLEEP_INFO
+        // ANIMAL_STATUS
         String args = "[{\"groupId\":\"" + groupId + "\",\"operType\":\"" + operType + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"syncUserIds\":[\"" + syncUserIds + "\"]}]";
         return ApplicationHook.requestString("com.alipay.antfarm.syncFamilyStatus", args);
     }
