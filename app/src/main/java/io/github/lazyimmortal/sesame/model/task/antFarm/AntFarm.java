@@ -2328,15 +2328,13 @@ public class AntFarm extends ModelTask {
             JSONArray ja = jo.getJSONArray("familyAwardRecordList");
             for (int i = 0; i < ja.length(); i++) {
                 jo = ja.getJSONObject(i);
-                if (jo.optBoolean("received", true)) {
-                    continue;
-                }
-                if (!"CUISINE".equals(jo.optString("type"))) {
+                if (jo.optBoolean("received", true)
+                        || jo.optBoolean("operability")) {
                     continue;
                 }
                 String rightId = jo.getString("rightId");
                 String awardName = jo.getString("awardName");
-                int count = jo.getInt("count");
+                int count = jo.optInt("count", 1);
                 receiveFamilyAward(rightId, awardName, count);
             }
         } catch (Throwable t) {
