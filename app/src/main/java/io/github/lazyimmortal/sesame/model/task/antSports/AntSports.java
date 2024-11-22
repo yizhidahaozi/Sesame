@@ -586,11 +586,14 @@ public class AntSports extends ModelTask {
     }
 
     private String queryJoinPathId() {
-        if (TokenConfig.INSTANCE.getCustomWalkPath()) {
-            return TokenConfig.INSTANCE.getCustomWalkPathId();
+        String pathId = null;
+        if (TokenConfig.isCustomWalkPath()) {
+            pathId = TokenConfig.getCustomWalkPathId();
+        }
+        if (pathId != null) {
+            return pathId;
         }
 
-        String pathId = null;
         try {
             String themeId = WalkPathTheme.walkPathThemeIds[walkPathTheme.getValue()];
             JSONObject theme = queryWorldMap(themeId);

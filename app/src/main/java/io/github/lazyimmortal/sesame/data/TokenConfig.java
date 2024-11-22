@@ -11,9 +11,11 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -36,11 +38,30 @@ public class TokenConfig {
     private boolean init;
 
     private Boolean newUI = true;
+
+    // sports
     private boolean customWalkPath = false;
-    private String customWalkPathId = null;
+    private String customWalkPathIdConstant = null;
+    private final Queue<String> customWalkPathIdList = new LinkedList<>();
 
     private final Map<String, String> answerList = new HashMap<>();
     private final Set<Map<String, String> > dishImageList = new HashSet<>();
+
+    public static Boolean isCustomWalkPath() {
+        return INSTANCE.customWalkPath;
+    }
+
+    public static String getCustomWalkPathId() {
+        String pathId = INSTANCE.customWalkPathIdList.poll();
+        String customWalkPathId = INSTANCE.customWalkPathIdConstant;
+        if (pathId == null && customWalkPathId == null) {
+            INSTANCE.customWalkPath = false;
+        } else if (pathId == null) {
+            return customWalkPathId;
+        }
+        save();
+        return pathId;
+    }
 
     public static String getAnswer(String question) {
         Calendar calendar = TimeUtil.getToday();
