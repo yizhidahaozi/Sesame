@@ -262,6 +262,7 @@ public class AntForestV2 extends ModelTask {
                         collectFriendsEnergy(idList);
                     }
                 }
+                selfHomeObject = collectSelfEnergy();
             } catch (Throwable t) {
                 Log.i(TAG, "queryEnergyRanking err:");
                 Log.printStackTrace(TAG, t);
