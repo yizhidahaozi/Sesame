@@ -36,6 +36,8 @@ public class TokenConfig {
     private boolean init;
 
     private Boolean newUI = true;
+    private boolean customWalkPath = false;
+    private String customWalkPathId = null;
 
     private final Map<String, String> answerList = new HashMap<>();
     private final Set<Map<String, String> > dishImageList = new HashSet<>();

@@ -8,11 +8,11 @@ import org.json.JSONObject;
 
 import io.github.lazyimmortal.sesame.data.ModelFields;
 import io.github.lazyimmortal.sesame.data.ModelGroup;
+import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.BooleanModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.ChoiceModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.IntegerModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
-import io.github.lazyimmortal.sesame.data.modelFieldExt.StringModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
@@ -32,8 +32,6 @@ public class AntSports extends ModelTask {
     private int tmpStepCount = -1;
     private BooleanModelField walk;
     private ChoiceModelField walkPathTheme;
-    private BooleanModelField walkCustomPath;
-    private StringModelField walkCustomPathId;
     private BooleanModelField receiveCoinAsset;
     private ChoiceModelField donateCharityCoinType;
     private IntegerModelField donateCharityCoinAmount;
@@ -63,8 +61,6 @@ public class AntSports extends ModelTask {
         ModelFields modelFields = new ModelFields();
         modelFields.addField(walk = new BooleanModelField("walk", "行走路线 | 开启", false));
         modelFields.addField(walkPathTheme = new ChoiceModelField("walkPathTheme", "行走路线 | 路线主题", WalkPathTheme.DA_MEI_ZHONG_GUO, WalkPathTheme.nickNames));
-        modelFields.addField(walkCustomPath = new BooleanModelField("walkCustomPath", "行走路线 | 开启自定义路线", false));
-        modelFields.addField(walkCustomPathId = new StringModelField("walkCustomPathId", "行走路线 | 自定义路线代码(debug)", "p000202408231708"));
         modelFields.addField(sportsTasks = new BooleanModelField("sportsTasks", "运动任务", false));
         modelFields.addField(receiveCoinAsset = new BooleanModelField("receiveCoinAsset", "收运动币", false));
         modelFields.addField(donateCharityCoinType = new ChoiceModelField("donateCharityCoinType", "捐运动币 | 方式", DonateCharityCoinType.ZERO, DonateCharityCoinType.nickNames));
@@ -590,8 +586,8 @@ public class AntSports extends ModelTask {
     }
 
     private String queryJoinPathId() {
-        if (walkCustomPath.getValue()) {
-            return walkCustomPathId.getValue();
+        if (TokenConfig.INSTANCE.getCustomWalkPath()) {
+            return TokenConfig.INSTANCE.getCustomWalkPathId();
         }
 
         String pathId = null;
