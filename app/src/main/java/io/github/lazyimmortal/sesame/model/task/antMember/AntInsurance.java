@@ -13,7 +13,7 @@ import io.github.lazyimmortal.sesame.util.Status;
 public class AntInsurance {
     private static final String TAG = AntInsurance.class.getSimpleName();
 
-    public static void exec(Set<String> options) {
+    public static void executeTask(Set<String> options) {
         if (options.contains("beanSignIn")) {
             beanSignIn();
         }

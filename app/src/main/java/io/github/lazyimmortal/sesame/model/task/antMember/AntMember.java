@@ -97,7 +97,7 @@ public class AntMember extends ModelTask {
                 goldTicket();
             }
             if (antInsurance.getValue()) {
-                AntInsurance.exec(antInsuranceOptions.getValue());
+                AntInsurance.executeTask(antInsuranceOptions.getValue());
             }
             // 消费金签到
             if (signinCalendar.getValue()) {
