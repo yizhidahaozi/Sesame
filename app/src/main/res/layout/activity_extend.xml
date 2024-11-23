@@ -60,5 +60,29 @@
                                 android:textColor="@color/button_text"
                                 android:text="查询未解锁项目🐘" />
                 </LinearLayout>
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp">
+                        <Button
+                            android:id="@+id/set_custom_walk_path_id"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_margin="10dp"
+                            android:background="@drawable/button_extend"
+                            android:textColor="@color/button_text"
+                            android:text="自定义路线🚶🏻‍♂️" />
+                        <Button
+                            android:id="@+id/set_custom_walk_path_id_queue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_margin="10dp"
+                            android:background="@drawable/button_extend"
+                            android:textColor="@color/button_text"
+                            android:text="待行走路线🚶🏻‍♂️" />
+                </LinearLayout>
         </LinearLayout>
 </LinearLayout>

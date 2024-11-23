@@ -68,9 +68,9 @@ public class TokenConfig {
         return save();
     }
 
-    public static void clearCustomWalkPathIdQueue() {
+    public static Boolean clearCustomWalkPathIdQueue() {
         INSTANCE.customWalkPathIdQueue.clear();
-        save();
+        return save();
     }
 
     public static String getAnswer(String question) {

@@ -6,10 +6,14 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
+import io.github.lazyimmortal.sesame.data.TokenConfig;
+import io.github.lazyimmortal.sesame.hook.Toast;
 import io.github.lazyimmortal.sesame.model.task.antForest.AntForestRpcCall;
 import io.github.lazyimmortal.sesame.model.task.antDodo.AntDodoRpcCall;
 import io.github.lazyimmortal.sesame.model.task.antOrchard.AntOrchardRpcCall;
+import io.github.lazyimmortal.sesame.model.task.antSports.AntSportsRpcCall;
 import io.github.lazyimmortal.sesame.util.*;
 import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
@@ -63,6 +67,13 @@ public class TestRpc {
                 }
                 if ("getUnlockTreeItems".equals(testType)) {
                     getUnlockTreeItems();
+                }
+
+                if (Objects.equals("setCustomWalkPathId", testType)) {
+                    setCustomWalkPathId(broadcastData);
+                }
+                if (Objects.equals("addCustomWalkPathIdQueue", testType)) {
+                    addCustomWalkPathIdQueue(broadcastData);
                 }
             }
         }.setData(broadcastFun, broadcastData, testType).start();
@@ -442,6 +453,39 @@ public class TestRpc {
         } catch (Throwable t) {
             Log.i(TAG, "getUnlockTreeItems err:");
             Log.printStackTrace(TAG, t);
+        }
+    }
+
+    private static void setCustomWalkPathId(String pathId) {
+        String userId = UserIdMap.getCurrentUid();
+        if (StringUtil.isEmpty(userId)) {
+            Toast.show("设置自定义路线失败:找不到用户信息");
+            return;
+        }
+        String pathName = "自定义路线关闭";
+        if (!StringUtil.isEmpty(pathId)) {
+            pathName = AntSportsRpcCall.queryPathName(pathId);
+            if (pathName == null) {
+                Toast.show("设置自定义路线失败:找不到路线信息");
+                return;
+            }
+        }
+        String userMaskName = UserIdMap.getCurrentMaskName();
+        if (TokenConfig.setCustomWalkPathId(userId, pathId)) {
+            Toast.show("设置自定义路线成功:" + pathName + "-->" + userMaskName);
+        }
+    }
+
+    private static void addCustomWalkPathIdQueue(String pathId) {
+        if (!StringUtil.isEmpty(pathId)) {
+            String pathName = AntSportsRpcCall.queryPathName(pathId);
+            if (pathName == null) {
+                Toast.show("添加待行走路线失败:找不到路线信息");
+                return;
+            }
+            if (TokenConfig.addCustomWalkPathIdQueue(pathId)) {
+                Toast.show("添加待行走路线成功:" + pathName);
+            }
         }
     }
 }

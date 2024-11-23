@@ -3,6 +3,8 @@ package io.github.lazyimmortal.sesame.model.task.antSports;
 import org.json.JSONObject;
 
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
+import io.github.lazyimmortal.sesame.util.Log;
+import io.github.lazyimmortal.sesame.util.MessageUtil;
 
 public class AntSportsRpcCall {
     private static final String chInfo = "ch_appcenter__chsub_9patch",
@@ -120,6 +122,19 @@ public class AntSportsRpcCall {
     public static String queryPath(String date, String pathId) {
         String args = "[{\"date\":\"" + date + "\",\"pathId\":\"" + pathId + "\"}]";
         return ApplicationHook.requestString("com.alipay.sportsplay.biz.rpc.walk.queryPath", args);
+    }
+
+    public static String queryPathName(String pathId) {
+        try {
+            JSONObject jo = new JSONObject(queryPath(Log.getFormatDate(), pathId));
+            if (MessageUtil.checkSuccess(jo)) {
+                jo = jo.getJSONObject("data").getJSONObject("path");
+                return jo.getString("name");
+            }
+        } catch (Throwable t) {
+            Log.record("查询路线:[" + pathId + "]失败！");
+        }
+        return null;
     }
 
     // 加入路线
