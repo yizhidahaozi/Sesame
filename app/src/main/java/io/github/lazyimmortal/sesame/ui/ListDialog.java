@@ -222,7 +222,9 @@ public class ListDialog {
                                 })
                                 .setNegativeButton(c.getString(R.string.cancel), null)
                                 .create();
-                        if (curIdAndName instanceof CooperateUser)
+                        if (curIdAndName instanceof CooperateUser
+                                || curIdAndName instanceof AlipayMarathon
+                                || curIdAndName instanceof AlipayNewAncientTree)
                             edt_count.setHint("浇水克数");
                         else
                             edt_count.setHint("次数");
