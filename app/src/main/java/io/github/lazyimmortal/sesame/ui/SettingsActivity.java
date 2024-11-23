@@ -64,6 +64,8 @@ public class SettingsActivity extends BaseActivity {
         TreeIdMap.load();
         ReserveIdMap.load();
         AnimalIdMap.load();
+        MarathonIdMap.load();
+        NewAncientTreeIdMap.load();
         BeachIdMap.load();
         ConfigV2.load(userId);
         LanguageUtil.setLocale(this);

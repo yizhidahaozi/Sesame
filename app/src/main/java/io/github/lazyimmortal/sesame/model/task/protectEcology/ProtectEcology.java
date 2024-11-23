@@ -18,6 +18,8 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectModelField;
 import io.github.lazyimmortal.sesame.data.task.ModelTask;
 import io.github.lazyimmortal.sesame.entity.AlipayAnimal;
 import io.github.lazyimmortal.sesame.entity.AlipayBeach;
+import io.github.lazyimmortal.sesame.entity.AlipayMarathon;
+import io.github.lazyimmortal.sesame.entity.AlipayNewAncientTree;
 import io.github.lazyimmortal.sesame.entity.AlipayReserve;
 import io.github.lazyimmortal.sesame.entity.AlipayTree;
 import io.github.lazyimmortal.sesame.entity.CooperateUser;
@@ -42,7 +44,9 @@ public class ProtectEcology extends ModelTask {
     private static SelectAndCountModelField cooperateWaterList;
     private static SelectAndCountModelField cooperateWaterTotalLimitList;
     private static ChoiceModelField protectMarathonType;
+    private static SelectAndCountModelField protectMarathonList;
     private static ChoiceModelField protectNewAncientTreeType;
+    private static SelectAndCountModelField protectNewAncientTreeList;
     private static BooleanModelField protectTree;
     private static SelectAndCountModelField protectTreeList;
     private static BooleanModelField protectReserve;
@@ -59,7 +63,9 @@ public class ProtectEcology extends ModelTask {
         modelFields.addField(cooperateWaterList = new SelectAndCountModelField("cooperateWaterList", "合种 | 日浇水量列表", new LinkedHashMap<>(), CooperateUser::getList));
         modelFields.addField(cooperateWaterTotalLimitList = new SelectAndCountModelField("cooperateWaterTotalLimitList", "合种 | 总浇水量列表", new LinkedHashMap<>(), CooperateUser::getList));
         modelFields.addField(protectMarathonType = new ChoiceModelField("protectMarathonType", "碳中和 | 马拉松", ProtectType.NONE, ProtectType.nickNames));
+        modelFields.addField(protectMarathonList = new SelectAndCountModelField("protectMarathonList", "碳中和 | 马拉松列表", new LinkedHashMap<>(), AlipayMarathon::getList));
         modelFields.addField(protectNewAncientTreeType = new ChoiceModelField("protectNewAncientTreeType", "碳中和 | 古树医生", ProtectType.NONE, ProtectType.nickNames));
+        modelFields.addField(protectNewAncientTreeList = new SelectAndCountModelField("protectNewAncientTreeList", "碳中和 | 古树医生列表", new LinkedHashMap<>(), AlipayNewAncientTree::getList));
         modelFields.addField(protectTree = new BooleanModelField("protectTree", "保护森林 | 植树(总数)", false));
         modelFields.addField(protectTreeList = new SelectAndCountModelField("protectTreeList", "保护森林 | 植树列表", new LinkedHashMap<>(), AlipayTree::getList));
         modelFields.addField(protectReserve = new BooleanModelField("protectReserve", "保护动物 | 保护地(每天)", false));
@@ -412,105 +418,120 @@ public class ProtectEcology extends ModelTask {
                 JSONObject jo = treeItems.getJSONObject(i);
                 jo = jo.getJSONObject("extendInfo");
                 String activityName = jo.optString("activityName");
-                if (Objects.equals("marathon", jo.optString("activityType"))
-                        && protectMarathonType.getValue() == ProtectType.COLLECT) {
+                if (Objects.equals("marathon", jo.optString("activityType"))) {
                     String activityId = StringUtil.getSubString(jo.getString("actionUrl"), "activityId%3D", "%26");
-                    if (marathonQueryActivity(activityId)) {
-                        Log.forest("生态保护🏕️助力[" + activityName + "]");
+                    MarathonIdMap.add(activityId, activityName);
+                    if (protectMarathonType.getValue() != ProtectType.NONE) {
+                        marathonQueryActivity(activityId);
                     }
-                } else if (activityName.contains("古树医生")
-                        && protectNewAncientTreeType.getValue() == ProtectType.COLLECT) {
+                } else if (activityName.contains("古树医生")) {
                     String activityId = StringUtil.getSubString(jo.getString("actionUrl"), "activityId%3D", "%26");
-                    if (carbonQueryActivity(activityId)) {
-                        Log.forest("生态保护🏕️助力[" + activityName + "]");
+                    NewAncientTreeIdMap.add(activityId, activityName);
+                    if (protectNewAncientTreeType.getValue() != ProtectType.NONE) {
+                        carbonQueryActivity(activityId);
                     }
                 }
             }
+            MarathonIdMap.save();
+            NewAncientTreeIdMap.save();
         } catch (Throwable t) {
-            Log.i(TAG, "protectMarathon err:");
+            Log.i(TAG, "protectCarbon err:");
             Log.printStackTrace(TAG, t);
         }
     }
 
-    private static Boolean marathonQueryActivity(String activityId) {
+    private static void marathonQueryActivity(String activityId) {
         try {
             JSONObject paramMap = new JSONObject();
             paramMap.put("donateQueryActionParam", "marathonWater");
             JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("marathonHome", activityId, paramMap));
             if (!MessageUtil.checkResultCode(TAG, jo)) {
-                return false;
+                return;
             }
             jo = jo.getJSONObject("resultData");
+            int currentEnergy = jo.getInt("currentEnergy");
+            // 如果未曾助力:助力一次
+            Integer donateNumber = protectMarathonList.getValue().get(activityId);
             if (!jo.optBoolean("certLockStatus", true)) {
-                jo = jo.getJSONObject("donateConfigVO");
-                int donateNum = jo.getInt("donateNum");
-                return marathonCharityActivity(activityId, donateNum);
+                int donateNum = jo.getJSONObject("donateConfigVO").getInt("donateNum");
+                if (protectMarathonType.getValue() == ProtectType.SELECT) {
+                    if (donateNumber == null || donateNumber < donateNum) {
+                        return;
+                    }
+                }
+                if (currentEnergy >= donateNum && carbonCharityActivity("marathonWater", activityId, donateNum)) {
+                    currentEnergy -= donateNum;
+                }
+            }
+            if (protectMarathonType.getValue() == ProtectType.COLLECT) {
+                // 集邮模式:不再助力
+                return;
+            }
+            int energy = jo.getJSONObject("activityCertVO").getInt("energy");
+            donateNumber -= energy;
+            int secondDonateMinNum = jo.getJSONObject("donateConfigVO").getInt("secondDonateMinNum");
+            if (donateNumber >= secondDonateMinNum && currentEnergy >= donateNumber) {
+                carbonCharityActivity("marathonWater", activityId, donateNumber);
             }
         } catch (Throwable t) {
             Log.i(TAG, "marathonQueryActivity err:");
             Log.printStackTrace(TAG, t);
         }
-        return false;
     }
 
-    private static Boolean marathonCharityActivity(String activityId, int donateNum) {
-        try {
-            JSONObject paramMap = new JSONObject();
-            paramMap.put("donateNum", donateNum);
-            paramMap.put("incrNum", donateNum);
-            JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("marathonWater", activityId, paramMap));
-            return MessageUtil.checkResultCode(TAG, jo);
-//            if (MessageUtil.checkResultCode(TAG, jo)) {
-//                return false;
-//            }
-//            jo = jo.getJSONObject("resultData").getJSONObject("activityCertVO");
-//            String name = jo.getString("name");
-//            int energy = jo.getInt("energy");
-//            Log.forest("生态保护🏕️助力[" + name + "]#累计[" + energy + "g能量]");
-//            return true;
-        } catch (Throwable t) {
-            Log.i(TAG, "marathonCharityActivity err:");
-            Log.printStackTrace(TAG, t);
-        }
-        return false;
-    }
-
-    private static Boolean carbonQueryActivity(String activityId) {
+    private static void carbonQueryActivity(String activityId) {
         try {
             JSONObject paramMap = new JSONObject();
             paramMap.put("donateQueryActionParam", "carbonWater");
             JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("carbonHome", activityId, paramMap));
             if (!MessageUtil.checkResultCode(TAG, jo)) {
-                return false;
+                return;
             }
             jo = jo.getJSONObject("resultData");
+            int currentEnergy = jo.getInt("currentEnergy");
+            // 如果未曾助力:助力一次
+            Integer donateNumber = protectNewAncientTreeList.getValue().get(activityId);
             if (!jo.optBoolean("certLockStatus", true)) {
-                jo = jo.getJSONObject("donateConfigVO");
-                int donateNum = jo.getInt("donateNum");
-                return carbonCharityActivity(activityId, donateNum);
+                int donateNum = jo.getJSONObject("donateConfigVO").getInt("donateNum");
+                if (protectNewAncientTreeType.getValue() == ProtectType.SELECT) {
+                    if (donateNumber == null || donateNumber < donateNum) {
+                        return;
+                    }
+                }
+                if (currentEnergy >= donateNum && carbonCharityActivity("carbonWater", activityId, donateNum)) {
+                    currentEnergy -= donateNum;
+                }
+            }
+            if (protectNewAncientTreeType.getValue() == ProtectType.COLLECT) {
+                // 集邮模式:不再助力
+                return;
+            }
+            int energy = jo.getJSONObject("activityCertVO").getInt("energy");
+            donateNumber -= energy;
+            int secondDonateMinNum = jo.getJSONObject("donateConfigVO").getInt("secondDonateMinNum");
+            if (donateNumber >= secondDonateMinNum && currentEnergy >= donateNumber) {
+                carbonCharityActivity("carbonWater", activityId, donateNumber);
             }
         } catch (Throwable t) {
             Log.i(TAG, "carbonQueryActivity err:");
             Log.printStackTrace(TAG, t);
         }
-        return false;
     }
 
-    private static Boolean carbonCharityActivity(String activityId, int donateNum) {
+    private static Boolean carbonCharityActivity(String actionCode, String activityId, int donateNum) {
         try {
             JSONObject paramMap = new JSONObject();
             paramMap.put("donateNum", donateNum);
             paramMap.put("incrNum", donateNum);
-            JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity("carbonWater", activityId, paramMap));
-            return MessageUtil.checkResultCode(TAG, jo);
-//            if (MessageUtil.checkResultCode(TAG, jo)) {
-//                return false;
-//            }
-//            jo = jo.getJSONObject("resultData").getJSONObject("activityCertVO");
-//            String name = jo.getString("name");
-//            int energy = jo.getInt("energy");
-//            Log.forest("生态保护🏕️助力[" + name + "]#累计[" + energy + "g能量]");
-//            return true;
+            JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity(actionCode, activityId, paramMap));
+            if (MessageUtil.checkResultCode(TAG, jo)) {
+                return false;
+            }
+            jo = jo.getJSONObject("resultData").getJSONObject("activityCertVO");
+            String name = jo.getString("name");
+            int energy = jo.getInt("energy");
+            Log.forest("生态保护🏕️助力[" + name + "]#累计[" + energy + "g能量]");
+            return true;
         } catch (Throwable t) {
             Log.i(TAG, "carbonCharityActivity err:");
             Log.printStackTrace(TAG, t);
@@ -627,6 +648,6 @@ public class ProtectEcology extends ModelTask {
         int COLLECT = 1;
         int SELECT = 2;
 
-        String[] nickNames = {"不保护", "集邮模式", "列表模式(Todo)"};
+        String[] nickNames = {"不保护", "集邮模式", "列表模式"};
     }
 }

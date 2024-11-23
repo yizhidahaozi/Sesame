@@ -238,6 +238,22 @@ public class FileUtil {
         return file;
     }
 
+    public static File getMarathonIdMapFile() {
+        File file = new File(MAIN_DIRECTORY_FILE, "marathon.json");
+        if (file.exists() && file.isDirectory()) {
+            file.delete();
+        }
+        return file;
+    }
+
+    public static File getNewAncientTreeIdMapFile() {
+        File file = new File(MAIN_DIRECTORY_FILE, "newAncientTree.json");
+        if (file.exists() && file.isDirectory()) {
+            file.delete();
+        }
+        return file;
+    }
+
     public static File getBeachIdMapFile() {
         File file = new File(MAIN_DIRECTORY_FILE, "beach.json");
         if (file.exists() && file.isDirectory()) {

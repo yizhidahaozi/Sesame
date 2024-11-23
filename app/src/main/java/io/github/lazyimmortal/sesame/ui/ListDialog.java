@@ -19,6 +19,8 @@ import io.github.lazyimmortal.sesame.data.modelFieldExt.SelectOneModelField;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
 import io.github.lazyimmortal.sesame.entity.AlipayAnimal;
 import io.github.lazyimmortal.sesame.entity.AlipayBeach;
+import io.github.lazyimmortal.sesame.entity.AlipayMarathon;
+import io.github.lazyimmortal.sesame.entity.AlipayNewAncientTree;
 import io.github.lazyimmortal.sesame.entity.AlipayReserve;
 import io.github.lazyimmortal.sesame.entity.AlipayTree;
 import io.github.lazyimmortal.sesame.entity.AlipayUser;
@@ -237,6 +239,9 @@ public class ListDialog {
                     IdAndName curIdAndName = (IdAndName) p1.getAdapter().getItem(p3);
                     if ((curIdAndName instanceof AlipayTree)
                             || (curIdAndName instanceof AlipayReserve)
+                            || (curIdAndName instanceof AlipayAnimal)
+                            || (curIdAndName instanceof AlipayMarathon)
+                            || (curIdAndName instanceof AlipayNewAncientTree)
                             || (curIdAndName instanceof AlipayBeach)) {
                         try {
                             new AlertDialog.Builder(c)
@@ -255,6 +260,14 @@ public class ListDialog {
                                                 AlipayAnimal.remove(curIdAndName.id);
                                                 AnimalIdMap.remove(curIdAndName.id);
                                                 AnimalIdMap.save();
+                                            } else if (curIdAndName instanceof AlipayMarathon) {
+                                                AlipayMarathon.remove(curIdAndName.id);
+                                                MarathonIdMap.remove(curIdAndName.id);
+                                                MarathonIdMap.save();
+                                            } else if (curIdAndName instanceof AlipayNewAncientTree) {
+                                                AlipayNewAncientTree.remove(curIdAndName.id);
+                                                NewAncientTreeIdMap.remove(curIdAndName.id);
+                                                NewAncientTreeIdMap.save();
                                             } else if (curIdAndName instanceof AlipayBeach) {
                                                 AlipayBeach.remove(curIdAndName.id);
                                                 BeachIdMap.remove(curIdAndName.id);
