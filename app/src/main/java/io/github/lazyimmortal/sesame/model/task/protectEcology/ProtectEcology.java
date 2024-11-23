@@ -468,7 +468,7 @@ public class ProtectEcology extends ModelTask {
                 return;
             }
             int energy = jo.getJSONObject("activityCertVO").getInt("energy");
-            donateNumber -= energy;
+            donateNumber = donateNumber == null ? 0 : donateNumber - energy;
             int secondDonateMinNum = jo.getJSONObject("donateConfigVO").getInt("secondDonateMinNum");
             if (donateNumber >= secondDonateMinNum && currentEnergy >= donateNumber) {
                 carbonCharityActivity("marathonWater", activityId, donateNumber);
@@ -507,7 +507,7 @@ public class ProtectEcology extends ModelTask {
                 return;
             }
             int energy = jo.getJSONObject("activityCertVO").getInt("energy");
-            donateNumber -= energy;
+            donateNumber = donateNumber == null ? 0 : donateNumber - energy;
             int secondDonateMinNum = jo.getJSONObject("donateConfigVO").getInt("secondDonateMinNum");
             if (donateNumber >= secondDonateMinNum && currentEnergy >= donateNumber) {
                 carbonCharityActivity("carbonWater", activityId, donateNumber);
