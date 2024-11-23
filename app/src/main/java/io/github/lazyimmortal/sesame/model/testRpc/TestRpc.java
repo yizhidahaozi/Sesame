@@ -75,6 +75,11 @@ public class TestRpc {
                 if (Objects.equals("addCustomWalkPathIdQueue", testType)) {
                     addCustomWalkPathIdQueue(broadcastData);
                 }
+                if (Objects.equals("clearCustomWalkPathIdQueue", testType)) {
+                    if (TokenConfig.clearCustomWalkPathIdQueue()) {
+                        Toast.show("清除待行走路线成功");
+                    }
+                }
             }
         }.setData(broadcastFun, broadcastData, testType).start();
     }

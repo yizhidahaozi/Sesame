@@ -18,7 +18,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.R;
 import io.github.lazyimmortal.sesame.util.*;
@@ -78,7 +77,6 @@ public class ExtendActivity extends BaseActivity {
             Context context = ExtendActivity.this;
             EditText input = new EditText(context);
 
-            TokenConfig.load();
             new AlertDialog.Builder(context)
                     .setTitle("自定义路线")
                     .setView(input)
@@ -100,9 +98,7 @@ public class ExtendActivity extends BaseActivity {
                         String text = input.getText().toString().trim();
                         sendItemsBroadcast(text, "addCustomWalkPathIdQueue");
                     }).setNegativeButton("清除", (dialog, which) -> {
-                        String text = "清除待行走路线"
-                                + (TokenConfig.clearCustomWalkPathIdQueue() ? "成功" : "失败");
-                        Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
+                        sendItemsBroadcast("clearCustomWalkPathIdQueue");
                     }).show();
         });
     }

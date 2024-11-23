@@ -59,6 +59,7 @@ public class TokenConfig {
     }
 
     public static Boolean setCustomWalkPathId(String userId, String pathId) {
+        if (StringUtil.isEmpty(pathId)) pathId = null;
         INSTANCE.customWalkPathIdList.put(userId, pathId);
         return save();
     }
