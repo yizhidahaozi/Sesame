@@ -40,27 +40,37 @@ public class TokenConfig {
     private Boolean newUI = true;
 
     // sports
-    private boolean customWalkPath = false;
-    private String customWalkPathIdConstant = null;
-    private final Queue<String> customWalkPathIdList = new LinkedList<>();
+    private final Map<String, String> customWalkPathIdList = new HashMap<>();
+    private final Queue<String> customWalkPathIdQueue = new LinkedList<>();
 
+    // farm
     private final Map<String, String> answerList = new HashMap<>();
+
+    // ecoLife
     private final Set<Map<String, String> > dishImageList = new HashSet<>();
 
-    public static Boolean isCustomWalkPath() {
-        return INSTANCE.customWalkPath;
+    public static String getCustomWalkPathId(String userId) {
+        String pathId = INSTANCE.customWalkPathIdQueue.poll();
+        if (pathId != null) {
+            save();
+            return pathId;
+        }
+        return INSTANCE.customWalkPathIdList.get(userId);
     }
 
-    public static String getCustomWalkPathId() {
-        String pathId = INSTANCE.customWalkPathIdList.poll();
-        String customWalkPathId = INSTANCE.customWalkPathIdConstant;
-        if (pathId == null && customWalkPathId == null) {
-            INSTANCE.customWalkPath = false;
-        } else if (pathId == null) {
-            return customWalkPathId;
-        }
+    public static Boolean setCustomWalkPathId(String userId, String pathId) {
+        INSTANCE.customWalkPathIdList.put(userId, pathId);
+        return save();
+    }
+
+    public static Boolean addCustomWalkPathIdQueue(String pathId) {
+        INSTANCE.customWalkPathIdQueue.add(pathId);
+        return save();
+    }
+
+    public static void clearCustomWalkPathIdQueue() {
+        INSTANCE.customWalkPathIdQueue.clear();
         save();
-        return pathId;
     }
 
     public static String getAnswer(String question) {

@@ -586,10 +586,7 @@ public class AntSports extends ModelTask {
     }
 
     private String queryJoinPathId() {
-        String pathId = null;
-        if (TokenConfig.isCustomWalkPath()) {
-            pathId = TokenConfig.getCustomWalkPathId();
-        }
+        String pathId = TokenConfig.getCustomWalkPathId(UserIdMap.getCurrentUid());
         if (pathId != null) {
             return pathId;
         }
