@@ -345,13 +345,6 @@ public class AntFarmRpcCall {
 
     /* 日常任务 */
 
-    public static String doFarmTask(String bizKey) {
-        return ApplicationHook.requestString("com.alipay.antfarm.doFarmTask",
-                "[{\"bizKey\":\"" + bizKey
-                        + "\",\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"version\":\""
-                        + VERSION + "\"}]");
-    }
-
     public static String queryTabVideoUrl() {
         return ApplicationHook.requestString("com.alipay.antfarm.queryTabVideoUrl",
                 "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"version\":\"" + VERSION
@@ -442,11 +435,6 @@ public class AntFarmRpcCall {
     public static String listFarmDrawTimesTask() {
         return ApplicationHook.requestString("com.alipay.antfarm.listFarmTask",
                 "[{\"requestType\":\"NORMAL\",\"sceneCode\":\"ANTFARM\",\"signSceneCode\":\"\",\"source\":\"H5\",\"taskSceneCode\":\"ANTFARM_DRAW_TIMES_TASK\",\"topTask\":\"\"}]");
-    }
-
-    public static String doFarmDrawTimesTask(String bizKey) {
-        return ApplicationHook.requestString("com.alipay.antfarm.doFarmTask",
-                "[{\"bizKey\":\"" + bizKey + "\",\"requestType\":\"RPC\",\"sceneCode\":\"ANTFARM\",\"source\":\"H5\",\"taskSceneCode\":\"ANTFARM_DRAW_TIMES_TASK\"}]");
     }
 
     public static String receiveFarmDrawTimesTaskAward(String taskId) {

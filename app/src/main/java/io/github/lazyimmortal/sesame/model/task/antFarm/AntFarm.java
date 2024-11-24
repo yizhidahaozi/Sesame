@@ -173,7 +173,7 @@ public class AntFarm extends ModelTask {
                     JSONObject joRecallAnimal = new JSONObject(AntFarmRpcCall
                             .orchardRecallAnimal(ownerAnimal.animalId, ownerAnimal.currentFarmMasterUserId));
                     int manureCount = joRecallAnimal.getInt("manureCount");
-                    Log.farm("召回小鸡📣[收获:肥料" + manureCount + "g]");
+                    Log.farm("召回小鸡📣收获[" + manureCount + "g肥料]");
                 } else {
                     syncAnimalStatusAtOtherFarm(ownerAnimal.currentFarmId);
                     boolean guest = false;
@@ -1416,7 +1416,7 @@ public class AntFarm extends ModelTask {
                                 AntFarmRpcCall.collectManurePot(manurePot.getString("manurePotNO")));
                         if (joManurePot.optBoolean("success")) {
                             int collectManurePotNum = joManurePot.getInt("collectManurePotNum");
-                            Log.farm("打扫鸡屎🧹[" + collectManurePotNum + "g]");
+                            Log.farm("打扫鸡屎🧹获得[" + collectManurePotNum + "g肥料]");
                         }
                     }
                 }
@@ -1493,7 +1493,7 @@ public class AntFarm extends ModelTask {
                 if ("FINISHED".equals(orchardFoodMaterialStatus.optString("foodStatus"))) {
                     jo = new JSONObject(AntFarmRpcCall.farmFoodMaterialCollect());
                     if ("100".equals(jo.getString("resultCode"))) {
-                        Log.farm("小鸡厨房👨🏻‍🍳领取[农场食材]#" + jo.getInt("foodMaterialAddCount") + "g");
+                        Log.farm("小鸡厨房👨🏻‍🍳农场食材#领取[" + jo.getInt("foodMaterialAddCount") + "g食材]");
                     } else {
                         Log.i(TAG, jo.toString());
                     }
@@ -1502,13 +1502,13 @@ public class AntFarm extends ModelTask {
             if (canCollectDailyFoodMaterial) {
                 jo = new JSONObject(AntFarmRpcCall.collectDailyFoodMaterial(dailyFoodMaterialAmount));
                 if (MessageUtil.checkMemo(TAG, jo)) {
-                    Log.farm("小鸡厨房👨🏻‍🍳领取[今日食材]#" + dailyFoodMaterialAmount + "g");
+                    Log.farm("小鸡厨房👨🏻‍🍳今日食材#领取[" + dailyFoodMaterialAmount + "g食材]");
                 }
             }
             if (garbageAmount > 0) {
                 jo = new JSONObject(AntFarmRpcCall.collectKitchenGarbage());
                 if (MessageUtil.checkMemo(TAG, jo)) {
-                    Log.farm("小鸡厨房👨🏻‍🍳领取[肥料]#" + jo.getInt("recievedKitchenGarbageAmount") + "g");
+                    Log.farm("小鸡厨房👨🏻‍🍳收集厨余#获得[" + jo.getInt("recievedKitchenGarbageAmount") + "g肥料]");
                 }
             }
         } catch (Throwable t) {
@@ -1551,7 +1551,7 @@ public class AntFarm extends ModelTask {
                         JSONObject cuisineVO = jo.getJSONObject("cuisineVO");
                         Log.farm("小鸡厨房👨🏻‍🍳制作[" + cuisineVO.getString("name") + "]");
                     }
-                    Thread.sleep(RandomUtil.delay());
+                    TimeUtil.sleep(RandomUtil.delay());
                 }
             }
         } catch (Throwable t) {
