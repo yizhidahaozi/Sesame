@@ -524,7 +524,7 @@ public class ProtectEcology extends ModelTask {
             paramMap.put("donateNum", donateNum);
             paramMap.put("incrNum", donateNum);
             JSONObject jo = new JSONObject(ProtectTreeRpcCall.doRubickActivity(actionCode, activityId, paramMap));
-            if (MessageUtil.checkResultCode(TAG, jo)) {
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
                 return false;
             }
             jo = jo.getJSONObject("resultData").getJSONObject("activityCertVO");
