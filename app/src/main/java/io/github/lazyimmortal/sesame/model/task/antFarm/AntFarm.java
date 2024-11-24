@@ -2403,9 +2403,9 @@ public class AntFarm extends ModelTask {
     private void familyEatTogether(String groupId, JSONArray friendUserIds) {
         long currentTime = System.currentTimeMillis();
         String periodName;
-        if (TimeUtil.isAfterTimeStr(currentTime, "0600") && TimeUtil.isBeforeTimeStr(currentTime, "1000")) {
+        if (TimeUtil.isAfterTimeStr(currentTime, "0600") && TimeUtil.isBeforeTimeStr(currentTime, "1100")) {
             periodName = "早餐";
-        } else if (TimeUtil.isAfterTimeStr(currentTime, "1100") && TimeUtil.isBeforeTimeStr(currentTime, "1500")) {
+        } else if (TimeUtil.isAfterTimeStr(currentTime, "1100") && TimeUtil.isBeforeTimeStr(currentTime, "1600")) {
             periodName = "午餐";
         } else if (TimeUtil.isAfterTimeStr(currentTime, "1600") && TimeUtil.isBeforeTimeStr(currentTime, "2000")) {
             periodName = "晚餐";
