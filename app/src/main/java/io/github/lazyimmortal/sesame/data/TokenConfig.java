@@ -37,8 +37,6 @@ public class TokenConfig {
     @JsonIgnore
     private boolean init;
 
-    private Boolean newUI = true;
-
     // sports
     private final Map<String, String> customWalkPathIdList = new HashMap<>();
     private final Queue<String> customWalkPathIdQueue = new LinkedList<>();

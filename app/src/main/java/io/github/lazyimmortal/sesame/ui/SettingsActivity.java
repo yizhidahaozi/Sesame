@@ -217,8 +217,8 @@ public class SettingsActivity extends BaseActivity {
                 ListDialog.show(this, "单向好友列表", AlipayUser.getList(user -> user.getFriendStatus() != 1), SelectModelFieldFunc.newMapInstance(), false, ListDialog.ListType.SHOW);
                 break;
             case 5:
-                TokenConfig.INSTANCE.setNewUI(true);
-                if (TokenConfig.save()) {
+                AppConfig.INSTANCE.setNewUI(true);
+                if (AppConfig.save()) {
                     Intent intent = new Intent(this, NewSettingsActivity.class);
                     intent.putExtra("userId", userId);
                     intent.putExtra("userName", userName);

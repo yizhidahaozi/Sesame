@@ -16,8 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import io.github.lazyimmortal.sesame.R;
+import io.github.lazyimmortal.sesame.data.AppConfig;
 import io.github.lazyimmortal.sesame.data.RunType;
-import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.data.ViewAppInfo;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
 import io.github.lazyimmortal.sesame.entity.FriendWatch;
@@ -157,7 +157,7 @@ public class MainActivity extends BaseActivity {
                 }
             }
             try {
-                TokenConfig.load();
+                AppConfig.load();
             } catch (Exception e) {
                 Log.printStackTrace(e);
             }
@@ -389,7 +389,7 @@ public class MainActivity extends BaseActivity {
 
     private void goSettingActivity(int index) {
         UserEntity userEntity = userEntityArray[index];
-        Intent intent = new Intent(this, TokenConfig.INSTANCE.getNewUI() && !"TEST".equals(ViewAppInfo.getAppVersion()) ? NewSettingsActivity.class : SettingsActivity.class);
+        Intent intent = new Intent(this, AppConfig.INSTANCE.getNewUI() && !"TEST".equals(ViewAppInfo.getAppVersion()) ? NewSettingsActivity.class : SettingsActivity.class);
         if (userEntity != null) {
             intent.putExtra("userId", userEntity.getUserId());
             intent.putExtra("userName", userEntity.getShowName());
