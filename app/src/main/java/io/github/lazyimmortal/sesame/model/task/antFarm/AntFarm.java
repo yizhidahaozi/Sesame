@@ -2328,8 +2328,10 @@ public class AntFarm extends ModelTask {
             JSONArray ja = jo.getJSONArray("familyAwardRecordList");
             for (int i = 0; i < ja.length(); i++) {
                 jo = ja.getJSONObject(i);
-                if (jo.optBoolean("received", true)
-                        || jo.optBoolean("operability")) {
+                if (jo.optBoolean("expired")
+                        || jo.optBoolean("received", true)
+                        || jo.has("linkUrl")
+                        || (jo.has("operability") && !jo.getBoolean("operability"))) {
                     continue;
                 }
                 String rightId = jo.getString("rightId");
