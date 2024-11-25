@@ -5,6 +5,10 @@ android {
     if (version == null || "unspecified".equalsIgnoreCase(version)) {
         version = "TEST"
     }
+    def gitCommitHash = 'git rev-parse --short HEAD'.execute().text.trim()
+    def gitBranchName = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+    def gitCommitCount = "git rev-list --count HEAD".execute().text.trim().toInteger()
+    def buildTime = new Date().format("yyyy-MM-dd HH:mm:ss", TimeZone.getTimeZone("Asia/Shanghai"))
 
     compileSdk 34
     defaultConfig {
@@ -12,8 +16,12 @@ android {
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 31
-        versionCode 80
+        versionCode gitCommitCount
         versionName version
+
+        buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\""
+        buildConfigField "String", "GIT_BRANCH_NAME", "\"${gitBranchName}\""
+        buildConfigField "String", "BUILD_TIME", "\"${buildTime}\""
     }
     ext {
         applicationName = "Sesame"
