@@ -57,9 +57,13 @@ public class TokenConfig {
     }
 
     public static Boolean setCustomWalkPathId(String userId, String pathId) {
+        TokenConfig tokenConfig = INSTANCE;
         if (StringUtil.isEmpty(pathId)) pathId = null;
-        INSTANCE.customWalkPathIdList.put(userId, pathId);
-        return save();
+        if (!Objects.equals(tokenConfig.customWalkPathIdList.get(userId), pathId)) {
+            tokenConfig.customWalkPathIdList.put(userId, pathId);
+            return save();
+        }
+        return true;
     }
 
     public static Boolean addCustomWalkPathIdQueue(String pathId) {
@@ -68,8 +72,12 @@ public class TokenConfig {
     }
 
     public static Boolean clearCustomWalkPathIdQueue() {
-        INSTANCE.customWalkPathIdQueue.clear();
-        return save();
+        TokenConfig tokenConfig = INSTANCE;
+        if (!tokenConfig.customWalkPathIdQueue.isEmpty()) {
+            tokenConfig.customWalkPathIdQueue.clear();
+            return save();
+        }
+        return true;
     }
 
     public static String getAnswer(String question) {
