@@ -58,7 +58,11 @@ public class NotificationUtil {
             }
             Notification mNotification = builder.build();
             if (context instanceof Service) {
-                ((Service) context).startForeground(NOTIFICATION_ID, mNotification);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    mNotifyManager.notify(NOTIFICATION_ID, mNotification);
+                } else {
+                    ((Service) context).startForeground(NOTIFICATION_ID, mNotification);
+                }
             } else {
                 mNotifyManager.notify(NOTIFICATION_ID, mNotification);
             }
