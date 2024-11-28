@@ -1144,7 +1144,7 @@ public class AntFarm extends ModelTask {
             if (MessageUtil.checkMemo(TAG, jo)) {
                 int feedFood = foodStock - jo.getInt("foodStock");
                 add2FoodStock(-feedFood);
-                Log.farm("投喂小鸡🥣[" + feedFood + "g]#剩余" + foodStock + "g");
+                Log.farm("投喂小鸡🥣消耗[" + feedFood + "g]#剩余[" + foodStock + "g饲料]");
                 if (useAccelerateTool.getValue()) {
                     TimeUtil.sleep(1000);
                     useAccelerateTool();
@@ -1995,7 +1995,7 @@ public class AntFarm extends ModelTask {
                     if (MessageUtil.checkMemo(TAG, jo)) {
                         foodStock = jo.getInt("foodStock");
                         int reduceFoodNum = jo.getInt("reduceFoodNum");
-                        Log.farm("雇佣小鸡👷雇佣[" + UserIdMap.getMaskName(userId) + "]消耗[" + reduceFoodNum + "g饲料]");
+                        Log.farm("雇佣小鸡👷雇佣[" + UserIdMap.getMaskName(userId) + "]#消耗[" + reduceFoodNum + "g饲料]");
                         return true;
                     }
                 }
