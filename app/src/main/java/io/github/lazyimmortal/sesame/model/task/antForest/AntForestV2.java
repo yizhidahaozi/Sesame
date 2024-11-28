@@ -424,6 +424,7 @@ public class AntForestV2 extends ModelTask {
                     energyRain();
                 }
                 if (receiveForestTaskAward.getValue()) {
+                    privilege();
                     queryTaskList();
                 }
                 if (ecoLife.getValue()) {
@@ -1519,6 +1520,45 @@ public class AntForestV2 extends ModelTask {
         } catch (Throwable th) {
             Log.i(TAG, "doChildTask err:");
             Log.printStackTrace(TAG, th);
+        }
+    }
+
+    private void privilege() {
+        try {
+            JSONArray list = new JSONArray();
+            list.put(new JSONObject().put("firstTaskType", "DNHZ_SL_college").put("taskType", "DAXUESHENG_SJK"));
+            list.put(new JSONObject().put("firstTaskType", "DXS_BHZ").put("taskType", "NENGLIANGZHAO_20230807"));
+            list.put(new JSONObject().put("firstTaskType", "DXS_JSQ").put("taskType", "JIASUQI_20230808"));
+            for (int i = 0; i < list.length(); i++) {
+                JSONObject extend = new JSONObject();
+                extend.put("firstTaskType", list.getJSONObject(i).getString("firstTaskType"));
+                JSONObject jo = new JSONObject(AntForestRpcCall.queryTaskList(extend));
+                if (!MessageUtil.checkResultCode(TAG, jo)) {
+                    continue;
+                }
+                JSONArray taskInfoList = jo.getJSONArray("forestTasksNew").getJSONObject(0).getJSONArray("taskInfoList");
+                for (int j = 0; j < taskInfoList.length(); j++) {
+                    jo = taskInfoList.getJSONObject(j).getJSONObject("taskBaseInfo");
+                    if (!Objects.equals(
+                            jo.getString("taskType"),
+                            list.getJSONObject(i).getString("taskType"))) {
+                        continue;
+                    }
+                    if (Objects.equals("FINISHED", jo.getString("taskStatus"))) {
+                        String sceneCode = jo.getString("sceneCode");
+                        String taskType = jo.getString("taskType");
+                        String taskTitle = new JSONObject(jo.getString("bizInfo")).getString("taskTitle");
+                        if (receiveTaskAward(sceneCode, taskType, taskTitle)) {
+                            TimeUtil.sleep(1000);
+                        } else {
+                            TimeUtil.sleep(5000);
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "privilege err:");
+            Log.printStackTrace(TAG, t);
         }
     }
 

@@ -1,6 +1,7 @@
 package io.github.lazyimmortal.sesame.model.task.antForest;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import io.github.lazyimmortal.sesame.entity.AlipayVersion;
 import io.github.lazyimmortal.sesame.entity.RpcEntity;
@@ -106,9 +107,12 @@ public class AntForestRpcCall {
     }
 
     public static String queryTaskList() {
-        return ApplicationHook.requestString("alipay.antforest.forest.h5.queryTaskList",
-                "[{\"extend\":{},\"fromAct\":\"home_task_list\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\""
-                        + VERSION + "\"}]");
+        return queryTaskList(new JSONObject());
+    }
+
+    public static String queryTaskList(JSONObject extend) {
+        String args = "[{\"extend\":" + extend + ",\"fromAct\":\"home_task_list\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\"" + VERSION + "\"}]";
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.queryTaskList", args);
     }
 
     public static String queryEnergyRainHome() {
