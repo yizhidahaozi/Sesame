@@ -425,7 +425,6 @@ public class AntForestV2 extends ModelTask {
                 }
                 if (receiveForestTaskAward.getValue()) {
                     queryTaskList();
-                    privilege();
                 }
                 if (ecoLife.getValue()) {
                     ecoLife();
@@ -1411,6 +1410,9 @@ public class AntForestV2 extends ModelTask {
     }
 
     private void queryTaskList() {
+        queryTaskList("DNHZ_SL_college", "DAXUESHENG_SJK");
+        queryTaskList("DXS_BHZ", "NENGLIANGZHAO_20230807");
+        queryTaskList("DXS_JSQ", "JIASUQI_20230808");
         try {
             boolean doubleCheck = true;
             while (doubleCheck) {
@@ -1469,6 +1471,43 @@ public class AntForestV2 extends ModelTask {
         }
     }
 
+    private void queryTaskList(String firstTaskType, String taskType) {
+        if (Status.hasFlagToday("vitalityTask::" + firstTaskType)) {
+            return;
+        }
+        try {
+            JSONObject jo = new JSONObject(
+                    AntForestRpcCall.queryTaskList(
+                            new JSONObject().put("firstTaskType", firstTaskType)
+                    )
+            );
+            if (!MessageUtil.checkResultCode(TAG, jo)) {
+                return;
+            }
+            JSONArray taskInfoList = jo.getJSONArray("forestTasksNew").getJSONObject(0).getJSONArray("taskInfoList");
+            for (int i = 0; i < taskInfoList.length(); i++) {
+                jo = taskInfoList.getJSONObject(i).getJSONObject("taskBaseInfo");
+                if (!Objects.equals(taskType, jo.getString("taskType"))) {
+                    continue;
+                }
+                boolean isReceived = TaskStatus.RECEIVED.name().equals(jo.getString("taskStatus"));
+                if (!isReceived && TaskStatus.FINISHED.name().equals(jo.getString("taskStatus"))) {
+                    String sceneCode = jo.getString("sceneCode");
+                    String taskTitle = new JSONObject(jo.getString("bizInfo")).getString("taskTitle");
+                    isReceived = receiveTaskAward(sceneCode, taskType, taskTitle);
+                    TimeUtil.sleep(1000);
+                }
+                if (isReceived) {
+                    Status.flagToday("vitalityTask::" + firstTaskType);
+                }
+                return;
+            }
+        } catch (Throwable t) {
+            Log.i(TAG, "queryTaskList err:");
+            Log.printStackTrace(TAG, t);
+        }
+    }
+
     private Boolean receiveTaskAward(String sceneCode, String taskType, String taskTitle) {
         try {
             JSONObject jo = new JSONObject(AntForestRpcCall.receiveTaskAward(sceneCode, taskType));
@@ -1520,62 +1559,6 @@ public class AntForestV2 extends ModelTask {
         } catch (Throwable th) {
             Log.i(TAG, "doChildTask err:");
             Log.printStackTrace(TAG, th);
-        }
-    }
-
-    private void privilege() {
-        try {
-            JSONArray list = new JSONArray();
-            list.put(
-                    new JSONObject()
-                            .put("firstTaskType", "DNHZ_SL_college")
-                            .put("taskType", "DAXUESHENG_SJK")
-            ); // 双击卡
-            list.put(
-                    new JSONObject()
-                            .put("firstTaskType", "DXS_BHZ")
-                            .put("taskType", "NENGLIANGZHAO_20230807")
-            ); // 保护罩
-            list.put(
-                    new JSONObject()
-                            .put("firstTaskType", "DXS_JSQ")
-                            .put("taskType", "JIASUQI_20230808")
-            ); // 加速器
-            for (int i = 0; i < list.length(); i++) {
-                String firstTaskType = list.getJSONObject(i).getString("firstTaskType");
-                if (Status.hasFlagToday("privilege::" + firstTaskType)) {
-                    continue;
-                }
-                String taskType = list.getJSONObject(i).getString("taskType");
-                JSONObject jo = new JSONObject(
-                        AntForestRpcCall.queryTaskList(
-                                new JSONObject().put("firstTaskType", firstTaskType)
-                        )
-                );
-                if (!MessageUtil.checkResultCode(TAG, jo)) {
-                    continue;
-                }
-                JSONArray taskInfoList = jo.getJSONArray("forestTasksNew").getJSONObject(0).getJSONArray("taskInfoList");
-                for (int j = 0; j < taskInfoList.length(); j++) {
-                    jo = taskInfoList.getJSONObject(j).getJSONObject("taskBaseInfo");
-                    if (!Objects.equals(taskType, jo.getString("taskType"))) {
-                        continue;
-                    }
-                    if (TaskStatus.FINISHED.name().equals(jo.getString("taskStatus"))) {
-                        String sceneCode = jo.getString("sceneCode");
-                        String taskTitle = new JSONObject(jo.getString("bizInfo")).getString("taskTitle");
-                        if (receiveTaskAward(sceneCode, taskType, taskTitle)) {
-                            Status.flagToday("privilege::" + firstTaskType);
-                        }
-                        TimeUtil.sleep(1000);
-                    } else if (TaskStatus.RECEIVED.name().equals(jo.getString("taskStatus"))) {
-                        Status.flagToday("privilege::" + firstTaskType);
-                    }
-                }
-            }
-        } catch (Throwable t) {
-            Log.i(TAG, "privilege err:");
-            Log.printStackTrace(TAG, t);
         }
     }
 
