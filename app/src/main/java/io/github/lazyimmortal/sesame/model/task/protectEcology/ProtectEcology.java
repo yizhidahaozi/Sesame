@@ -294,6 +294,7 @@ public class ProtectEcology extends ModelTask {
                 if (!exchangeTree(projectId, projectName)) {
                     break;
                 }
+                Status.exchangeReserveToday(projectId);
                 TimeUtil.sleep(300);
             }
         }
