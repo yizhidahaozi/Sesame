@@ -118,12 +118,11 @@ public class AntForestV2 extends ModelTask {
     private StringModelField queryInterval;
     private StringModelField collectInterval;
     private StringModelField doubleCollectInterval;
-    private BooleanModelField doubleCard;
+    private ChoiceModelField doubleClickType;
     private ListModelField.ListJoinCommaToStringModelField doubleCardTime;
     @Getter
     private IntegerModelField doubleCountLimit;
     private BooleanModelField doubleCardConstant;
-    private BooleanModelField doubleCardOnlyLimitTime;
     private ChoiceModelField stealthCardType;
     private BooleanModelField stealthCardConstant;
     private ChoiceModelField bubbleBoostType;
@@ -184,11 +183,10 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(tryCount = new IntegerModelField("tryCount", "尝试收取(次数)", 1, 0, 10));
         modelFields.addField(retryInterval = new IntegerModelField("retryInterval", "重试间隔(毫秒)", 1000, 0, 10000));
         modelFields.addField(dontCollectList = new SelectModelField("dontCollectList", "不收取能量列表", new LinkedHashSet<>(), AlipayUser::getList));
-        modelFields.addField(doubleCard = new BooleanModelField("doubleCard", "双击卡 | 使用", false));
+        modelFields.addField(doubleClickType = new ChoiceModelField("doubleClickType", "双击卡 | 自动使用", UsePropType.CLOSE, UsePropType.nickNames));
         modelFields.addField(doubleCountLimit = new IntegerModelField("doubleCountLimit", "双击卡 | 使用次数", 6));
         modelFields.addField(doubleCardTime = new ListModelField.ListJoinCommaToStringModelField("doubleCardTime", "双击卡 | 使用时间(范围)", ListUtil.newArrayList("0700-0730")));
         modelFields.addField(doubleCardConstant = new BooleanModelField("DoubleCardConstant", "双击卡 | 限时双击永动机", false));
-        modelFields.addField(doubleCardOnlyLimitTime = new BooleanModelField("doubleCardOnlyLimitTime", "双击卡 | 仅使用限时双击卡", false));
         if (ExtendHandle.handleAlphaRequest("enableDeveloperMode")) {
             modelFields.addField(stealthCardType = new ChoiceModelField("stealthCardType", "隐身卡 | 接力使用", UsePropType.CLOSE, UsePropType.nickNames));
             modelFields.addField(stealthCardConstant = new BooleanModelField("stealthCardConstant", "隐身卡 | 限时隐身永动机", false));
@@ -1712,7 +1710,7 @@ public class AntForestV2 extends ModelTask {
     }
 
     private Boolean needDoubleClick() {
-        if (!doubleCard.getValue()) {
+        if (doubleClickType.getValue() == UsePropType.CLOSE) {
             return false;
         }
         Long doubleClickEndTime = usingProps.get(PropGroup.doubleClick.name());
@@ -1744,7 +1742,7 @@ public class AntForestV2 extends ModelTask {
                 if (jo == null) {
                     return;
                 }
-                if (!jo.has("recentExpireTime") && doubleCardOnlyLimitTime.getValue()) {
+                if (!jo.has("recentExpireTime") && doubleClickType.getValue() == UsePropType.ONLY_LIMIT_TIME) {
                     return;
                 }
                 // 使用能量双击卡
