@@ -8,10 +8,10 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import io.github.lazyimmortal.sesame.R;
 import io.github.lazyimmortal.sesame.data.TokenConfig;
+import io.github.lazyimmortal.sesame.util.ToastUtil;
 
 public class ExtendActivity extends BaseActivity {
 
@@ -40,7 +40,7 @@ public class ExtendActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 sendItemsBroadcast("antForest", "getTreeItems", null);
-                Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
+                ToastUtil.show(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！");
             }
         });
 
@@ -48,7 +48,7 @@ public class ExtendActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 sendItemsBroadcast("antForest", "getNewTreeItems", null);
-                Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
+                ToastUtil.show(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！");
             }
         });
 
@@ -56,7 +56,7 @@ public class ExtendActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 sendItemsBroadcast("antForest", "queryAreaTrees", null);
-                Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
+                ToastUtil.show(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！");
             }
         });
 
@@ -64,13 +64,13 @@ public class ExtendActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 sendItemsBroadcast("antForest", "getUnlockTreeItems", null);
-                Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
+                ToastUtil.show(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！");
             }
         });
 
         btnClearDishImage.setOnClickListener(view -> {
             if (TokenConfig.clearDishImage()) {
-                Toast.makeText(ExtendActivity.this, "存储的光盘行动图片已清空！", Toast.LENGTH_SHORT).show();
+                ToastUtil.show(ExtendActivity.this, "存储的光盘行动图片已清空");
             }
         });
 
@@ -109,7 +109,7 @@ public class ExtendActivity extends BaseActivity {
                 try {
                     startActivity(new Intent(ExtendActivity.this, Class.forName("io.github.lazyimmortal.sesame.ui.AlphaActivity")));
                 } catch (Exception e) {
-                    Toast.makeText(ExtendActivity.this, "不符合开启资格！", Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(ExtendActivity.this, "不符合开启资格！");
                 }
             }
         });
