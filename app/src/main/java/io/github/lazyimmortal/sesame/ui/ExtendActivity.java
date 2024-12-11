@@ -97,9 +97,9 @@ public class ExtendActivity extends BaseActivity {
                     .setView(input)
                     .setPositiveButton(R.string.btn_add_custom_walk_path_id, (dialog, which) -> {
                         String text = input.getText().toString().trim();
-                        sendItemsBroadcast("addCustomWalkPathIdQueue", "", text);
+                        sendItemsBroadcast("setCustomWalkPathIdQueue", "addCustomWalkPathIdQueue", text);
                     }).setNegativeButton(getString(R.string.btn_clear_custom_walk_path_id_queue), (dialog, which) -> {
-                        sendItemsBroadcast("clearCustomWalkPathIdQueue", "", "");
+                        sendItemsBroadcast("setCustomWalkPathIdQueue", "clearCustomWalkPathIdQueue", null);
                     }).show();
         });
 

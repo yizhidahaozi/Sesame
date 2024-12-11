@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 import io.github.lazyimmortal.sesame.data.TokenConfig;
 import io.github.lazyimmortal.sesame.hook.Toast;
@@ -38,11 +39,12 @@ public class ExtendHandle {
             case "setCustomWalkPathIdList":
                 addCustomWalkPathIdList(data);
                 break;
-            case "addCustomWalkPathIdQueue":
-                addCustomWalkPathIdQueue(data);
-                break;
-            case "clearCustomWalkPathIdQueue":
-                clearCustomWalkPathIdQueue();
+            case "setCustomWalkPathIdQueue":
+                if (Objects.equals("addCustomWalkPathIdQueue", fun)) {
+                    addCustomWalkPathIdQueue(data);
+                } else if (Objects.equals("clearCustomWalkPathIdQueue", fun)) {
+                    clearCustomWalkPathIdQueue();
+                }
                 break;
         }
     }
