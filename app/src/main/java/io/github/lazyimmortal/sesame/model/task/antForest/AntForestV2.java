@@ -469,15 +469,7 @@ public class AntForestV2 extends ModelTask {
                     ecoLife();
                 }
                 waterFriendEnergy();
-                Set<String> set = whoYouWantToGiveTo.getValue();
-                if (!set.isEmpty()) {
-                    for (String userId : set) {
-                        if (!Objects.equals(selfId, userId)) {
-                            giveProp(userId);
-                            break;
-                        }
-                    }
-                }
+                giveProp();
                 forestExtend();
                 if (vitalityExchangeBenefit.getValue()) {
                     vitalityExchangeBenefit();
@@ -1831,6 +1823,18 @@ public class AntForestV2 extends ModelTask {
     }
 
     /* 赠送道具 */
+    private void giveProp() {
+        Set<String> set = whoYouWantToGiveTo.getValue();
+        if (!set.isEmpty() && selfId != null) {
+            for (String userId : set) {
+                if (!Objects.equals(selfId, userId)) {
+                    giveProp(userId);
+                    break;
+                }
+            }
+        }
+    }
+
     private void giveProp(String targetUserId) {
         try {
             do {
