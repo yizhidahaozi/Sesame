@@ -81,9 +81,7 @@ public class MainActivity extends BaseActivity {
                             }
                             viewHandler.removeCallbacks(titleRunner);
                             if (isClick) {
-                                Toast toast = Toast.makeText(context, "芝麻粒加载状态正常", Toast.LENGTH_SHORT);
-                                toast.setGravity(toast.getGravity(), toast.getXOffset(), BaseModel.getToastOffsetY().getValue());
-                                toast.show();
+                                ToastUtil.show(context, "芝麻粒加载状态正常");
                                 isClick = false;
                             }
                             break;
@@ -290,7 +288,7 @@ public class MainActivity extends BaseActivity {
             case 3:
                 File errorLogFile = FileUtil.exportFile(FileUtil.getErrorLogFile());
                 if (errorLogFile != null) {
-                    Toast.makeText(this, "文件已导出到: " + errorLogFile.getPath(), Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(this, "文件已导出到: " + errorLogFile.getPath());
                 }
                 break;
 
@@ -307,21 +305,21 @@ public class MainActivity extends BaseActivity {
             case 5:
                 File allLogFile = FileUtil.exportFile(FileUtil.getRuntimeLogFile());
                 if (allLogFile != null) {
-                    Toast.makeText(this, "文件已导出到: " + allLogFile.getPath(), Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(this, "文件已导出到: " + allLogFile.getPath());
                 }
                 break;
 
             case 6:
                 File statisticsFile = FileUtil.exportFile(FileUtil.getStatisticsFile());
                 if (statisticsFile != null) {
-                    Toast.makeText(this, "文件已导出到: " + statisticsFile.getPath(), Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(this, "文件已导出到: " + statisticsFile.getPath());
                 }
                 break;
 
             case 7:
                 if (FileUtil.copyTo(FileUtil.getExportedStatisticsFile(), FileUtil.getStatisticsFile())) {
                     tvStatistics.setText(Statistics.getText());
-                    Toast.makeText(this, "导入成功！", Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(this, "导入成功！");
                 }
                 break;
 
