@@ -68,10 +68,20 @@ public class ExtendActivity extends BaseActivity {
             }
         });
 
-        btnClearDishImage.setOnClickListener(view -> {
-            if (TokenConfig.clearDishImage()) {
-                ToastUtil.show(ExtendActivity.this, "存储的光盘行动图片已清空");
-            }
+        btnClearDishImage.setOnClickListener(v -> {
+            Context context = ExtendActivity.this;
+            new AlertDialog.Builder(context)
+                    .setTitle(R.string.clear_dish_image)
+                    .setMessage("确认执行该操作？")
+                    .setPositiveButton(R.string.ok, (dialog, which) -> {
+                        if (TokenConfig.clearDishImage()) {
+                            ToastUtil.show(context, "光盘行动图片清空成功");
+                        } else {
+                            ToastUtil.show(context, "光盘行动图片清空失败");
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+                    .show();
         });
 
         btnSetCustomWalkPathId.setOnClickListener(v -> {
