@@ -25,7 +25,7 @@ public class ExtensionsActivity extends BaseActivity {
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.activity_extend);
-        setBaseTitle(getString(R.string.extend_options));
+        setBaseTitle(getString(R.string.extensions));
         btnGetTreeItems = findViewById(R.id.btn_get_tree_items);
         btnGetNewTreeItems = findViewById(R.id.btn_get_newTree_items);
         btnQueryAreaTrees = findViewById(R.id.btn_query_area_trees);

@@ -21,6 +21,6 @@
     <string name="export_the_statistic_file">导出统计</string>
     <string name="view_debug_file">抓包记录</string>
     <string name="view_record_file">全部记录</string>
-    <string name="extend_options">扩展功能</string>
+    <string name="extensions">扩展功能</string>
     <string name="settings">设  置</string>
 </resources>

@@ -21,6 +21,6 @@
     <string name="import_the_statistic_file">Import the statistic file</string>
     <string name="view_debug_file">View debug file</string>
     <string name="view_record_file">View record file</string>
-    <string name="extend_options">Extend options</string>
+    <string name="extensions">Extensions</string>
     <string name="settings">Settings</string>
 </resources>
