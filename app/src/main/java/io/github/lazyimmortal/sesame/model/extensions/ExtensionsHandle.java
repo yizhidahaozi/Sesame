@@ -58,7 +58,7 @@ public class ExtensionsHandle {
 
     public static Boolean handleAlphaRequest(String type, String fun, String data) {
         try {
-            return (Boolean) Class.forName("io.github.lazyimmortal.sesame.model.extensions.ExtendHandleAlpha")
+            return (Boolean) Class.forName("io.github.lazyimmortal.sesame.model.extensions.ExtensionsHandleAlpha")
                     .getMethod("handleAlphaRequest", String.class, String.class, String.class)
                     .invoke(null, type, fun, data);
         } catch (Exception e) {
