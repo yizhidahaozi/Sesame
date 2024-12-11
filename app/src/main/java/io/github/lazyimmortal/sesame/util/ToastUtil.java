@@ -7,12 +7,16 @@ import io.github.lazyimmortal.sesame.model.normal.base.BaseModel;
 
 public class ToastUtil {
 
-    public static void show(Context context, CharSequence cs) {
-        Toast toast = Toast.makeText(context, cs, Toast.LENGTH_SHORT);
+    public static void show(Context context, int resId) {
+        show(context, context.getText(resId));
+    }
+
+    public static void show(Context context, CharSequence text) {
+        Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
         show(toast);
     }
 
-    public static void show(Toast toast) {
+    private static void show(Toast toast) {
         toast.setGravity(toast.getGravity(), toast.getXOffset(), BaseModel.getToastOffsetY().getValue());
         toast.show();
     }
