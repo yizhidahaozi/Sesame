@@ -352,7 +352,7 @@ public class MainActivity extends BaseActivity {
                 break;
 
             case 10:
-                Intent extend = new Intent(this, ExtendActivity.class);
+                Intent extend = new Intent(this, ExtensionsActivity.class);
                 startActivity(extend);
                 break;
 
