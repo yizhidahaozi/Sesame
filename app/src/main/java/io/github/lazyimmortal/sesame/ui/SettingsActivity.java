@@ -206,9 +206,9 @@ public class SettingsActivity extends BaseActivity {
                                 userConfigDirectoryFile = FileUtil.getUserConfigDirectoryFile(userId);
                             }
                             if (FileUtil.deleteFile(userConfigDirectoryFile)) {
-                                Toast.makeText(this, "配置删除成功", Toast.LENGTH_SHORT).show();
+                                ToastUtil.show(this, "配置删除成功");
                             } else {
-                                Toast.makeText(this, "配置删除失败", Toast.LENGTH_SHORT).show();
+                                ToastUtil.show(this, "配置删除失败");
                             }
                             finish();
                         })
@@ -228,7 +228,7 @@ public class SettingsActivity extends BaseActivity {
                     finish();
                     startActivity(intent);
                 } else {
-                    Toast.makeText(this, "切换失败", Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(this, "切换失败");
                 }
                 break;
         }
@@ -253,13 +253,13 @@ public class SettingsActivity extends BaseActivity {
                     }
                     FileInputStream inputStream = new FileInputStream(configV2File);
                     if (FileUtil.streamTo(inputStream, getContentResolver().openOutputStream(data.getData()))) {
-                        Toast.makeText(this, "导出成功！", Toast.LENGTH_SHORT).show();
+                        ToastUtil.show(this, "导出成功！");
                     } else {
-                        Toast.makeText(this, "导出失败！", Toast.LENGTH_SHORT).show();
+                        ToastUtil.show(this, "导出失败！");
                     }
                 } catch (IOException e) {
                     Log.printStackTrace(e);
-                    Toast.makeText(this, "导出失败！", Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(this, "导出失败！");
                 }
             }
         } else if (requestCode == IMPORT_REQUEST_CODE) {
@@ -274,7 +274,7 @@ public class SettingsActivity extends BaseActivity {
                     }
                     FileOutputStream outputStream = new FileOutputStream(configV2File);
                     if (FileUtil.streamTo(getContentResolver().openInputStream(data.getData()), outputStream)) {
-                        Toast.makeText(this, "导入成功！", Toast.LENGTH_SHORT).show();
+                        ToastUtil.show(this, "导入成功！");
                         if (!StringUtil.isEmpty(userId)) {
                             try {
                                 Intent intent = new Intent("com.eg.android.AlipayGphone.sesame.restart");
@@ -288,11 +288,11 @@ public class SettingsActivity extends BaseActivity {
                         finish();
                         startActivity(intent);
                     } else {
-                        Toast.makeText(this, "导入失败！", Toast.LENGTH_SHORT).show();
+                        ToastUtil.show(this, "导入失败！");
                     }
                 } catch (IOException e) {
                     Log.printStackTrace(e);
-                    Toast.makeText(this, "导入失败！", Toast.LENGTH_SHORT).show();
+                    ToastUtil.show(this, "导入失败！");
                 }
             }
         }
@@ -300,7 +300,7 @@ public class SettingsActivity extends BaseActivity {
 
     private void save() {
         if (ConfigV2.isModify(userId) && ConfigV2.save(userId, false)) {
-            Toast.makeText(this, "保存成功！", Toast.LENGTH_SHORT).show();
+            ToastUtil.show(this, "保存成功！");
             if (!StringUtil.isEmpty(userId)) {
                 try {
                     Intent intent = new Intent("com.eg.android.AlipayGphone.sesame.restart");
