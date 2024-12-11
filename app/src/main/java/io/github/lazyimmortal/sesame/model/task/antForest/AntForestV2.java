@@ -18,7 +18,7 @@ import io.github.lazyimmortal.sesame.entity.*;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.hook.Toast;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
-import io.github.lazyimmortal.sesame.model.extend.ExtendHandle;
+import io.github.lazyimmortal.sesame.model.extensions.ExtensionsHandle;
 import io.github.lazyimmortal.sesame.model.normal.base.BaseModel;
 import io.github.lazyimmortal.sesame.model.task.antFarm.AntFarm.TaskStatus;
 import io.github.lazyimmortal.sesame.rpc.intervallimit.FixedOrRangeIntervalLimit;
@@ -187,7 +187,7 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(doubleCountLimit = new IntegerModelField("doubleCountLimit", "双击卡 | 使用次数", 6));
         modelFields.addField(doubleCardTime = new ListModelField.ListJoinCommaToStringModelField("doubleCardTime", "双击卡 | 使用时间(范围)", ListUtil.newArrayList("0700-0730")));
         modelFields.addField(doubleCardConstant = new BooleanModelField("DoubleCardConstant", "双击卡 | 限时双击永动机", false));
-        if (ExtendHandle.handleAlphaRequest("enableDeveloperMode")) {
+        if (ExtensionsHandle.handleAlphaRequest("enableDeveloperMode")) {
             modelFields.addField(stealthCardType = new ChoiceModelField("stealthCardType", "隐身卡 | 接力使用", UsePropType.CLOSE, UsePropType.nickNames));
             modelFields.addField(stealthCardConstant = new BooleanModelField("stealthCardConstant", "隐身卡 | 限时隐身永动机", false));
             modelFields.addField(bubbleBoostType = new ChoiceModelField("bubbleBoostType", "加速器 | 定时使用", UsePropType.CLOSE, UsePropType.nickNames));
@@ -1376,7 +1376,7 @@ public class AntForestV2 extends ModelTask {
 
     private void forestExtend() {
         try {
-            if (!ExtendHandle.handleAlphaRequest("antForest", "vitality")) {
+            if (!ExtensionsHandle.handleAlphaRequest("antForest", "vitality")) {
                 return;
             }
             JSONObject jo = new JSONObject();
@@ -1394,7 +1394,7 @@ public class AntForestV2 extends ModelTask {
                     new JSONObject()
                             .put("energyShieldType", energyShieldType.getValue())
                             .put("energyShieldTime", usingProps.get(PropGroup.shield.name())));
-            ExtendHandle.handleAlphaRequest("antForest", "boost|shield", jo.toString());
+            ExtensionsHandle.handleAlphaRequest("antForest", "boost|shield", jo.toString());
         } catch (Throwable t) {
             Log.i(TAG, "forestExtend err:");
             Log.printStackTrace(TAG, t);
