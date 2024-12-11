@@ -1,7 +1,12 @@
 package io.github.lazyimmortal.sesame.ui;
 
 import android.annotation.SuppressLint;
-import android.content.*;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -17,6 +22,12 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.github.lazyimmortal.sesame.R;
 import io.github.lazyimmortal.sesame.data.AppConfig;
 import io.github.lazyimmortal.sesame.data.RunType;
@@ -24,15 +35,14 @@ import io.github.lazyimmortal.sesame.data.ViewAppInfo;
 import io.github.lazyimmortal.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
 import io.github.lazyimmortal.sesame.entity.FriendWatch;
 import io.github.lazyimmortal.sesame.entity.UserEntity;
-import io.github.lazyimmortal.sesame.model.normal.base.BaseModel;
-import io.github.lazyimmortal.sesame.util.*;
+import io.github.lazyimmortal.sesame.util.FileUtil;
+import io.github.lazyimmortal.sesame.util.LibraryUtil;
+import io.github.lazyimmortal.sesame.util.Log;
+import io.github.lazyimmortal.sesame.util.PermissionUtil;
+import io.github.lazyimmortal.sesame.util.Statistics;
+import io.github.lazyimmortal.sesame.util.TimeUtil;
+import io.github.lazyimmortal.sesame.util.ToastUtil;
 import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends BaseActivity {
 
@@ -101,7 +111,7 @@ public class MainActivity extends BaseActivity {
         } else {
             registerReceiver(broadcastReceiver, intentFilter);
         }
-        AlertDialog.Builder builder= new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.tips);
         builder.setMessage(R.string.start_message);
         builder.setPositiveButton(R.string.btn_understood, (dialog, which) -> dialog.dismiss());
@@ -373,7 +383,7 @@ public class MainActivity extends BaseActivity {
         }
         int length = userNameArray.length;
         if (length > 0 && length < 3) {
-            new Thread(()-> {
+            new Thread(() -> {
                 TimeUtil.sleep(800);
                 if (!selected.get()) {
                     alertDialog.dismiss();
