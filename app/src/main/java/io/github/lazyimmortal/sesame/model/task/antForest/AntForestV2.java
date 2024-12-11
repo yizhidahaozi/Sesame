@@ -124,7 +124,6 @@ public class AntForestV2 extends ModelTask {
     private IntegerModelField doubleCountLimit;
     private BooleanModelField doubleCardConstant;
     private BooleanModelField doubleCardOnlyLimitTime;
-    private BooleanModelField stealthCard;
     private ChoiceModelField stealthCardType;
     private BooleanModelField stealthCardConstant;
     private ChoiceModelField bubbleBoostType;
@@ -190,10 +189,9 @@ public class AntForestV2 extends ModelTask {
         modelFields.addField(doubleCardTime = new ListModelField.ListJoinCommaToStringModelField("doubleCardTime", "双击卡 | 使用时间(范围)", ListUtil.newArrayList("0700-0730")));
         modelFields.addField(doubleCardConstant = new BooleanModelField("DoubleCardConstant", "双击卡 | 限时双击永动机", false));
         modelFields.addField(doubleCardOnlyLimitTime = new BooleanModelField("doubleCardOnlyLimitTime", "双击卡 | 仅使用限时双击卡", false));
-        modelFields.addField(stealthCard = new BooleanModelField("stealthCard", "隐身卡 | 使用", false));
-        modelFields.addField(stealthCardConstant = new BooleanModelField("stealthCardConstant", "隐身卡 | 限时隐身永动机", false));
         if (ExtendHandle.handleAlphaRequest("enableDeveloperMode")) {
             modelFields.addField(stealthCardType = new ChoiceModelField("stealthCardType", "隐身卡 | 接力使用", UsePropType.CLOSE, UsePropType.nickNames));
+            modelFields.addField(stealthCardConstant = new BooleanModelField("stealthCardConstant", "隐身卡 | 限时隐身永动机", false));
             modelFields.addField(bubbleBoostType = new ChoiceModelField("bubbleBoostType", "加速器 | 定时使用", UsePropType.CLOSE, UsePropType.nickNames));
             modelFields.addField(bubbleBoostTime = new StringModelField("bubbleBoostTime", "加速器 | 定时使用时间", "0630"));
             modelFields.addField(energyShieldType = new ChoiceModelField("energyShieldType", "保护罩 | 接力使用", UsePropType.CLOSE, UsePropType.nickNames));
@@ -1704,18 +1702,10 @@ public class AntForestV2 extends ModelTask {
         if (Objects.equals(selfId, userId)) {
             return;
         }
-        if (needDoubleClick() || needStealthCard()) {
+        if (needDoubleClick()) {
             synchronized (usePropLockObj) {
-                JSONArray forestPropVOList = null;
                 if (needDoubleClick()) {
-                    forestPropVOList = getForestPropVOList();
-                    useDoubleCard(forestPropVOList);
-                }
-                if (needStealthCard()) {
-                    if (forestPropVOList == null) {
-                        forestPropVOList = getForestPropVOList();
-                    }
-                    useStealthCard(forestPropVOList);
+                    useDoubleCard(getForestPropVOList());
                 }
             }
         }
@@ -1730,17 +1720,6 @@ public class AntForestV2 extends ModelTask {
             return true;
         }
         return doubleClickEndTime < System.currentTimeMillis();
-    }
-
-    private Boolean needStealthCard() {
-        if (!stealthCard.getValue()) {
-            return false;
-        }
-        Long stealthCardEndTime = usingProps.get(PropGroup.stealthCard.name());
-        if (stealthCardEndTime == null) {
-            return true;
-        }
-        return stealthCardEndTime < System.currentTimeMillis();
     }
 
     private void useDoubleCard(JSONArray forestPropVOList) {
@@ -1780,39 +1759,6 @@ public class AntForestV2 extends ModelTask {
             }
         } catch (Throwable th) {
             Log.i(TAG, "useDoubleCard err:");
-            Log.printStackTrace(TAG, th);
-        }
-    }
-
-    private void useStealthCard(JSONArray forestPropVOList) {
-        try {
-            // 背包查找 隐身卡
-            JSONObject jo = null;
-            List<JSONObject> list = getPropGroup(forestPropVOList, PropGroup.stealthCard.name());
-            if (!list.isEmpty()) {
-                jo = list.get(0);
-            }
-            if (jo == null || !jo.has("recentExpireTime")) {
-                if (stealthCardConstant.getValue()) {
-                    // 商店兑换 限时隐身卡
-                    if (exchangeBenefit("SK20230521000206")) {
-                        jo = getForestPropVO(getForestPropVOList(), "LIMIT_TIME_STEALTH_CARD");
-                    }
-                }
-            }
-            if (jo == null) {
-                return;
-            }
-            // 使用 隐身卡
-            if (consumeProp(jo)) {
-                Long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(
-                        jo.getJSONObject("propConfigVO").getLong("durationTime"));
-                usingProps.put(PropGroup.stealthCard.name(), endTime);
-            } else {
-                updateUsingPropsEndTime();
-            }
-        } catch (Throwable th) {
-            Log.i(TAG, "useStealthCard err:");
             Log.printStackTrace(TAG, th);
         }
     }
