@@ -39,7 +39,7 @@ public class ExtendActivity extends BaseActivity {
         btnGetTreeItems.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendItemsBroadcast("getTreeItems", "", "");
+                sendItemsBroadcast("antForest", "getTreeItems", null);
                 Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
             }
         });
@@ -47,7 +47,7 @@ public class ExtendActivity extends BaseActivity {
         btnGetNewTreeItems.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendItemsBroadcast("getNewTreeItems", "", "");
+                sendItemsBroadcast("antForest", "getNewTreeItems", null);
                 Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
             }
         });
@@ -55,7 +55,7 @@ public class ExtendActivity extends BaseActivity {
         btnQueryAreaTrees.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendItemsBroadcast("queryAreaTrees", "", "");
+                sendItemsBroadcast("antForest", "queryAreaTrees", null);
                 Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
             }
         });
@@ -63,7 +63,7 @@ public class ExtendActivity extends BaseActivity {
         btnGetUnlockTreeItems.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendItemsBroadcast("getUnlockTreeItems", "", "");
+                sendItemsBroadcast("antForest", "getUnlockTreeItems", null);
                 Toast.makeText(ExtendActivity.this, "已发送查询请求，请在森林日志查看结果！", Toast.LENGTH_SHORT).show();
             }
         });
