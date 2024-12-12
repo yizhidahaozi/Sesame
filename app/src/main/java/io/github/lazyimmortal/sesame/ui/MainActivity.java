@@ -97,7 +97,7 @@ public class MainActivity extends BaseActivity {
                             break;
                         case "io.github.lazyimmortal.sesame.update":
                             Statistics.load();
-                            tvStatistics.setText(Statistics.getText());
+                            tvStatistics.setText(Statistics.getText(MainActivity.this));
                             break;
                     }
                 }
@@ -200,7 +200,7 @@ public class MainActivity extends BaseActivity {
             try {
                 Statistics.load();
                 Statistics.updateDay(Calendar.getInstance());
-                tvStatistics.setText(Statistics.getText());
+                tvStatistics.setText(Statistics.getText(MainActivity.this));
             } catch (Exception e) {
                 Log.printStackTrace(e);
             }
@@ -328,7 +328,7 @@ public class MainActivity extends BaseActivity {
 
             case 7:
                 if (FileUtil.copyTo(FileUtil.getExportedStatisticsFile(), FileUtil.getStatisticsFile())) {
-                    tvStatistics.setText(Statistics.getText());
+                    tvStatistics.setText(Statistics.getText(MainActivity.this));
                     ToastUtil.show(this, "导入成功！");
                 }
                 break;
