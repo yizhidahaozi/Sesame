@@ -464,7 +464,6 @@ public class AntForestV2 extends ModelTask {
                 }
                 waterFriendEnergy();
                 giveProp();
-                forestExtend();
                 if (vitalityExchangeBenefit.getValue()) {
                     vitalityExchangeBenefit();
                 }
@@ -1022,6 +1021,7 @@ public class AntForestV2 extends ModelTask {
                     collectRobExpandEnergy(jo.optString("extInfo"));
                 }
             }
+            forestExtensions();
         } catch (Throwable th) {
             Log.i(TAG, "updateUsingPropsEndTime err:");
             Log.printStackTrace(TAG, th);
@@ -1372,7 +1372,7 @@ public class AntForestV2 extends ModelTask {
         return 39;
     }
 
-    private void forestExtend() {
+    private void forestExtensions() {
         try {
             if (!ExtensionsHandle.handleAlphaRequest("antForest", "vitality")) {
                 return;

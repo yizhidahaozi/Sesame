@@ -105,7 +105,7 @@ public class AntMember extends ModelTask {
             if (antInsurance.getValue()) {
                 AntInsurance.executeTask(antInsuranceOptions.getValue());
             }
-            if (virtualProfit.getValue()) {
+            if (ExtensionsHandle.handleAlphaRequest("enableDeveloperMode")) {
                 ExtensionsHandle.handleAlphaRequest("antBank", "virtualProfit", virtualProfit.getConfigValue());
             }
             // 消费金签到
