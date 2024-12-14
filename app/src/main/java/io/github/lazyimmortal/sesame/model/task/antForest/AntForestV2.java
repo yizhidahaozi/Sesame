@@ -1795,9 +1795,9 @@ public class AntForestV2 extends ModelTask {
                         jo = new JSONObject(AntForestRpcCall.giveProp(giveConfigId, propId, targetUserId));
                         if (MessageUtil.checkResultCode(TAG, jo)) {
                             Log.forest("赠送道具🎭[" + UserIdMap.getMaskName(targetUserId) + "]#" + propName);
-                        }
-                        if (holdsNum > 1 || forestPropVOList.length() > 1) {
-                            continue;
+                            if (holdsNum > 1 || forestPropVOList.length() > 1) {
+                                continue;
+                            }
                         }
                     }
                 } finally {
