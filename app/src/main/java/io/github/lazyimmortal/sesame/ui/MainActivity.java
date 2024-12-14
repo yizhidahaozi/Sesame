@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,7 +47,7 @@ import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
 public class MainActivity extends BaseActivity {
 
-    private final Handler handler = new Handler();
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     private boolean hasPermissions = false;
 
@@ -76,7 +77,7 @@ public class MainActivity extends BaseActivity {
             supportActionBar.setIcon(R.drawable.title_logo);
         }*/
         updateSubTitle(ViewAppInfo.getRunType());
-        viewHandler = new Handler();
+        viewHandler = new Handler(Looper.getMainLooper());
         titleRunner = () -> updateSubTitle(RunType.DISABLE);
         BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
             @Override
