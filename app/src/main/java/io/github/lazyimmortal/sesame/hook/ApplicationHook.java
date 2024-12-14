@@ -663,6 +663,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
         }
     }
 
+    @SuppressLint("ScheduleExactAlarm")
     private static Boolean setAlarmTask(long triggerAtMillis, PendingIntent operation) {
         try {
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
