@@ -686,7 +686,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
         }
     }
 
-    @SuppressLint("ScheduleExactAlarm")
+    @SuppressLint({"ScheduleExactAlarm", "MissingPermission"})
     private static Boolean setAlarmTask(long triggerAtMillis, PendingIntent operation) {
         try {
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
