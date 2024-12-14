@@ -16,7 +16,7 @@ android {
         applicationId "io.github.lazyimmortal.sesame"
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 33
+        targetSdk 34
         versionCode gitCommitCount
         versionName version
 
