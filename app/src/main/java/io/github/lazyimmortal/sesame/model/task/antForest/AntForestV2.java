@@ -1377,12 +1377,11 @@ public class AntForestV2 extends ModelTask {
             if (!ExtensionsHandle.handleRequest("antForest", "vitality")) {
                 return;
             }
-            JSONObject jo = new JSONObject();
+            JSONObject jo = new JSONObject().put("usingProps", usingProps);
             jo.put("stealthCard",
                     new JSONObject()
                             .put("stealthCardType", stealthCardType.getValue())
                             .put("stealthCardConstant", stealthCardConstant.getValue())
-                            .put("stealthCardTime", usingProps.get(PropGroup.stealthCard.name()))
             );
             jo.put("bubbleBoost",
                     new JSONObject()
@@ -1391,7 +1390,7 @@ public class AntForestV2 extends ModelTask {
             jo.put("energyShield",
                     new JSONObject()
                             .put("energyShieldType", energyShieldType.getValue())
-                            .put("energyShieldTime", usingProps.get(PropGroup.shield.name())));
+            );
             ExtensionsHandle.handleRequest("antForest", "boost|shield", jo.toString());
         } catch (Throwable t) {
             Log.i(TAG, "forestExtend err:");
