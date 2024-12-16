@@ -26,6 +26,8 @@ public class AppConfig {
 
     private Boolean newUI = true;
 
+    private Boolean languageSimplifiedChinese = false;
+
     private static File getExternalFilesDir() {
         try {
             @SuppressLint("PrivateApi")

@@ -7,8 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import io.github.lazyimmortal.sesame.R;
-import io.github.lazyimmortal.sesame.data.AppConfig;
 import io.github.lazyimmortal.sesame.data.ViewAppInfo;
+import io.github.lazyimmortal.sesame.util.LanguageUtil;
 
 public class BaseActivity extends AppCompatActivity {
 
@@ -31,8 +31,7 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void attachBaseContext(Context newBase) {
-        AppConfig.load();
-        super.attachBaseContext(newBase);
+        super.attachBaseContext(LanguageUtil.setLocal(newBase));
     }
 
     public String getBaseTitle() {
