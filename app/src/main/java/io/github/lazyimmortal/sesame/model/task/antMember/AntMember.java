@@ -204,7 +204,7 @@ public class AntMember extends ModelTask {
                     if (Objects.equals("BROWSE", type)) {
                         doubleCheck = doBrowseTask(taskList);
                     } else {
-                        ExtensionsHandle.handleRequest("antMember", "doMoreTask", jo.toString());
+                        ExtensionsHandle.handleRequest("antMember", "doMoreTask", jo);
                     }
                 }
                 if (doubleCheck) {

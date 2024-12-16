@@ -1396,8 +1396,7 @@ public class AntForestV2 extends ModelTask {
 
     private void forestExtensions() {
         try {
-            JSONObject jo = new JSONObject(usingProps);
-            ExtensionsHandle.handleRequest("antForest", "extensions", jo.toString());
+            ExtensionsHandle.handleRequest("antForest", "extensions", usingProps);
         } catch (Throwable t) {
             Log.i(TAG, "forestExtensions err:");
             Log.printStackTrace(TAG, t);
