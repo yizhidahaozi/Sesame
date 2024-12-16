@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.lazyimmortal.sesame.data.Model;
+import io.github.lazyimmortal.sesame.model.extensions.ExtensionsHandle;
 import io.github.lazyimmortal.sesame.model.normal.answerAI.AnswerAI;
 import io.github.lazyimmortal.sesame.model.normal.base.BaseModel;
 import io.github.lazyimmortal.sesame.model.task.antDodo.AntDodo;
@@ -16,7 +17,6 @@ import io.github.lazyimmortal.sesame.model.task.antSports.AntSports;
 import io.github.lazyimmortal.sesame.model.task.antStall.AntStall;
 import io.github.lazyimmortal.sesame.model.task.greenFinance.GreenFinance;
 import io.github.lazyimmortal.sesame.model.task.protectEcology.ProtectEcology;
-import io.github.lazyimmortal.sesame.util.Log;
 import lombok.Getter;
 
 public class ModelOrder {
@@ -38,12 +38,6 @@ public class ModelOrder {
         clazzList.add(GreenFinance.class);
         clazzList.add(AnswerAI.class);
 
-        try {
-            Class.forName("io.github.lazyimmortal.sesame.model.extensions.ExtensionsHandleAlpha")
-                    .getMethod("addExtensionsClass", List.class)
-                    .invoke(null, clazzList);
-        } catch (Exception e) {
-            Log.record("长生根本不存在!");
-        }
+        ExtensionsHandle.handleAlphaRequest("ModelOrder", "addExtensionsClass", clazzList);
     }
 }
