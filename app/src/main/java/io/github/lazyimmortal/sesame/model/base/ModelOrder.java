@@ -16,6 +16,7 @@ import io.github.lazyimmortal.sesame.model.task.antSports.AntSports;
 import io.github.lazyimmortal.sesame.model.task.antStall.AntStall;
 import io.github.lazyimmortal.sesame.model.task.greenFinance.GreenFinance;
 import io.github.lazyimmortal.sesame.model.task.protectEcology.ProtectEcology;
+import io.github.lazyimmortal.sesame.util.Log;
 import lombok.Getter;
 
 public class ModelOrder {
@@ -36,5 +37,13 @@ public class ModelOrder {
         clazzList.add(AntMember.class);
         clazzList.add(GreenFinance.class);
         clazzList.add(AnswerAI.class);
+
+        try {
+            Class.forName("io.github.lazyimmortal.sesame.model.extensions.ExtensionsHandleAlpha")
+                    .getMethod("addExtensionsClass", List.class)
+                    .invoke(null, clazzList);
+        } catch (Exception e) {
+            Log.record("长生根本不存在!");
+        }
     }
 }
