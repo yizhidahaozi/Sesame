@@ -338,7 +338,8 @@ public class AntSports extends ModelTask {
     private void walk() {
         String goingPathId = queryGoingPathId();
         do {
-            String tempPathId = (String) ExtensionsHandle.handleRequest("antSports", "walk");
+            String tempPathId = (String) ExtensionsHandle
+                    .handleAlphaRequest("antSports", "walk", null);
             if (tempPathId != null) {
                 goingPathId = tempPathId;
             }
