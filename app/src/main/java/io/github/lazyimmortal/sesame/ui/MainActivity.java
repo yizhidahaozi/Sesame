@@ -164,11 +164,6 @@ public class MainActivity extends BaseActivity {
                 }
             }
             try {
-                AppConfig.load();
-            } catch (Exception e) {
-                Log.printStackTrace(e);
-            }
-            try {
                 List<String> userNameList = new ArrayList<>();
                 List<UserEntity> userEntityList = new ArrayList<>();
                 File[] configFiles = FileUtil.CONFIG_DIRECTORY_FILE.listFiles();
