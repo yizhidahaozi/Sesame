@@ -18,6 +18,7 @@ import io.github.lazyimmortal.sesame.entity.AlipayUser;
 import io.github.lazyimmortal.sesame.entity.WalkPath;
 import io.github.lazyimmortal.sesame.hook.ApplicationHook;
 import io.github.lazyimmortal.sesame.model.base.TaskCommon;
+import io.github.lazyimmortal.sesame.model.extensions.ExtensionsHandle;
 import io.github.lazyimmortal.sesame.util.*;
 import io.github.lazyimmortal.sesame.util.idMap.UserIdMap;
 
@@ -337,6 +338,10 @@ public class AntSports extends ModelTask {
     private void walk() {
         String goingPathId = queryGoingPathId();
         do {
+            String tempPathId = (String) ExtensionsHandle.handleRequest("antSports", "walk");
+            if (tempPathId != null) {
+                goingPathId = tempPathId;
+            }
             TimeUtil.sleep(1000);
             if (isNeedJoinNewPath(goingPathId)) {
                 String joinPathId = queryJoinPathId();
@@ -628,7 +633,7 @@ public class AntSports extends ModelTask {
         return pathId;
     }
 
-    private static Boolean checkJoinPathId(String joinPathId) {
+    public static Boolean checkJoinPathId(String joinPathId) {
         try {
             JSONObject jo = queryPath(joinPathId);
             String goingPathId = jo.optString("goingPathId");
@@ -644,7 +649,7 @@ public class AntSports extends ModelTask {
         return false;
     }
 
-    private Boolean joinPath(String pathId) {
+    public static Boolean joinPath(String pathId) {
         if (pathId == null) {
             // 守护体育梦
             pathId = "p000202408231708";
