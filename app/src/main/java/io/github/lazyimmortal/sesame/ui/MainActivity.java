@@ -249,7 +249,7 @@ public class MainActivity extends BaseActivity {
         menu.add(0, 1, 1, R.string.hide_the_application_icon)
                 .setCheckable(true)
                 .setChecked(state > PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
-        menu.add(0, 2, 2, "只显示中文")
+        menu.add(0, 2, 2, R.string.language_simplified_chinese)
                 .setCheckable(true)
                 .setChecked(AppConfig.INSTANCE.getLanguageSimplifiedChinese());
         menu.add(0, 3, 3, R.string.view_error_log_file);
