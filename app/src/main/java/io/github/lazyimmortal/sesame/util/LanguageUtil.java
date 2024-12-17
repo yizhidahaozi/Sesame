@@ -14,11 +14,15 @@ public class LanguageUtil {
         if (AppConfig.INSTANCE.getLanguageSimplifiedChinese()) {
             // 忽略系统语言，强制使用简体中文
             Locale locale = new Locale("zh", "CN"); // 简体中文的区域代码
-            Locale.setDefault(locale);
-            Configuration config = new Configuration();
-            config.setLocale(locale);
-            context = context.createConfigurationContext(config);
+            return setLocal(context, locale);
+        } else {
+            return setLocal(context, Locale.getDefault());
         }
-        return context;
+    }
+
+    public static Context setLocal(Context context, Locale locale) {
+        Configuration configuration = new Configuration();
+        configuration.setLocale(locale);
+        return context.createConfigurationContext(configuration);
     }
 }
