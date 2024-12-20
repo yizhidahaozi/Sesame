@@ -1771,13 +1771,16 @@ public class AntForestV2 extends ModelTask {
     /* 赠送道具 */
     private void giveProp() {
         Set<String> set = whoYouWantToGiveTo.getValue();
-        if (!set.isEmpty() && selfId != null) {
-            for (String userId : set) {
-                if (!Objects.equals(selfId, userId)) {
-                    giveProp(userId);
-                    break;
-                }
+        if (set.isEmpty()) {
+            return;
+        }
+        for (String userId : set) {
+            if (UserIdMap.getCurrentUid() == null
+                    || Objects.equals(UserIdMap.getCurrentUid(), userId)) {
+                continue;
             }
+            giveProp(userId);
+            break;
         }
     }
 
