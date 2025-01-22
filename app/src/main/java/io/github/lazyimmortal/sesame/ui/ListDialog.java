@@ -101,7 +101,7 @@ public class ListDialog {
             AlertDialog d = (AlertDialog) p1;
             layout_batch_process = d.findViewById(R.id.layout_batch_process);
             assert layout_batch_process != null;
-            layout_batch_process.setVisibility(listType == ListType.CHECK /*&& !hasCount*/ ? View.VISIBLE : View.GONE);
+            layout_batch_process.setVisibility(listType == ListType.CHECK ? View.VISIBLE : View.GONE);
             ListAdapter.get(c).notifyDataSetChanged();
         });
         listDialog.show();
@@ -157,6 +157,7 @@ public class ListDialog {
         btn_select_all.setOnClickListener(batchBtnOnClickListener);
         btn_select_invert.setOnClickListener(batchBtnOnClickListener);
 
+
         oneClickText = v.findViewById(R.id.one_click_setup);
         oneClickText.setOnFocusChangeListener((v2, hasFocus) -> {
             if (hasFocus) {
@@ -191,6 +192,10 @@ public class ListDialog {
                 }
             }
         });
+
+        if (!hasCount) {
+            oneClickText.setVisibility(View.GONE);
+        }
 
         searchText = v.findViewById(R.id.edt_find);
         lv_list = v.findViewById(R.id.lv_list);
