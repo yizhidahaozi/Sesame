@@ -1,4 +1,4 @@
-name: 🤖 Android CI 自动化构建re
+name: 🤖 Android CI 自动化构建
 
 on:
   # 每天触发 1 次（北京时间）
@@ -28,6 +28,20 @@ jobs:
         with:
           fetch-depth: 0  # 获取完整提交历史
 
+      - name: 📌 提取版本号
+        id: extract_version
+        run: |
+          # 从分支名或标签名中提取版本号
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${{ github.ref_name }}
+          elif [[ "${{ github.ref }}" == refs/heads/* ]]; then
+            VERSION=${{ github.ref_name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD)
+          else
+            VERSION=unknown-$(date +%Y%m%d)-$(git rev-parse --short HEAD)
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: ☕ 配置 JDK 17
         uses: actions/setup-java@v4
         with:
@@ -45,7 +59,10 @@ jobs:
         run: chmod +x gradlew
 
       - name: 🧰 使用 Gradle 构建
-        run: ./gradlew assembleNormalRelease assembleCompatibleRelease -Pversion=${{ github.ref_name }}
+        run: |
+          ./gradlew assembleNormalRelease assembleCompatibleRelease \
+            -PversionName="${{ env.VERSION }}" \
+            -PversionCode=$(date +%Y%m%d%H%M)
 
       - name: 📦 定位 APK 文件并设置输出
         id: locate_apks
@@ -114,7 +131,7 @@ jobs:
       - name: 🏷️ 从版本号创建 Git 标签
         if: startsWith(github.ref, 'refs/heads/develop') && github.event_name == 'push'
         run: |
-          VERSION_TAG="v${{ steps.extract_info.outputs.version }}"
+          VERSION_TAG="v${{ env.VERSION }}"
           echo "创建版本标签: $VERSION_TAG" 🔖
           git tag "$VERSION_TAG"
           git push origin "$VERSION_TAG"
@@ -122,12 +139,12 @@ jobs:
       - name: 🎉 上传资产到 GitHub 版本发布
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ steps.extract_info.outputs.version }}
+          name: ${{ env.VERSION }}
           files: |
             ${{ steps.extract_apks.outputs.signed_compatible }}
             ${{ steps.extract_apks.outputs.signed_normal }}
             CHECKSUMS-*.sha256
-          tag_name: ${{ steps.extract_info.outputs.version }}
+          tag_name: ${{ env.VERSION }}
           draft: false
           append_body: true
           generate_release_notes: false
@@ -138,14 +155,10 @@ jobs:
 
             2. **📱 兼容版 （Compatible）适用于 最低支持 (Android 5.1~7.0) 系统📲 **
                - 文件管理器安装 📂  
-  
 
                 🛠 一天自动打包1次
                 🌞 北京时间6点构建
-                
 
-
-    
             ### ⚠️ 重要声明  
             > 本安装包仅限个人研究学习，非商业用途，禁止任何形式的倒卖或非法分发
             
