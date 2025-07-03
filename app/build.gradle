@@ -1,13 +1,48 @@
 apply plugin: 'com.android.application'
 
+// 封装 Git 命令执行和错误处理
+def safeExecuteGitCommand(command) {
+    try {
+        def process = command.execute()
+        process.waitFor()
+        if (process.exitValue() != 0) {
+            println "Git command failed: ${command}, error: ${process.errorStream.text}"
+            return null
+        }
+        return process.text.trim()
+    } catch (Exception e) {
+        println "Failed to execute Git command: ${command}, exception: ${e.message}"
+        return null
+    }
+}
+
+// 获取 Git 提交哈希
+def getGitCommitHash() {
+    def output = safeExecuteGitCommand('git rev-parse --short HEAD')
+    return output ?: "unknown"
+}
+
+// 获取 Git 分支名
+def getGitBranchName() {
+    def output = safeExecuteGitCommand('git rev-parse --abbrev-ref HEAD')
+    return output ?: "unknown"
+}
+
+// 获取 Git 提交计数，默认返回 1 确保 versionCode 为正整数
+def getGitCommitCount() {
+    def output = safeExecuteGitCommand('git rev-list --count HEAD')
+    return output?.isInteger() ? output.toInteger() : 1
+}
+
 android {
     def version = project.getProperties().get("version")
     if (version == null || "unspecified".equalsIgnoreCase(version)) {
         version = "TEST"
     }
-    def gitCommitHash = 'git rev-parse --short HEAD'.execute().text.trim()
-    def gitBranchName = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
-    def gitCommitCount = "git rev-list --count HEAD".execute().text.trim().toInteger()
+
+    def gitCommitHash = getGitCommitHash()
+    def gitBranchName = getGitBranchName()
+    def gitCommitCount = getGitCommitCount()
     def buildTime = new Date().format("yyyy-MM-dd HH:mm:ss", TimeZone.getTimeZone("Asia/Shanghai"))
 
     compileSdk 34
@@ -17,7 +52,7 @@ android {
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 34
-        versionCode gitCommitCount
+        versionCode gitCommitCount // 使用修正后的 gitCommitCount
         versionName version
 
         buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\""
@@ -27,6 +62,13 @@ android {
     buildFeatures {
         buildConfig = true // 显式启用 BuildConfig
     }
+
+    // 配置 Java 版本为 11，消除源/目标版本过时警告
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
     ext {
         applicationName = "Sesame"
         applicationType = "Normal"
@@ -81,5 +123,4 @@ dependencies {
     compatibleImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.13.5'
     compatibleImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.5'
     compatibleImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.13.5'
-
 }
