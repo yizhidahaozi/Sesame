@@ -1,195 +1,110 @@
-name: 🕔 🤖 Android CI 自动化构建
+name: Android CI 🤖
 
 on:
-  # 每10天触发 1 次（北京时间6点）
-  schedule:
-    - cron: '0 22 */10 * *'    # 🌞 北京时间6点构建
-
-
-  push:
-    branches: ["develop"]  # 🚀 代码推送触发
-  pull_request:
-    branches: ["develop"]  # 📌 PR合并触发
   release:
-    types: [published]     # 🏷️ 版本发布触发
-  workflow_dispatch:       # 🕹️ 手动触发
+    types: [published] 🚀
+  workflow_dispatch:  # 添加手动触发选项
+    inputs:
+      base_version:
+        description: '基础版本号 (例如: v1.6.4.2-X)'
+        required: true
+        default: 'v1.6.4.2-X'
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 💻
 
     steps:
-      - name: ⏳ 设置时区为北京时间
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+        # 拉取代码仓库 📥
+
+      - name: set up JDK 21 ☕
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Generate timestamp 🕒
+        id: timestamp
         run: |
-          sudo timedatectl set-timezone Asia/Shanghai
-          echo "当前时间: $(date)"
+          # 获取当前时间并格式化为 YYYY.MM.dd.HH.mm
+          TIMESTAMP=$(date +'%Y.%m.%d.%H.%M')
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
 
-      - name: 📂 检出代码
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # 获取完整提交历史
-
-      - name: ☕ 配置 JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: "zulu"
-          cache: gradle  # 缓存依赖加速构建
-
-      - name: 🛠️ 配置 Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: false
-          gradle-version: wrapper
-
-      - name: ⚙️ 授予 gradlew 执行权限
-        run: chmod +x gradlew
-
-      - name: 🧰 使用 Gradle 构建
-        run: ./gradlew assembleNormalRelease assembleCompatibleRelease -Pversion=${{ github.ref_name }}
-
-      - name: 📦 定位 APK 文件并设置输出
-        id: locate_apks
+      - name: Determine version 🔖
+        id: version
         run: |
-          normal_apk=$(find app/build/outputs/apk/normal/release -name "*.apk" | head -n 1)
-          compatible_apk=$(find app/build/outputs/apk/compatible/release -name "*.apk" | head -n 1)
-          echo "normal_apk=$normal_apk" >> $GITHUB_OUTPUT
-          echo "compatible_apk=$compatible_apk" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # 手动触发: 使用输入的基础版本 + 时间戳
+            VERSION="${{ github.event.inputs.base_version }}.${{ steps.timestamp.outputs.timestamp }}"
+          else
+            # 发布触发: 使用标签名作为完整版本号
+            VERSION="${{ github.ref_name }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_without_v=${VERSION#v}" >> $GITHUB_OUTPUT  # 移除前缀 'v'
 
-      - name: 🚚 复制 APK 到签名目录
+      - name: Build with Gradle 🔨
         run: |
-          mkdir -p app/build/outputs/apk/all
-          cp "${{ steps.locate_apks.outputs.normal_apk }}" app/build/outputs/apk/all/
-          cp "${{ steps.locate_apks.outputs.compatible_apk }}" app/build/outputs/apk/all/
+          ./gradlew assembleRelease -P version=${{ steps.version.outputs.version_without_v }}
 
-      - name: ✅ 签名 APK
-        id: sign_apks
-        uses: ilharp/sign-android-release@v2
+      - name: Sign Normal APK 📦
+        id: sign_normal_apk
+        uses: ilharp/sign-android-release@v1
         with:
-          releaseDir: app/build/outputs/apk/all
+          releaseDir: app/build/outputs/apk/normal/release/
           signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
           keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: 36.0.0
+          buildToolsVersion: 34.0.0
 
-      - name: 📋 提取签名后的 APK 路径
-        id: extract_apks
-        run: |
-          IFS=':' read -r -a files <<< "${{ steps.sign_apks.outputs.signedFiles }}"
-          for file in "${files[@]}"; do
-            if [[ "$file" == *Normal* ]]; then
-              echo "signed_normal=$file" >> $GITHUB_OUTPUT
-            elif [[ "$file" == *Compatible* ]]; then
-              echo "signed_compatible=$file" >> $GITHUB_OUTPUT
-            fi
-          done
-
-      - name: 📤 上传兼容版 APK
-        uses: actions/upload-artifact@v4
+      - name: Sign Compatible APK 📦
+        id: sign_compatible_apk
+        uses: ilharp/sign-android-release@v1
         with:
-          name: apk-compatible
-          path: ${{ steps.extract_apks.outputs.signed_compatible }}
+          releaseDir: app/build/outputs/apk/compatible/release/
+          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
+          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          buildToolsVersion: 34.0.0
 
-      - name: 📤 上传标准版 APK
-        uses: actions/upload-artifact@v4
+      - name: Upload Normal to Release 📤
+        uses: termux/upload-release-action@v4.2.0
         with:
-          name: apk-normal
-          path: ${{ steps.extract_apks.outputs.signed_normal }}
+          asset_name: |
+            Sesame-Normal-${{ steps.version.outputs.version }}.apk
+          file: ${{ steps.sign_normal_apk.outputs.signedFile }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: |
+            $(if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+              echo "refs/tags/${{ steps.version.outputs.version }}";
+            else
+              echo "${{ github.ref }}";
+            fi)
+          overwrite: true
+          checksums: sha256
+          checksums_file_name: |
+            CHECKSUMS-Sesame-Normal-${{ steps.version.outputs.version }}.%algo%
 
-      - name: ℹ️ 提取文件信息
-        id: extract_info
-        run: |
-          normal_file=$(basename "${{ steps.extract_apks.outputs.signed_normal }}")
-          compatible_file=$(basename "${{ steps.extract_apks.outputs.signed_compatible }}")
-          version=$(echo "$normal_file" | sed -E 's/.*-(Normal|Compatible)-(.*)-signed\.apk/\2/')
-          echo "normal_file=$normal_file" >> $GITHUB_OUTPUT
-          echo "compatible_file=$compatible_file" >> $GITHUB_OUTPUT
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-      - name: 🔐 生成 APK 校验和
-        run: |
-          sha256sum ${{ steps.extract_apks.outputs.signed_normal }} > CHECKSUMS-Sesame-Normal-${{ steps.extract_info.outputs.version }}.${{ env.SHORT_SHA }}-signed.apk.sha256
-          sha256sum ${{ steps.extract_apks.outputs.signed_compatible }} > CHECKSUMS-Sesame-Compatible-${{ steps.extract_info.outputs.version }}.${{ env.SHORT_SHA }}-signed.apk.sha256
-
-      - name: 📢 发送综合消息到 Telegram
-        uses: appleboy/telegram-action@master
+      - name: Upload Compatible to Release 📤
+        uses: termux/upload-release-action@v4.2.0
         with:
-          to: ${{ secrets.TG_CHAT_ID }}
-          token: ${{ secrets.TG_BOT_TOKEN }}
-          message: |
-            🚀 *新版本 ${{ steps.extract_info.outputs.version }} 安装包构建完成!* 📦
-
-            - 📱**标准版** :
-            `${{ steps.extract_info.outputs.normal_file }}`
-
-            - 📱**兼容版** 📱:
-            `${{ steps.extract_info.outputs.compatible_file }}`
-
-            🛠️ 安装指引与说明:
-            ✅ *标准版（Normal）*：直接下载安装 ，适用于 Android 8.0 及以上系统📲 
-            
-            ✅ *兼容版（Compatible）*：低版本设备建议文件管理器安装 📁，适用于 最低支持 Android 5.1-Android 7.0 系统📲
-
-
-
-          format: markdown
-
-      - name: 📱 发送标准版 APK 到 Telegram
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TG_CHAT_ID }}
-          token: ${{ secrets.TG_BOT_TOKEN }}
-          document: ${{ steps.extract_apks.outputs.signed_normal }}
-          message: "📱 标准版安装包 (Android 8.0+) "
-
-      - name: 📱 发送兼容版 APK 到 Telegram
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TG_CHAT_ID }}
-          token: ${{ secrets.TG_BOT_TOKEN }}
-          document: ${{ steps.extract_apks.outputs.signed_compatible }}
-          message: "📱 兼容版安装包 (Android 5.1-Android 7.0) "
-
-      - name: 🏷️ 从版本号创建 Git 标签
-        if: startsWith(github.ref, 'refs/heads/develop') && github.event_name == 'push'
-        run: |
-          VERSION_TAG="v${{ steps.extract_info.outputs.version }}"
-          echo "创建版本标签: $VERSION_TAG" 🔖
-          git tag "$VERSION_TAG"
-          git push origin "$VERSION_TAG"
-
-      - name: 🎉 上传资产到 GitHub 版本发布
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ steps.extract_info.outputs.version }}
-          files: |
-            ${{ steps.extract_apks.outputs.signed_compatible }}
-            ${{ steps.extract_apks.outputs.signed_normal }}
-            CHECKSUMS-*.sha256
-          tag_name: ${{ steps.extract_info.outputs.version }}
-          draft: false
-          append_body: true
-          generate_release_notes: false
-          body: |
-            ### 🛠️ 安装指引与说明:
-            1. **📱 标准版 （Normal）直接下载安装 ，适用于 (Android 8.0+) 及以上系统📲 **
-               - 直接点击安装 📲  
-
-            2. **📱 兼容版 （Compatible）适用于 最低支持 (Android 5.1~7.0) 系统📲 **
-               - 文件管理器安装 📂  
-            
-                🖋️ 仅限个人研究学习
-                🛠  10天自动打包1次，可以忽略
-                🌞 北京时间6点构建
-            
-            
-            
-            ### ⚠️ 重要声明  
-            > ~~墙内不再更新~~ 倒卖必死全家 ❗ 本安装包仅限个人研究学习，非商业用途，禁止任何形式的倒卖或非法分发
-            
-            > ~~墙内不再更新~~ 倒卖必死全家 ❗ 本安装包仅限个人研究学习，非商业用途，禁止任何形式的倒卖或非法分发
-            
-            > ~~墙内不再更新~~ 倒卖必死全家 ❗ 本安装包仅限个人研究学习，非商业用途，禁止任何形式的倒卖或非法分发
-            
-            >   出现任何问题自行承担一切后果，出现任何问题自行承担一切后果，出现任何问题自行承担一切后果
+          asset_name: |
+            Sesame-Compatible-${{ steps.version.outputs.version }}.apk
+          file: ${{ steps.sign_compatible_apk.outputs.signedFile }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: |
+            $(if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+              echo "refs/tags/${{ steps.version.outputs.version }}";
+            else
+              echo "${{ github.ref }}";
+            fi)
+          overwrite: true
+          checksums: sha256
+          checksums_file_name: |
+            CHECKSUMS-Sesame-Compatible-${{ steps.version.outputs.version }}.%algo%
