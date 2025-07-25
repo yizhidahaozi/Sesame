@@ -2,8 +2,8 @@ name: Android CI 🤖
 
 on:
   release:
-    types: [published]
-  workflow_dispatch:
+    types: [published] 🚀
+  workflow_dispatch:  # 添加手动触发选项
     inputs:
       base_version:
         description: '基础版本号 (例如: v1.6.4.2-X)'
@@ -12,16 +12,23 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 💻
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+        # 拉取代码仓库 📥
+
+      - name: Set timezone to Asia/Shanghai ⏰
+        run: |
+          sudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+          echo "Timezone set to $(date +%Z)"
 
       - name: Generate timestamp 🕒
         id: timestamp
         run: |
+          # 使用北京时间生成时间戳
           TIMESTAMP=$(date +'%Y.%m.%d.%H.%M')
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
 
@@ -29,8 +36,10 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # 手动触发: 使用输入的基础版本 + 时间戳
             VERSION="${{ github.event.inputs.base_version }}.${{ steps.timestamp.outputs.timestamp }}"
           else
+            # 发布触发: 使用标签名作为完整版本号
             VERSION="${{ github.ref_name }}"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
